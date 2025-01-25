@@ -1,0 +1,28 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Nuxt build
+.nuxt/
+.output/
+.yarn/
+dist/
+
+
+# Environment variables
+.env
+.env.*
+
+# TypeScript
+*.tsbuildinfo
+
+# IDE files
+.vscode/
+.idea/
+.DS_Store

@@ -1,0 +1,22 @@
+{
+  "name": "squeeze-plex-hub",
+  "version": "1.0.0",
+  "description": "A Squeeze Plex Hub that allows you to play your Plex content on your Squeezebox devices",
+  "author": "onmomo",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "nuxt generate"
+  },
+  "dependencies": {
+    "nuxt": "^3.15.3"
+  },
+  "devDependencies": {
+    "@nuxt/types": "^2.18.1",
+    "@nuxt/typescript-build": "^3.0.2",
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "yarn@4.4.0"
+}
