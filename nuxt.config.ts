@@ -1,4 +1,11 @@
 export default {
+  runtimeConfig: {
+    logLevel: 'debug',
+  },
+  compatibilityDate: '2025-01-25',
+  devtools: {
+    enabled: true
+  },
   target: 'server',
   head: {
     title: 'Squeeze Plex Hub',
@@ -11,12 +18,27 @@ export default {
       { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
     ]
   },
-  css: [],
+  //css: ['vuetify/lib/styles/main.sass', '@mdi/font/css/materialdesignicons.min.css'],
+  //css: ['vuetify/lib/styles/main.sass'],
   plugins: [],
   components: true,
+  typescript: {
+    typeCheck: true,
+    strict: true,
+  },
   buildModules: [
     '@nuxt/typescript-build'
   ],
-  modules: [],
-  build: {}
+  modules: ['nuxt-scheduler', '@nuxt/ui'],
+  scheduler: {
+    jobs: [
+      {
+        name: 'squeezeScanner',
+        cronTime: '*/10 * * * * *',
+        handler: '~/jobs/squeezeScanner.ts',
+      },
+    ],
+  },
+
+
 }
