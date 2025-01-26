@@ -29,16 +29,5 @@ export default {
   buildModules: [
     '@nuxt/typescript-build'
   ],
-  modules: ['nuxt-scheduler', '@nuxt/ui'],
-  scheduler: {
-    jobs: [
-      {
-        name: 'squeezeScanner',
-        cronTime: '*/10 * * * * *',
-        handler: '~/jobs/squeezeScanner.ts',
-      },
-    ],
-  },
-
-
+  modules: ['nuxt-scheduler', '@nuxt/ui']
 }
