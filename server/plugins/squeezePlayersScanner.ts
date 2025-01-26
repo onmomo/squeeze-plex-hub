@@ -1,6 +1,7 @@
 import { useScheduler } from '#scheduler'
 import { ServerInfo } from 'lms-discovery'
 import useLogger from '../composables/useLogger'
+import SqueezeServer from 'squeezenode'
 
 const logger = useLogger('squeezePlayersScanner')
 
@@ -24,9 +25,19 @@ function squeezePlayersScanner() {
           const server = await storage.getItem<ServerInfo>(key)
           if (server) {
             logger.info(`Looking for players from LMS ${server.name} (${server.ip}) ..`)
-            // TODO get players from LMS and store them in storage
+            const squeeze = new SqueezeServer(`http://${server.ip}`, server.jsonPort || '9000')
+            squeeze.getPlayers((reply: any) => {
+              if (reply.ok) {
+                logger.info(JSON.stringify(reply.result))
+                for (const player of reply.result) {
+                  logger.info(`Player found: ${player.name} (${player.ip})`)
+                  storage.setItem(`players/${player.uuid}`, player)
+                }
+              } else {
+                logger.error('Error getting players:', reply)
+              }
+            })
           }
-          
         }
       })
     })
