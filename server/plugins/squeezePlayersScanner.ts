@@ -25,6 +25,7 @@ function squeezePlayersScanner() {
           return
         }
 
+        logger.debug('keys:', servers)
         for (const key of servers) {
           const server = await storage.getItem<ServerInfo>(key)
           if (server) {
@@ -32,10 +33,10 @@ function squeezePlayersScanner() {
             const client = new SqueezeServerStub(`http://${server.ip}:${server.jsonPort || '9000'}`)
             const squeeze = new SqueezeServer(client)
             const playerInfos = await squeeze.getPlayerInfosAsync()
-            logger.info(`Found ${playerInfos.length} players on ${server.name} (${server.ip})`)
-            await storage.setItem(`servers/${server.uuid}/players`, playerInfos)
+            logger.info(`Found ${playerInfos.length} players on ${server.name} (${server.ip})`)            
+            await storage.setItem(`players/${server.uuid}`, playerInfos)
             
-            //const storedPlayerInfos = await storage.getItem<IPlayerInfo[]>(`servers/${server.uuid}/players`) || []
+            //const storedPlayerInfos = await storage.getItem<IPlayerInfo[]>(`players/${server.uuid}/players`) || []
             //for (const storedPlayerInfo of storedPlayerInfos) {
             //  logger.info(`Stored Player: ${storedPlayerInfo.name} (${storedPlayerInfo.playerid})`)
             //}

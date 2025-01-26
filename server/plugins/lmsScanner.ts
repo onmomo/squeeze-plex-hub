@@ -17,6 +17,6 @@ function squeezeScanner() {
   logger.debug('Scanning for squeeze devices ..')
   discovery.on('discovered', async (server) => {    
     logger.info('Server discovered:', server)
-    await storage.setItem('servers' + server.uuid, server)
+    await storage.setItem('servers/' + server.uuid, server)
   })
 }
