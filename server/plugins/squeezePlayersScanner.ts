@@ -1,7 +1,8 @@
 import { useScheduler } from '#scheduler'
 import { ServerInfo } from 'lms-discovery'
 import useLogger from '../composables/useLogger'
-import SqueezeServer from 'squeezenode'
+import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc'
+//import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 
 const logger = useLogger('squeezePlayersScanner')
 
@@ -9,6 +10,9 @@ export default defineNitroPlugin(() => {
   squeezePlayersScanner()
 })
 
+/**
+ * Scans for LMS (Logitech Media Server) players on the network and stores them in the DISCOVERY storage.
+ */
 function squeezePlayersScanner() {
   const storage = useStorage('DISCOVERY')
   const scheduler = useScheduler()
@@ -24,19 +28,17 @@ function squeezePlayersScanner() {
         for (const key of servers) {
           const server = await storage.getItem<ServerInfo>(key)
           if (server) {
-            logger.info(`Looking for players from LMS ${server.name} (${server.ip}) ..`)
-            const squeeze = new SqueezeServer(`http://${server.ip}`, server.jsonPort || '9000')
-            squeeze.getPlayers((reply: any) => {
-              if (reply.ok) {
-                logger.info(JSON.stringify(reply.result))
-                for (const player of reply.result) {
-                  logger.info(`Player found: ${player.name} (${player.ip})`)
-                  storage.setItem(`players/${player.uuid}`, player)
-                }
-              } else {
-                logger.error('Error getting players:', reply)
-              }
-            })
+            logger.debug(`Looking for players from LMS ${server.name} (${server.ip}) ..`)
+            const client = new SqueezeServerStub(`http://${server.ip}:${server.jsonPort || '9000'}`)
+            const squeeze = new SqueezeServer(client)
+            const playerInfos = await squeeze.getPlayerInfosAsync()
+            logger.info(`Found ${playerInfos.length} players on ${server.name} (${server.ip})`)
+            await storage.setItem(`servers/${server.uuid}/players`, playerInfos)
+            
+            //const storedPlayerInfos = await storage.getItem<IPlayerInfo[]>(`servers/${server.uuid}/players`) || []
+            //for (const storedPlayerInfo of storedPlayerInfos) {
+            //  logger.info(`Stored Player: ${storedPlayerInfo.name} (${storedPlayerInfo.playerid})`)
+            //}
           }
         }
       })
