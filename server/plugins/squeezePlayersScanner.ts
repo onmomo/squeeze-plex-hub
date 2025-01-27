@@ -36,7 +36,7 @@ function squeezePlayersScanner() {
             logger.info(`Found ${playerInfos.length} players on ${server.name} (${server.ip})`)
             await storage.setItem(`players/${server.uuid}`, playerInfos)
 
-            // TODO remove block later
+            // TODO remove later
             const storedPlayerInfos = (await storage.getItem<IPlayerInfo[]>(`players/${server.uuid}`)) || []
             for (const storedPlayerInfo of storedPlayerInfos) {
               logger.info(`Stored Player: ${storedPlayerInfo.name} (${storedPlayerInfo.playerid})`)
