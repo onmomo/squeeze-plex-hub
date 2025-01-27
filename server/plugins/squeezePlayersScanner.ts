@@ -1,8 +1,9 @@
 import { useScheduler } from '#scheduler'
 import { ServerInfo } from 'lms-discovery'
 import useLogger from '../composables/useLogger'
-import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc'
-//import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
+import { SqueezeServerStub, SqueezeServer, SqueezePlayer } from 'lms-squeeze-rpc'
+import type { IPlayerInfo, IPlayerStatus } from 'lms-squeeze-rpc/dist/modelTypes'
+import ExtendedSqueezePlayer from '../lib/squeezePlayer'
 
 const logger = useLogger('squeezePlayersScanner')
 
@@ -25,7 +26,6 @@ function squeezePlayersScanner() {
           return
         }
 
-        logger.debug('keys:', servers)
         for (const key of servers) {
           const server = await storage.getItem<ServerInfo>(key)
           if (server) {
@@ -33,13 +33,23 @@ function squeezePlayersScanner() {
             const client = new SqueezeServerStub(`http://${server.ip}:${server.jsonPort || '9000'}`)
             const squeeze = new SqueezeServer(client)
             const playerInfos = await squeeze.getPlayerInfosAsync()
-            logger.info(`Found ${playerInfos.length} players on ${server.name} (${server.ip})`)            
+            logger.info(`Found ${playerInfos.length} players on ${server.name} (${server.ip})`)
             await storage.setItem(`players/${server.uuid}`, playerInfos)
-            
-            //const storedPlayerInfos = await storage.getItem<IPlayerInfo[]>(`players/${server.uuid}/players`) || []
-            //for (const storedPlayerInfo of storedPlayerInfos) {
-            //  logger.info(`Stored Player: ${storedPlayerInfo.name} (${storedPlayerInfo.playerid})`)
-            //}
+
+            // TODO remove block later
+            const storedPlayerInfos = (await storage.getItem<IPlayerInfo[]>(`players/${server.uuid}`)) || []
+            for (const storedPlayerInfo of storedPlayerInfos) {
+              logger.info(`Stored Player: ${storedPlayerInfo.name} (${storedPlayerInfo.playerid})`)
+              var player = new ExtendedSqueezePlayer(client, storedPlayerInfo)
+              await player.clearPlaylist()
+              await player.addToPlaylist('http://stream.radioparadise.com/flacm', 'Radio Paradise - FLAC')
+              await player.getStatusAsync().then((status) => {
+                if (status) {
+                  logger.info(`Player status: ${status.power} - ${status.volume}`)
+                }                
+              })
+              storedPlayerInfo
+            }
           }
         }
       })
