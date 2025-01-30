@@ -59,13 +59,13 @@ function announceMessage(playerId: string, name: string, port: number) {
   appendParameter(sb, 'Name', name)
   appendParameter(sb, 'Port', port.toString())
   appendParameter(sb, 'Product', 'SqueezePlexHub')
+  appendParameter(sb, 'Version', '1.0.0') // TODO get version from package.json
   appendParameter(sb, 'Protocol', 'plex')
   appendParameter(sb, 'Protocol-Capabilities', 'timeline,playback,shoutcast')
   appendParameter(sb, 'Provides', 'player')
   appendParameter(sb, 'Protocol-Version', '1')
   appendParameter(sb, 'RawName', name)
   appendParameter(sb, 'Resource-Identifier', playerId)
-  appendParameter(sb, 'Version', '1.0.0')
   sb.push('\r\n')
 
   return sb.join('')
