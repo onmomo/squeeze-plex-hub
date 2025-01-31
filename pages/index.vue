@@ -1,18 +1,34 @@
 <template>
   <div>
-    <!--<h1>Welcome to Squeeze Plex Hub!</h1>-->
-    <PlexPinAuth />
+    <PlexPinAuth v-if="!isSessionActive" />
+    <SessionStatus v-else />
   </div>
 </template>
 
 <script lang="ts">
-import PlexPinAuth from '@/components/PlexPinAuth.vue';
+import { defineComponent, ref, onMounted } from 'vue'
+import axios from 'axios'
+import PlexPinAuth from '@/components/PlexPinAuth.vue'
+import SessionStatus from '@/components/SessionStatus.vue'
 
-export default {
+export default defineComponent({
   components: {
-    PlexPinAuth
+    PlexPinAuth,
+    SessionStatus
+  },
+  setup() {
+    const isSessionActive = ref(false)
+
+    onMounted(async () => {
+      const response = await axios.get('/api/auth/session')
+      isSessionActive.value = response.data.status === 'authorized'
+    })
+
+    return {
+      isSessionActive
+    }
   }
-}
+})
 </script>
 
 <style scoped>

@@ -1,9 +1,10 @@
 import { useScheduler } from '#scheduler'
-import { ServerInfo } from 'lms-discovery'
 import useLogger from '../composables/useLogger'
 import { SqueezeServerStub, SqueezeServer, SqueezePlayer } from 'lms-squeeze-rpc'
-import type { IPlayerInfo, IPlayerStatus } from 'lms-squeeze-rpc/dist/modelTypes'
 import ExtendedSqueezePlayer from '../lib/squeezePlayer'
+import type { IPlayerInfo, IPlayerStatus } from 'lms-squeeze-rpc/dist/modelTypes'
+import type { ServerInfo } from 'lms-discovery'
+
 
 const logger = useLogger('squeezePlayersScanner')
 
