@@ -1,6 +1,14 @@
 <template>
   <div class="session-status">
-    <p>Session Status: {{ status }}</p>
+    <div v-if="serverInfo">
+      <h2>Plex Server Info</h2>
+      <p><strong>Name:</strong> {{ serverInfo.friendlyName }}</p>
+      <p><strong>machineIdentifier:</strong> {{ serverInfo.machineIdentifier }}</p>
+      <p><strong>platform:</strong> {{ serverInfo.platform }}</p>
+      <p><strong>platform version:</strong> {{ serverInfo.platformVersion }}</p>
+      <p><strong>myPlexSubscription:</strong> {{ serverInfo.myPlexSubscription }}</p>
+      <p><strong>myPlexUsername:</strong> {{ serverInfo.myPlexUsername }}</p>
+    </div>
     <button @click="deleteSession">Delete Session</button>
   </div>
 </template>
@@ -9,24 +17,36 @@
 import { ref, onMounted, defineComponent } from 'vue'
 import axios from 'axios'
 
+interface ServerInfo {
+  friendlyName: string
+  machineIdentifier: string
+  myPlexSubscription: boolean
+  myPlexUsername: string
+  platform: string
+  platformVersion: string
+}
+
 export default defineComponent({
   setup() {
     const status = ref('')
+    const serverInfo = ref<ServerInfo | null>(null)
 
     onMounted(async () => {
       const response = await axios.get('/api/auth/session')
       status.value = response.data.status
+      serverInfo.value = response.data.serverInfo
     })
 
     const deleteSession = async () => {
       await axios.delete('/api/auth/session')
       status.value = 'unauthorized'
       // Force page reload to start pin auth flow
-      window.location.reload();
+      window.location.reload()
     }
 
     return {
       status,
+      serverInfo,
       deleteSession
     }
   }

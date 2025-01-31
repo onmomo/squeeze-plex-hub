@@ -12,6 +12,9 @@ export default defineNitroPlugin(() => {
   gdmAnnouncer()
 })
 
+/**
+ * Announces LMS players to Plex clients using GDM.
+ */
 function gdmAnnouncer() {
   const decoder = new StringDecoder('utf8')
   const server = dgram.createSocket('udp4')
