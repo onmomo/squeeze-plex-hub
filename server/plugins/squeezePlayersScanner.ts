@@ -37,19 +37,19 @@ function squeezePlayersScanner() {
             await storage.setItem(`players/${server.uuid}`, playerInfos)
 
             // TODO remove later
-            const storedPlayerInfos = (await storage.getItem<IPlayerInfo[]>(`players/${server.uuid}`)) || []
-            for (const storedPlayerInfo of storedPlayerInfos) {
-              logger.info(`Stored Player: ${storedPlayerInfo.name} (${storedPlayerInfo.playerid})`)
-              var player = new ExtendedSqueezePlayer(client, storedPlayerInfo)
-              await player.clearPlaylist()
-              await player.addToPlaylist('http://stream.radioparadise.com/flacm', 'Radio Paradise - FLAC')
-              await player.getStatusAsync().then((status) => {
-                if (status) {
-                  logger.info(`Player status: ${status.power} - ${status.volume}`)
-                }                
-              })
-              storedPlayerInfo
-            }
+            // const storedPlayerInfos = (await storage.getItem<IPlayerInfo[]>(`players/${server.uuid}`)) || []
+            // for (const storedPlayerInfo of storedPlayerInfos) {
+            //   logger.info(`Stored Player: ${storedPlayerInfo.name} (${storedPlayerInfo.playerid})`)
+            //   var player = new ExtendedSqueezePlayer(client, storedPlayerInfo)
+            //   await player.clearPlaylist()
+            //   await player.addToPlaylist('http://stream.radioparadise.com/flacm', 'Radio Paradise - FLAC')
+            //   await player.getStatusAsync().then((status) => {
+            //     if (status) {
+            //       logger.info(`Player status: ${status.power} - ${status.volume}`)
+            //     }                
+            //   })
+            //   storedPlayerInfo
+            // }
           }
         }
       })

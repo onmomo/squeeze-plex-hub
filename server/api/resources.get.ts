@@ -1,5 +1,6 @@
 import { Builder } from 'xml2js'
 import useLogger from '../composables/useLogger'
+import { plexOptions } from '~/server/lib/squeezePlexHub'
 import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 
 const logger = useLogger('resources.get')
@@ -19,8 +20,8 @@ export default eventHandler(async (event) => {
             platform: 'Konvergo',
             platformVersion: '1.0',
             protocol: 'plex',
-            product: 'SqueezePlexHub',
-            version: '1.0.0', // TODO get version from package.json
+            product: plexOptions.product,
+            version: plexOptions.version,
             protocolVersion: '1',
             machineIdentifier: boundPlayer.playerid,
             port: serverPort,

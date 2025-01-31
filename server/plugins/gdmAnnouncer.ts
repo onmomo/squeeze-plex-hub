@@ -1,6 +1,7 @@
 import dgram from 'dgram'
 import { StringDecoder } from 'string_decoder'
 import useLogger from '../composables/useLogger'
+import { plexOptions } from '~/server/lib/squeezePlexHub'
 import type { IPlayerInfo, IPlayerStatus } from 'lms-squeeze-rpc/dist/modelTypes'
 
 const logger = useLogger('gdmAnnouncer')
@@ -58,8 +59,8 @@ function announceMessage(playerId: string, name: string, port: number) {
   appendParameter(sb, 'Device-Class', 'stb')
   appendParameter(sb, 'Name', name)
   appendParameter(sb, 'Port', port.toString())
-  appendParameter(sb, 'Product', 'SqueezePlexHub')
-  appendParameter(sb, 'Version', '1.0.0') // TODO get version from package.json
+  appendParameter(sb, 'Product', plexOptions.product)
+  appendParameter(sb, 'Version', plexOptions.version)
   appendParameter(sb, 'Protocol', 'plex')
   appendParameter(sb, 'Protocol-Capabilities', 'timeline,playback,shoutcast')
   appendParameter(sb, 'Provides', 'player')

@@ -12,9 +12,11 @@
   },
   "dependencies": {
     "@nuxt/kit": "^3.15.3",
-    "@nuxt/ui": "2.21.0",    
+    "@nuxt/ui": "2.21.0",
+    "axios": "^1.7.9",
     "lms-discovery": "^1.1.0",
     "lms-squeeze-rpc": "^0.0.3",
+    "node-plex-api-pinauth": "github:Zefau/node-plex-api-pinauth",
     "nuxt": "^3.15.3",
     "nuxt-scheduler": "^0.1.9",
     "winston": "^3.17.0",

@@ -1,17 +1,16 @@
 <template>
   <div>
-    <h1>Welcome to My Nuxt App</h1>
-    <p>This is the homepage of your Nuxt application.</p>
-    <ExampleComponent />
+    <!--<h1>Welcome to Squeeze Plex Hub!</h1>-->
+    <PlexPinAuth />
   </div>
 </template>
 
 <script lang="ts">
-import ExampleComponent from '@/components/ExampleComponent.vue';
+import PlexPinAuth from '@/components/PlexPinAuth.vue';
 
 export default {
   components: {
-    ExampleComponent
+    PlexPinAuth
   }
 }
 </script>
