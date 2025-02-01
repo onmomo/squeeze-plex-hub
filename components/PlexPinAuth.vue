@@ -20,6 +20,7 @@
     <!-- Success State -->
     <div v-else-if="success">
       <p class="success">Successfully linked Plex with Squeeze Plex Hub! ✅</p>
+      <SessionStatus />
     </div>
 
     <!-- PIN Display -->
@@ -39,7 +40,7 @@ import axios from 'axios'
 
 export default defineComponent({
   name: 'PlexPinAuth',
-  setup() {
+  setup() {    
     const pin = ref<{ code: string; id: string } | null>(null)
     const success = ref(false)
     const loading = ref(true)
