@@ -16,23 +16,35 @@ export default defineEventHandler(async (event) => {
   }
 
   const token = await credentials.getItem('plexToken')
-  if (token) {
-    logger.info('Token found in storage, fetching server info to validate token..')
-    // TODO: Add error handling 401 / 403 in case token is invalid
+  if (!token) {
+    logger.info('No token found in storage')
+    return { status: 'unauthorized' }
+  }
+
+  logger.info('Token found in storage, fetching server info to validate token..')
+  try {
     const serverInfo = await axios.get(`http://${plexServer.localAddress}:${plexServer.port}`, {
       headers: {
         'X-Plex-Token': token.toString(),
         Accept: 'application/json'
       }
     })
-    
+
     return {
       status: 'authorized',
       clientIdentifier: plexOptions.identifier,
       serverInfo: serverInfo.data.MediaContainer
     }
-  } else {
-    logger.info('No token found in storage')
-    return { status: 'unauthorized' }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        logger.warn('Unauthorized access, invalid token in storage')
+        await credentials.removeItem('plexToken')
+        return { status: 'unauthorized' }
+      }
+    }
+
+    logger.error('Failed to fetch server info', error)
+    throw new Error('Failed to fetch server info')
   }
 })
