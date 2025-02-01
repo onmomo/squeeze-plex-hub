@@ -41,53 +41,48 @@ async function gdmDiscovery() {
 
   const scheduler = useScheduler()
   scheduler
-    .run(() => {
-      new Promise((resolve, reject) => {
-        try {
-          const discoverySocket = dgram.createSocket('udp4')
+    .run(async () => {
+      try {
+        const discoverySocket = dgram.createSocket('udp4')
 
-          discoverySocket.bind(() => {
-            discoverySocket.setBroadcast(true)
-          })
+        discoverySocket.bind(() => {
+          discoverySocket.setBroadcast(true)
+        })
 
-          const messageBuffer = Buffer.from(discoveryMessage)
-          discoverySocket.send(messageBuffer, 0, messageBuffer.length, discoveryPort, broadcastAddress, (err) => {
-            if (err) {
-              logger.error('Error sending discovery packet:', err)
-              discoverySocket.close()
-              reject(err)
-            }
-          })
-
-          discoverySocket.on('message', async (msg, rinfo) => {
-            const responseData = msg.toString()
-            if (responseData.includes('HTTP/1.0 200 OK')) {
-              const plexServer = parseServerResponse(responseData, rinfo.address)
-              if (!plexServer || plexServer.contentType !== 'plex/media-server') {
-                logger.warn('Unexpected GDM Discovery response:', responseData)
-                return resolve(null)
-              }
-              logger.info(
-                `Found PLEX server '${plexServer.name}' at ${plexServer.localAddress}:${plexServer.port} (external: ${plexServer.host})`
-              )
-              await storage.setItem('plexServer', plexServer)
-              discoverySocket.close()
-              resolve(plexServer)
-            }
-          })
-
-          setTimeout(() => {
-            logger.warn('GDM Discovery timeout. No response received within 10s.')
+        const messageBuffer = Buffer.from(discoveryMessage)
+        discoverySocket.send(messageBuffer, 0, messageBuffer.length, discoveryPort, broadcastAddress, (err) => {
+          if (err) {
+            logger.error('Error sending discovery packet:', err)
             discoverySocket.close()
-            resolve(null)
-          }, 10000)
-        } catch (error) {
-          logger.error('Error during GDM Discovery:', error)
-          reject(error)
-        }
-      })
+            return
+          }
+        })
+
+        discoverySocket.on('message', async (msg, rinfo) => {
+          const responseData = msg.toString()
+          if (responseData.includes('HTTP/1.0 200 OK')) {
+            const plexServer = parseServerResponse(responseData, rinfo.address)
+            if (!plexServer || plexServer.contentType !== 'plex/media-server') {
+              logger.warn('Unexpected GDM Discovery response:', responseData)
+              return
+            }
+            logger.info(
+              `Found PLEX server '${plexServer.name}' at ${plexServer.localAddress}:${plexServer.port} (external: ${plexServer.host})`
+            )
+            await storage.setItem('plexServer', plexServer)
+            discoverySocket.close()
+          }
+        })
+
+        setTimeout(() => {
+          logger.info('GDM Discovery timeout. No response received within 15s, trying again later ..')
+          discoverySocket.close()
+        }, 150000)
+      } catch (error) {
+        logger.error('Error during GDM Discovery:', error)
+      }
     })
-    .everySeconds(20)
+    .everySeconds(30)
 }
 
 function parseServerResponse(response: string, localAddress: string): PlexServerResponse | null {
