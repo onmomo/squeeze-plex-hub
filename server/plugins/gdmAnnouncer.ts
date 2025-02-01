@@ -28,7 +28,7 @@ function gdmAnnouncer() {
   server.on('message', async (msg, rinfo) => {
     const packetContent = decoder.write(msg).trim()
     if (packetContent.match(/M-SEARCH \* HTTP\/1\.[0-1]/)) {
-      logger.info(`Received GDM discovery request from ${rinfo.address}:${rinfo.port}`)
+      logger.debug(`Received GDM discovery request from ${rinfo.address}:${rinfo.port}`)
       storage.getKeys('players/').then(async (serverKey) => {
         if (!serverKey) {
           logger.debug('No LMS found in storage, skipping')
@@ -38,7 +38,7 @@ function gdmAnnouncer() {
         for (const key of serverKey) {
           const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
           if (playerInfos) {
-            logger.info(`Announcing ${playerInfos.length} players from LMS ${key} to Plex ..`)
+            logger.debug(`Announcing ${playerInfos.length} players from LMS ${key} to Plex ..`)
             for (const playerInfo of playerInfos) {
               const message = announceMessage(playerInfo.playerid, playerInfo.name, serverPort)
               server.send(message, 0, message.length, rinfo.port, rinfo.address)

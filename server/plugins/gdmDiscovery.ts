@@ -71,6 +71,7 @@ async function gdmDiscovery() {
             )
             await storage.setItem('plexServer', plexServer)
             discoverySocket.close()
+            return
           }
         })
 

@@ -1,6 +1,6 @@
 export default {
   runtimeConfig: {
-    logLevel: 'debug',
+    logLevel: 'info',
   },
   compatibilityDate: '2025-01-25',
   devtools: {
