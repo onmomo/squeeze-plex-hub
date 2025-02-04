@@ -1,6 +1,14 @@
 export default {
   runtimeConfig: {
-    logLevel: 'info',
+    logLevel: 'info'
+  },
+  vite: {
+    server: {
+      allowedHosts: [
+        'localhost',
+        '.plex.direct' // allow request from app.plex.tv web player
+      ]
+    }
   },
   compatibilityDate: '2025-01-25',
   devtools: {
@@ -14,9 +22,7 @@ export default {
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { hid: 'description', name: 'description', content: 'Squeeze Plex Hub' }
     ],
-    link: [
-      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }
-    ]
+    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }]
   },
   //css: ['vuetify/lib/styles/main.sass', '@mdi/font/css/materialdesignicons.min.css'],
   //css: ['vuetify/lib/styles/main.sass'],
@@ -24,10 +30,8 @@ export default {
   components: true,
   typescript: {
     typeCheck: true,
-    strict: true,
+    strict: true
   },
-  buildModules: [
-    '@nuxt/typescript-build'
-  ],
+  buildModules: ['@nuxt/typescript-build'],
   modules: ['nuxt-scheduler', '@nuxt/ui']
 }

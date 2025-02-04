@@ -6,7 +6,6 @@ import type { IPlayerInfo, IPlayerStatus } from 'lms-squeeze-rpc/dist/modelTypes
 
 const logger = useLogger('gdmAnnouncer')
 const storage = useStorage('DISCOVERY')
-const serverPort = 3000 // nuxt server port
 
 export default defineNitroPlugin(() => {
   gdmAnnouncer()
@@ -38,9 +37,10 @@ function gdmAnnouncer() {
         for (const key of serverKey) {
           const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
           if (playerInfos) {
-            logger.debug(`Announcing ${playerInfos.length} players from LMS ${key} to Plex ..`)
+            logger.debug(`Announcing ${playerInfos.length} players from LMS ${key} to Plex device ${rinfo.address}:${rinfo.port} ..`)
             for (const playerInfo of playerInfos) {
-              const message = announceMessage(playerInfo.playerid, playerInfo.name, serverPort)
+             logger.info(`Announcing squeeze player ${playerInfo.playerid} from LMS ${key} to Plex device ${rinfo.address}:${rinfo.port} ..`)
+              const message = announceMessage(playerInfo)
               server.send(message, 0, message.length, rinfo.port, rinfo.address)
             }
           }
@@ -56,20 +56,22 @@ function appendParameter(sb: string[], key: string, value: string): void {
   sb.push(`${key}: ${value}\r\n`)
 }
 
-function announceMessage(playerId: string, name: string, port: number) {
-  const sb = ['HTTP/1.0 200 OK\r\n']
+function announceMessage(player :IPlayerInfo) {
+  const sb = ['HTTP/1.1 200 OK\r\n']
   appendParameter(sb, 'Content-Type', 'plex/media-player')
   appendParameter(sb, 'Device-Class', 'stb')
-  appendParameter(sb, 'Name', name)
-  appendParameter(sb, 'Port', port.toString())
+  appendParameter(sb, 'Name', player.name)
+  appendParameter(sb, 'Host', 'localhost')
+  appendParameter(sb, 'Address', 'localhost')
+  appendParameter(sb, 'Port', plexOptions.port)
   appendParameter(sb, 'Product', plexOptions.product)
   appendParameter(sb, 'Version', plexOptions.version)
   appendParameter(sb, 'Protocol', 'plex')
-  appendParameter(sb, 'Protocol-Capabilities', 'timeline,playback,shoutcast')
+  appendParameter(sb, 'Protocol-Capabilities', 'timeline,playback,playqueues,playqueues-creation')
   appendParameter(sb, 'Provides', 'player')
   appendParameter(sb, 'Protocol-Version', '1')
-  appendParameter(sb, 'RawName', name)
-  appendParameter(sb, 'Resource-Identifier', playerId)
+  appendParameter(sb, 'RawName', player.name)
+  appendParameter(sb, 'Resource-Identifier', player.playerid)  
   sb.push('\r\n')
 
   return sb.join('')

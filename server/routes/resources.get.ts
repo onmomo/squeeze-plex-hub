@@ -5,7 +5,6 @@ import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 
 const logger = useLogger('resources.get')
 const storage = useStorage('DISCOVERY')
-const serverPort = 3000 // nuxt server port
 
 export default eventHandler(async (event) => {
   /**
@@ -14,20 +13,22 @@ export default eventHandler(async (event) => {
   function resourcesXml(players: IPlayerInfo[]): string {
     const mediaContainer = {
       MediaContainer: {
+        $: {
+          size: players.length
+        },
         Player: [...players].map((boundPlayer) => ({
           $: {
+            machineIdentifier: boundPlayer.playerid,
             title: boundPlayer.name,
             platform: 'Konvergo',
             platformVersion: '1.0',
-            protocol: 'plex',
             product: plexOptions.product,
             version: plexOptions.version,
+            protocol: 'plex',
             protocolVersion: '1',
-            machineIdentifier: boundPlayer.playerid,
-            port: serverPort,
-            protocolCapabilities: 'playback,timeline,shoutcast',
-            provides: 'player,pubsub-player',
-            deviceClass: 'sbt'
+            protocolCapabilities: 'timeline,playback,playqueues,playqueues-creation',
+            port: plexOptions.port,
+            deviceClass: 'stb'
           }
         }))
       }
@@ -46,7 +47,7 @@ export default eventHandler(async (event) => {
     const allPlayers: IPlayerInfo[] = []
     for (const key of serverKey) {
       const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
-      allPlayers.push(...playerInfos || [])
+      allPlayers.push(...(playerInfos || []))
     }
 
     logger.info(`Responding with ${allPlayers.length} players to /resources api caller ..`)
