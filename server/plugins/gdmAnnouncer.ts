@@ -2,7 +2,7 @@ import dgram from 'dgram'
 import { StringDecoder } from 'string_decoder'
 import useLogger from '../composables/useLogger'
 import { plexOptions } from '~/server/lib/squeezePlexHub'
-import type { IPlayerInfo, IPlayerStatus } from 'lms-squeeze-rpc/dist/modelTypes'
+import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 
 const logger = useLogger('gdmAnnouncer')
 const storage = useStorage('DISCOVERY')
@@ -59,10 +59,8 @@ function appendParameter(sb: string[], key: string, value: string): void {
 function announceMessage(player :IPlayerInfo) {
   const sb = ['HTTP/1.1 200 OK\r\n']
   appendParameter(sb, 'Content-Type', 'plex/media-player')
-  appendParameter(sb, 'Device-Class', 'stb')
+  appendParameter(sb, 'Device-Class', plexOptions.deviceClass)
   appendParameter(sb, 'Name', player.name)
-  appendParameter(sb, 'Host', 'localhost')
-  appendParameter(sb, 'Address', 'localhost')
   appendParameter(sb, 'Port', plexOptions.port)
   appendParameter(sb, 'Product', plexOptions.product)
   appendParameter(sb, 'Version', plexOptions.version)

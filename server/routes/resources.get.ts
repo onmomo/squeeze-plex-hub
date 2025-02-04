@@ -20,15 +20,15 @@ export default eventHandler(async (event) => {
           $: {
             machineIdentifier: boundPlayer.playerid,
             title: boundPlayer.name,
-            platform: 'Konvergo',
-            platformVersion: '1.0',
+            platform: plexOptions.platform,
+            platformVersion: plexOptions.platformVersion,
             product: plexOptions.product,
             version: plexOptions.version,
             protocol: 'plex',
             protocolVersion: '1',
             protocolCapabilities: 'timeline,playback,playqueues,playqueues-creation',
             port: plexOptions.port,
-            deviceClass: 'stb'
+            deviceClass: plexOptions.deviceClass
           }
         }))
       }
