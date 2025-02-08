@@ -11,8 +11,8 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
     this.id = playerInfo.playerid;
   }
 
-  async addToPlaylist(trackUrl: string, metadata: string) {
-    return this.stub.requestAsync([this.id, ['playlist', 'add', trackUrl, metadata]])
+  async addToPlaylist(trackUrl: string, title: string) {
+    return this.stub.requestAsync([this.id, ['playlist', 'add', trackUrl, title]]) //  playlist add <item> <title>
   }
 
   async clearPlaylist() {
@@ -24,7 +24,7 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
   }
 
   async play() {
-    return this.stub.requestAsync([this.id, ['play']])
+    return this.stub.requestAsync([this.id, ['play', '5']]) // play <fadeInSecs>
   }
 
   async stop() {

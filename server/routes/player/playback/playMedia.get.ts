@@ -19,6 +19,11 @@ interface PlexTrack {
   key: string
 }
 
+interface PlexPlayQueue {
+  tracks: PlexTrack[]
+  playQueueSelectedItemOffset: number
+}
+
 export default eventHandler(async (event) => {
   const query = getQuery(event)
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
@@ -69,40 +74,41 @@ export default eventHandler(async (event) => {
     }
 
     const url = getPlexApiUrl(plexProtocol, plexAddress, plexPort, containerKey)
-    // call plex first to get track information
-    const targetTrack = await axios
-      .get(url, {
-        headers: {
-          'X-Plex-Token': plexToken.toString(),
-          Accept: 'application/json'
-        }
-      })
-      .then((response) => {
-        const playQueueSelectedItemOffset = response.data.MediaContainer.playQueueSelectedItemOffset
-        const track: PlexTrack = {
-          title: response.data.MediaContainer.Metadata[playQueueSelectedItemOffset].title,
-          album: response.data.MediaContainer.Metadata[playQueueSelectedItemOffset].parentTitle,
-          artist: response.data.MediaContainer.Metadata[playQueueSelectedItemOffset].grandparentTitle,
-          file: response.data.MediaContainer.Metadata[playQueueSelectedItemOffset].Media[0].Part[0].key,
-          duration: response.data.MediaContainer.Metadata[playQueueSelectedItemOffset].duration,
-          index: playQueueSelectedItemOffset,
-          key: response.data.MediaContainer.Metadata[playQueueSelectedItemOffset].key
-        }
+    // retrieve playQueue information from plex
+    const response = await axios.get(url, {
+      headers: {
+      'X-Plex-Token': plexToken.toString(),
+      Accept: 'application/json'
+      }
+    })
 
-        logger.info(`parsed track: ${JSON.stringify(track)}`)
-        // TODO parse all tracks in playqueue, load all of them to squeeze playlist and play the track matching playQueueSelectedItemOffset
-        return track
-      })
+    const playQueueSelectedItemOffset = response.data.MediaContainer.playQueueSelectedItemOffset
+    const playQueue: PlexPlayQueue = {
+      tracks: response.data.MediaContainer.Metadata.map((item: any, index: number) => ({
+      title: item.title,
+      album: item.parentTitle,
+      artist: item.grandparentTitle,
+      file: item.Media[0].Part[0].key,
+      duration: item.duration,
+      index: index,
+      key: item.key
+      } as PlexTrack)),
+      playQueueSelectedItemOffset: playQueueSelectedItemOffset
+    }
 
-    const trackUrl = getPlexApiTrackUrl(plexProtocol, plexAddress, plexPort, targetTrack, plexToken)
-    logger.info(`Playing ${trackUrl} on player ${serverInfo.ip} and port ${serverInfo.jsonPort}`)
     const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
     var player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    
     await player.clearPlaylist()
-    await player.addToPlaylist(trackUrl, metadata(targetTrack))
-    await player.play()
-
-    const response = {
+    for (const track of playQueue.tracks) {
+      logger.info(`Adding track '${track.title}' to player '${playerInfo.name}' playlist ..`)    
+      const trackUrl = getPlexApiTrackUrl(plexProtocol, plexAddress, plexPort, track, plexToken)            
+      await player.addToPlaylist(trackUrl, metadata(track))      
+    }
+        
+    logger.info(`Playing playlist index '${playQueue.playQueueSelectedItemOffset}' on player ${serverInfo.ip} and port ${serverInfo.jsonPort}`)
+    await player.selectTrackInPlaylist(playQueue.playQueueSelectedItemOffset)    
+    const playMediaResponse = {
       Response: {
         $: {
           code: 200,
@@ -111,7 +117,7 @@ export default eventHandler(async (event) => {
       }
     }
     const builder = new Builder()
-    return event.respondWith(new Response(builder.buildObject(response), { status: 200, headers: { 'Content-Type': 'application/xml' } }))
+    return event.respondWith(new Response(builder.buildObject(playMediaResponse), { status: 200, headers: { 'Content-Type': 'application/xml' } }))
   } catch (error) {
     logger.warn(`Error when playing media with player '${targetClientIdentifier}'`, error)
     return event.respondWith(new Response(`Player '${targetClientIdentifier}' failed to play media, try again later`, { status: 503 }))
@@ -119,18 +125,22 @@ export default eventHandler(async (event) => {
 })
 
 // TODO refactor to plex object
+// TODO we should never use the public plex address since we need to send the plex token as url query parameter for LMS to stream from it. I can't think of a valid where using the public plex address would be useful in our LMS use case
 function getPlexApiUrl(protocol: string, address: string, port: string, path: string): string {
   return `${protocol}://${address}:${port}${path}`
 }
 
 function getPlexApiTrackUrl(protocol: string, address: string, port: string, track: PlexTrack, token: string): string {
   return `${protocol}://${address}:${port}${track.file}?X-Plex-Token=${token}`
+  //TODO return `${protocol}://${address}:${port}${track.file}?X-Plex-Token=${token}&artist=mytitle&title=blubber&cover=https%3A%2F%2Fwww.rockarchive.com%2Fmedia%2F1890%2Fdavid-bowie-db001duffy.jpg%3Fcrop%3D0.19186424300418511%2C0.18786141133986681%2C0.20427102269629802%2C0.20827385436061632%26cropmode%3Dpercentage%26width%3D800%26height%3D800%26rnd%3D132951122240000000%26overlay%3Dwatermark.png%26overlay.size%3D230%2C20%26overlay.position%3D0%2C780`
 }
 
 /**
  * Returns metadata string that LMS seems to be able to parse.
  * @param track track to generate LMS metadata
  * @returns LMS for LMS
+ *
+ * @see https://github.com/LMS-Community/slimserver/blob/2c8f7a6f6657e695d7e799c04b232d9d05c17538/Slim/Player/Protocols/HTTP.pm#L1076
  */
 function metadata(track: PlexTrack): string {
   return `${track.artist} - ${track.title} (${track.album})`
