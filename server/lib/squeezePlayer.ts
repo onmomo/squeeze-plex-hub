@@ -12,11 +12,23 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
   }
 
   async addToPlaylist(trackUrl: string, metadata: string) {
-    await this.stub.requestAsync([this.id, ['playlist', 'add', trackUrl, metadata]])
+    return this.stub.requestAsync([this.id, ['playlist', 'add', trackUrl, metadata]])
   }
 
   async clearPlaylist() {
-    await this.stub.requestAsync([this.id, ['playlist', 'clear']])
+    return this.stub.requestAsync([this.id, ['playlist', 'clear']])
+  }
+
+  async selectTrackInPlaylist(index: number) {
+    return this.stub.requestAsync([this.id, ['playlist', 'index', index]])
+  }
+
+  async play() {
+    return this.stub.requestAsync([this.id, ['play']])
+  }
+
+  async stop() {
+    return this.stub.requestAsync([this.id, ['stop']])
   }
 }
 
