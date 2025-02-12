@@ -2154,7 +2154,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/xml2js@npm:^0":
+"@types/xml2js@npm:^0.4.14":
   version: 0.4.14
   resolution: "@types/xml2js@npm:0.4.14"
   dependencies:
@@ -3293,7 +3293,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chokidar@npm:^4.0.0, chokidar@npm:^4.0.1, chokidar@npm:^4.0.3":
+"chokidar@npm:^4.0.1, chokidar@npm:^4.0.3":
   version: 4.0.3
   resolution: "chokidar@npm:4.0.3"
   dependencies:
@@ -5376,13 +5376,6 @@ __metadata:
   version: 0.2.1
   resolution: "image-meta@npm:0.2.1"
   checksum: 10c0/c8a100b666663ad53ffe95c22647e79802d6eac6dfa3e1a00e4cf034129b4a13e7861b5c5a7cee46604a45a9e0c8ed91e73233c7bf9f48fbece5f0300ef6912c
-  languageName: node
-  linkType: hard
-
-"immutable@npm:^5.0.2":
-  version: 5.0.3
-  resolution: "immutable@npm:5.0.3"
-  checksum: 10c0/3269827789e1026cd25c2ea97f0b2c19be852ffd49eda1b674b20178f73d84fa8d945ad6f5ac5bc4545c2b4170af9f6e1f77129bc1cae7974a4bf9b04a9cdfb9
   languageName: node
   linkType: hard
 
@@ -8627,23 +8620,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass@npm:^1.83.4":
-  version: 1.83.4
-  resolution: "sass@npm:1.83.4"
-  dependencies:
-    "@parcel/watcher": "npm:^2.4.1"
-    chokidar: "npm:^4.0.0"
-    immutable: "npm:^5.0.2"
-    source-map-js: "npm:>=0.6.2 <2.0.0"
-  dependenciesMeta:
-    "@parcel/watcher":
-      optional: true
-  bin:
-    sass: sass.js
-  checksum: 10c0/6f27f0eebfeb50222b14baaeef548ef58a05daf8abd9797e6c499334ed7ad40541767056c8693780d06ca83d8836348ea7396a923d3be439b133507993ca78be
-  languageName: node
-  linkType: hard
-
 "sax@npm:>=0.6.0":
   version: 1.4.1
   resolution: "sax@npm:1.4.1"
@@ -8943,7 +8919,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map-js@npm:>=0.6.2 <2.0.0, source-map-js@npm:^1.0.1, source-map-js@npm:^1.2.0, source-map-js@npm:^1.2.1":
+"source-map-js@npm:^1.0.1, source-map-js@npm:^1.2.0, source-map-js@npm:^1.2.1":
   version: 1.2.1
   resolution: "source-map-js@npm:1.2.1"
   checksum: 10c0/7bda1fc4c197e3c6ff17de1b8b2c20e60af81b63a52cb32ec5a5d67a20a7d42651e2cb34ebe93833c5a2a084377e17455854fee3e21e7925c64a51b6a52b0faf
@@ -8996,7 +8972,7 @@ __metadata:
     "@nuxt/types": "npm:^2.18.1"
     "@nuxt/typescript-build": "npm:^3.0.2"
     "@nuxt/ui": "npm:^2.21.0"
-    "@types/xml2js": "npm:^0"
+    "@types/xml2js": "npm:^0.4.14"
     axios: "npm:^1.7.9"
     lms-discovery: "npm:^1.1.0"
     lms-squeeze-rpc: "npm:^0.0.3"
@@ -9004,7 +8980,6 @@ __metadata:
     nuxt: "npm:^3.15.3"
     nuxt-scheduler: "npm:^0.1.9"
     prettier: "npm:^3.3.1"
-    sass: "npm:^1.83.4"
     typescript: "npm:^5.7.3"
     vue-tsc: "npm:^2.2.0"
     winston: "npm:^3.17.0"
