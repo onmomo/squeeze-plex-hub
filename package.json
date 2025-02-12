@@ -11,8 +11,8 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
-    "@nuxt/kit": "^3.15.3",
-    "@nuxt/ui": "2.21.0",
+    "@nuxt/kit": "^3.15.4",
+    "@nuxt/ui": "^2.21.0",
     "axios": "^1.7.9",
     "lms-discovery": "^1.1.0",
     "lms-squeeze-rpc": "^0.0.3",
@@ -29,8 +29,7 @@
     "prettier": "^3.3.1",
     "sass": "^1.83.4",
     "typescript": "^5.7.3",
-    "vue-tsc": "^2.2.0",
-    "vuetify": "^3.7.7"
+    "vue-tsc": "^2.2.0"
   },
   "packageManager": "yarn@4.4.0"
 }
