@@ -11,7 +11,7 @@ export default eventHandler(async (event) => {
    * Generates the resources XML based on a set of players.
    */
   function resourcesXml(players: IPlayerInfo[]): string {
-    const mediaContainer = {
+    const mediaContainer = { // TODO fix that each player has a different is exposed via different port otherwise plex will only show one player
       MediaContainer: {
         $: {
           size: players.length
