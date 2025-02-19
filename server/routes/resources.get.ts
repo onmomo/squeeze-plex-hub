@@ -24,9 +24,12 @@ export default eventHandler(async (event) => {
             platformVersion: plexOptions.platformVersion,
             product: plexOptions.product,
             version: plexOptions.version,
-            protocol: 'plex',
-            protocolVersion: '1',
+            protocol: plexOptions.protocol,
+            protocolVersion: plexOptions.protocolVersion,
+            model: plexOptions.model,
+            device: plexOptions.device,
             protocolCapabilities: 'timeline,playback,playqueues,playqueues-creation',
+            //protocolCapabilities: 'timeline,playback',
             port: plexOptions.port,
             deviceClass: plexOptions.deviceClass
           }

@@ -5,6 +5,7 @@ import { SqueezeServerStub, SqueezeServer, SqueezePlayer } from 'lms-squeeze-rpc
 import { Builder } from 'xml2js'
 import type { ServerInfo } from 'lms-discovery'
 import axios from 'axios'
+import { getPlexApiTrackUrl, getPlexApiUrl } from '../../../lib/plexApi'
 
 const logger = useLogger('playback.playMedia.get')
 const storage = useStorage('DISCOVERY')
@@ -149,17 +150,6 @@ export default eventHandler(async (event) => {
     return event.respondWith(new Response(`Player '${targetClientIdentifier}' failed to play media, try again later`, { status: 503 }))
   }
 })
-
-// TODO refactor to plex object
-// TODO we should never use the public plex address since we need to send the plex token as url query parameter for LMS to stream from it. I can't think of a valid where using the public plex address would be useful in our LMS use case
-function getPlexApiUrl(protocol: string, address: string, port: string, path: string): string {
-  return `${protocol}://${address}:${port}${path}`
-}
-
-function getPlexApiTrackUrl(protocol: string, address: string, port: string, track: PlexTrack, token: string): string {
-  return `${protocol}://${address}:${port}${track.file}?X-Plex-Token=${token}`
-  //TODO return `${protocol}://${address}:${port}${track.file}?X-Plex-Token=${token}&artist=mytitle&title=blubber&cover=https%3A%2F%2Fwww.rockarchive.com%2Fmedia%2F1890%2Fdavid-bowie-db001duffy.jpg%3Fcrop%3D0.19186424300418511%2C0.18786141133986681%2C0.20427102269629802%2C0.20827385436061632%26cropmode%3Dpercentage%26width%3D800%26height%3D800%26rnd%3D132951122240000000%26overlay%3Dwatermark.png%26overlay.size%3D230%2C20%26overlay.position%3D0%2C780`
-}
 
 /**
  * Returns metadata string that LMS seems to be able to parse.
