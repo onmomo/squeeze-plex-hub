@@ -5,7 +5,7 @@ import { SqueezeServerStub, SqueezeServer, SqueezePlayer } from 'lms-squeeze-rpc
 import { Builder } from 'xml2js'
 import type { ServerInfo } from 'lms-discovery'
 import axios from 'axios'
-import { getPlexApiTrackUrl, getPlexApiUrl } from '../../../lib/plexApi'
+import { getPlexApiTrackUrl, getPlexApiUrl, metadata, responseHeaders, type PlexServer } from '../../../lib/plexApi'
 
 const logger = useLogger('playback.playMedia.get')
 const storage = useStorage('DISCOVERY')
@@ -32,6 +32,7 @@ export interface PlexPlayQueue {
   playQueueVersion: string
   playQueueShuffled: boolean
   count: number
+  server: PlexServer
 }
 
 export default eventHandler(async (event) => {
@@ -45,6 +46,10 @@ export default eventHandler(async (event) => {
   const containerKey = query.containerKey as string | undefined
   const key = query.key as string | undefined
   if (!targetClientIdentifier || !commandId || !plexAddress || !plexProtocol || !plexPort || !plexToken || !containerKey || !key) {
+    logger.warn(
+      `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers and 'commandID' query parameter), got:`,
+      event.node.req.headers
+    )
     return event.respondWith(
       new Response(
         `Missing required parameters ('X-Plex-Target-Client-Identifier' header and 'commandID' query parameter) in playMedia request`,
@@ -115,7 +120,13 @@ export default eventHandler(async (event) => {
       containerKey: `/playQueues/${response.data.MediaContainer.playQueueID}`,
       playQueueVersion: response.data.MediaContainer.playQueueVersion,
       playQueueShuffled: response.data.MediaContainer.playQueueShuffled || false,
-      count: response.data.MediaContainer.playQueueTotalCount
+      count: response.data.MediaContainer.playQueueTotalCount,
+      server: {
+        host: plexAddress,
+        port: plexPort,
+        protocol: plexProtocol,
+        token: plexToken
+      }
     }
 
     const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
@@ -128,38 +139,16 @@ export default eventHandler(async (event) => {
       await player.addToPlaylist(trackUrl, metadata(track))
     }
 
-    logger.info(
-      `Playing playlist index '${playQueue.playQueueSelectedItemOffset}' on player ${serverInfo.ip} and port ${serverInfo.jsonPort}`
-    )
+    logger.info(`Playing playlist item '${playQueue.playQueueSelectedItemOffset}' on player '${playerInfo.name}'`)
     await player.selectTrackInPlaylist(playQueue.playQueueSelectedItemOffset)
     await storage.setItem(`playerQueue/${playerInfo.playerid}`, playQueue)
-    const playMediaResponse = {
-      Response: {
-        $: {
-          code: 200,
-          status: 'OK'
-        }
-      }
-    }
-    const builder = new Builder({ headless: true })
-    return event.respondWith(
-      new Response(builder.buildObject(playMediaResponse), { status: 200, headers: { 'Content-Type': 'application/xml' } })
-    )
+
+    setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
+    return sendNoContent(event, 200)
   } catch (error) {
     logger.warn(`Error when playing media with player '${targetClientIdentifier}'`, error)
     return event.respondWith(new Response(`Player '${targetClientIdentifier}' failed to play media, try again later`, { status: 503 }))
   }
 })
-
-/**
- * Returns metadata string that LMS seems to be able to parse.
- * @param track track to generate LMS metadata
- * @returns LMS for LMS
- *
- * @see https://github.com/LMS-Community/slimserver/blob/2c8f7a6f6657e695d7e799c04b232d9d05c17538/Slim/Player/Protocols/HTTP.pm#L1076
- */
-function metadata(track: PlexTrack): string {
-  return `${track.artist} - ${track.title} (${track.album})`
-}
 
 // TODO {"url":"/player/playback/skipNext?commandID=2&type=music","statusCode":404,"statusMessage":"Page not found: /player/playback/skipNext?commandID=2&type=music","message":"Page not found: /player/playback/skipNext?commandID=2&type=music","stack":"","data":{"path":"/player/playback/skipNext?commandID=2&type=music"}}

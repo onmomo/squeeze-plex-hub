@@ -1,13 +1,15 @@
 import { useScheduler } from '#scheduler'
 import useLogger from '../composables/useLogger'
-import { SqueezeServerStub, SqueezeServer, SqueezePlayer } from 'lms-squeeze-rpc'
+import { SqueezeServerStub } from 'lms-squeeze-rpc'
 import ExtendedSqueezePlayer from '../lib/squeezePlayer'
-import type { IPlayerInfo, IPlayerStatus } from 'lms-squeeze-rpc/dist/modelTypes'
+import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import type { ServerInfo } from 'lms-discovery'
 import type { RemoteSubscriber } from '../routes/player/timeline/poll.get'
 import axios from 'axios'
-import { timelineResponse } from '../lib/plexPayerTimeline'
-import { plexOptions } from '../lib/squeezePlexHub'
+import { timelineResponse } from '../lib/plexPlayerTimeline'
+import { Builder } from 'xml2js'
+import { responseHeaders } from '../lib/plexApi'
+import type { PlexServerResponse } from './gdmDiscovery'
 
 const logger = useLogger('timelinePublisher')
 
@@ -20,7 +22,10 @@ export default defineNitroPlugin(() => {
  */
 function publishTimeline() {
   const storage = useStorage('DISCOVERY')
+  const credentials = useStorage('CREDENTIALS')
   const scheduler = useScheduler()
+  const config = useRuntimeConfig()
+  const builder = new Builder({ headless: true })
   scheduler
     .run(async () => {
       logger.debug('Publishing timeline to all available subscribers ..')
@@ -51,6 +56,14 @@ function publishTimeline() {
         for (const key of subscriberKeys) {
           const subscriber = await storage.getItem<RemoteSubscriber>(key)
           if (subscriber) {
+            // Check if subscriber is older than 10 seconds and remove it
+            const TEN_SECONDS = 10 * 1000
+            if (Date.now() - new Date(subscriber.subscribedAt).getTime() > TEN_SECONDS) {
+              logger.info(`Removing stale subscriber ${subscriber.clientIdentifier}`)
+              await storage.removeItem(key)
+              continue
+            }
+
             remoteSubscribers.push(subscriber)
           }
         }
@@ -67,54 +80,64 @@ function publishTimeline() {
         if (!playerStatus) {
           throw new Error(`Player ${playerInfo.playerid} status available yet`)
         }
+
+        const serverResponse = await storage.getItem<PlexServerResponse>(`plexServer`)
+        if (!serverResponse) {
+          throw new Error(`No plex server found in storage and playQueue not available`)
+        }
+
+        const serverTimelineUrl = `http://${serverResponse.localAddress}:${serverResponse.port}/:/timeline`
+        const token = await credentials.getItem<string>('plexToken') || config.plexToken
+        if (!token) {
+          logger.warn('No plex token available, abort timeline subscriber update. Please ensure to authenticate Squeeze Plex Hub.')
+          throw new Error(`No Plex token found in storage`)
+        }
+
         for (const subscriber of remoteSubscribers || []) {
-          const body = await timelineResponse(playerStatus, subscriber, true) // TODO support includeMetadata
-          const state = playerStatus.mode == 'play' ? 'playing' : 'stopped'
+          const xmlBody = await timelineResponse(playerStatus, subscriber, false) // TODO support includeMetadata
+          const xmlString = builder.buildObject(xmlBody)
+          const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'text/xml')
+          headers.append('X-Plex-Token', token)
+
+          xmlBody.MediaContainer.Timeline.forEach(async (timeline) => {
+            logger.debug(`Sending timeline '${timeline.$.itemType}' to subscriber ${subscriber.deviceName} ..`)
+            const url = new URL(serverTimelineUrl)
+            url.searchParams.append('commandID', xmlBody.MediaContainer.$.commandID.toString()) // TODO why is it required to have query params instead of the xml body?!
+            url.searchParams.append('state', timeline.$.state) // TODO why is it required to have query params instead of the xml body?!
+            url.searchParams.append('key', timeline.$.key)
+            url.searchParams.append('type', timeline.$.type)
+            url.searchParams.append('ratingKey', timeline.$.ratingKey)
+            url.searchParams.append('playQueueID', timeline.$.playQueueID)
+            url.searchParams.append('duration', timeline.$.duration)
+            url.searchParams.append('playbackTime', timeline.$.time) // this vs time? why was this introduced by Plex Controller?
+            url.searchParams.append('time', timeline.$.time)
+            url.searchParams.append('playQueueItemID', timeline.$.playQueueItemID)
+            url.searchParams.append('containerKey', timeline.$.containerKey)
+            url.searchParams.append('guid', timeline.$.guid) // TODO why is it required to have query params instead of the xml body?!
+
+            await axios
+              .post(url.toString(), xmlString, {
+                headers: Object.fromEntries(headers.entries())
+              })
+              .catch(async (error) => {
+                logger.error(
+                  `Failed to update timeline '${timeline.$.itemType}' for subscriber ${subscriber.deviceName} / ${subscriber.clientIdentifier}, unsubscribe from squeezePlexHub: ${error.message}`
+                )
+                await storage.removeItem(`subscribers/${playerInfo.playerid}/${subscriber.clientIdentifier}`)
+                // abort if one timeline fails to send
+                return
+              })
+          })
+
           //logger.info(`Sending timeline to subscriber ${subscriber.deviceName} @ ${subscriber.address} ..`)
-          const url = new URL(subscriber.address)          
-          url.searchParams.append('state', 'playing') // TODO why is it required to have query params instead of the xml body?!
-          url.searchParams.append('key', '/library/metadata/40900')
-          url.searchParams.append('ratingKey', '40900')
-          url.searchParams.append('playQueueID', '7509')
-          url.searchParams.append('duration', '302013')
-          url.searchParams.append('playbackTime', '224245') // this vs time? why was this introduced by Plex Controller?
-          url.searchParams.append('time', '224245')
-          url.searchParams.append('playQueueItemID', '582408')
-          url.searchParams.append('containerKey', '/playQueues/7509')          
-          url.searchParams.append('guid', 'local://40900')
-          url.searchParams.append('url', '/library/metadata/40888/thumb/1672307105') // TODO what value is here actually required?   artwork URL?
+          //url.searchParams.append('url', musicTimeline.$.url) // TODO what value is here actually required?   artwork URL?
           //url.searchParams.append('source', 'local') // TODO there must be another parameter to map it to source= on the controller it seems
 
           //state=playing&duration=380906&time=89249&playQueueItemID=583873&key=/library/metadata/35460&ratingKey=35460&playQueueID=7570&playQueueVersion=1&contai
 
-          await axios
-            .post(url.toString(), body, {
-              headers: {
-                'X-Plex-Token': subscriber.plexToken,
-                'X-Plex-Client-Identifier': playerInfo.playerid,
-                'X-Plex-Target-Client-Identifier': subscriber.clientIdentifier,
-                'X-Plex-Device-Name': playerInfo.name,
-                'X-Plex-Platform': plexOptions.platform,
-                'X-Plex-Platform-Version': plexOptions.platformVersion,
-                'X-Plex-Product': plexOptions.product,
-                'X-Plex-Version': plexOptions.version,
-                'X-Plex-Device': plexOptions.device,
-                'X-Plex-Model': plexOptions.model,
-                'Content-Type': 'application/xml',
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Private-Network': 'true',
-                'Access-Control-Max-Age': '1209600',
-                'Access-Control-Expose-Headers': 'X-Plex-Client-Identifier',
-                'X-Plex-Protocol': plexOptions.protocol,
-                'X-Plex-Protocol-Version': plexOptions.protocolVersion
-              }
-            })
-            .catch((error) => {
-              logger.error(
-                `Failed to send timeline to subscriber ${subscriber.deviceName} / ${subscriber.clientIdentifier} @ ${subscriber.address}, unsubscribe: ${error.message}`
-              )
-              storage.removeItem(`subscribers/${playerInfo.playerid}/${subscriber.clientIdentifier}`)
-            })
+          //logger.info(`Sending headers: ${JSON.stringify(headers)}`)
+
+          //const body = builder.buildObject(xmlBody)
         }
       })
     })

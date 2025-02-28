@@ -111,12 +111,16 @@ const storage = useStorage('DISCOVERY')
 /**
  * Generates the resources XML based on a set of players.
  */
+
+
+// TODO refactor to use js objects instead of xml 
+// https://github.com/Leonidas-from-XIV/node-xml2js?tab=readme-ov-file#so-you-wanna-some-json
 export function timelineBody(
   playerStatus: PlayerStatus,
-  subscriber: RemoteSubscriber,
+  subscriber: RemoteSubscriber, // TODO REMOVE
   playQueue: PlexPlayQueue | null,
-  includeMetadata: boolean
-): string {
+  includeMetadata: boolean // TODO implement metadata
+) {
   //logger.info(`Generating timeline XML for player ${JSON.stringify(playerStatus)} ..`)
   //logger.info(`Generating timeline XML for playQueue ${JSON.stringify(playQueue)} ..`)
   function findCurrentTrack() {
@@ -141,7 +145,7 @@ export function timelineBody(
     }
   }
 
-  const timeLineQueue = {
+  const timeLineMusic = {
     $: {
       type: 'music',
       itemType: 'music',
@@ -154,24 +158,24 @@ export function timelineBody(
       audioStreamID: findCurrentTrack()?.streamId,
       guid: findCurrentTrack()?.guid,
       ratingKey: findCurrentTrack()?.ratingKey,
-      time: playerStatus.time * 1000, // the current time of the track playing in ms
-      duration: (playerStatus.duration || 1) * 1000, // the total duration of the track in ms
-      seekRange: `0-${(playerStatus.duration || 1) * 1000}`,
+      time: Math.round(playerStatus.time * 1000), // the current time of the track playing in ms
+      duration: Math.round((playerStatus.duration || 1) * 1000), // the total duration of the track in ms
+      seekRange: `0-${Math.round((playerStatus.duration || 1) * 1000)}`,
       repeat: '0',
       mute: '0',
       volume: '50', // TODO
       shuffle: playQueue?.playQueueShuffled ? '1' : '0',
       //machineIdentifier: 'SqueezePlexHub', // this MUST match the clientIdentifier used to register SqueezePlexHub with Plex Server??
       machineIdentifier: playerStatus.playerId,
-      port: subscriber.plexServer.port,
-      address: subscriber.plexServer.host,
-      protocol: subscriber.plexServer.protocol,
-      token: subscriber.plexServer.token,
+      //port: subscriber.plexServer?.port,
+      //address: subscriber.plexServer?.host,
+      //protocol: subscriber.plexServer?.protocol,
+      //token: subscriber.plexServer?.token,
       controllable: 'volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext'
       //controllable: 'playPause,stop,skipPrevious,skipNext'
       //controllable: 'subtitleStream,videoStream,audioStream,shuffle,repeat,stop,playPause,stepBack,seekTo,stepForward,skipNext'
     },
-    Track: includeMetadata ? metadata(findCurrentTrack()) : undefined
+    //Track: includeMetadata ? metadata(findCurrentTrack()) : undefined
   }
 
   function createEmptyTimeline(type: string) {
@@ -184,6 +188,14 @@ export function timelineBody(
         shuffle: '0',        
         repeat: '0',        
         volume: '50', // TODO
+        key: '',
+        containerKey: '',
+        guid: '',        
+        ratingKey: '',
+        time: '0',
+        duration: '0',
+        playQueueItemID: '',
+        audioStreamID: '',
       }
     }
   }
@@ -197,15 +209,19 @@ export function timelineBody(
         //location: 'navigation',
         //machineIdentifier: playerStatus.playerId
       },
-      Timeline: [playQueue ? timeLineQueue : createEmptyTimeline('music'), createEmptyTimeline('video'), createEmptyTimeline('photo')]
+      Timeline: [
+        playQueue ? timeLineMusic : createEmptyTimeline('music'),
+        createEmptyTimeline('video'),
+        createEmptyTimeline('photo')
+      ]
     }
   }
 
-  /* const mediaContainer = {
+  const mediaContainerEmpty = {
     MediaContainer: {
       $: {
-        commandID,
-        machineIdentifier: playerStatus.playerid,
+        commandID: subscriber.commandId,
+        machineIdentifier: playerStatus.playerId,
         location: 'fullScreenMusic',
         size: '3'
       },
@@ -233,12 +249,13 @@ export function timelineBody(
             seekRange: '0-0',
             controllable: 'playPause,stop,skipPrevious,skipNext'
           }
-        }
+        }          
       ]
     }
-  } */
-  const builder = new Builder({ headless: true })
-  return builder.buildObject(mediaContainer)
+  }
+  //const builder = new Builder({ headless: true })  
+  //return builder.buildObject(mediaContainer)
+  return mediaContainer
 }
 
 export async function timelineResponse(playerStatus: PlayerStatus, subscriber: RemoteSubscriber, includeMetadata: boolean) {
@@ -248,5 +265,10 @@ export async function timelineResponse(playerStatus: PlayerStatus, subscriber: R
 
 export function subscriberUrl(protocol: string, address: string): string {
   const subscriberTimelinePath = '/:/timeline'
+  return `${protocol}://${address}${subscriberTimelinePath}`
+}
+
+export function playerResourcesUrl(protocol: string, address: string): string {
+  const subscriberTimelinePath = '/resources'
   return `${protocol}://${address}${subscriberTimelinePath}`
 }

@@ -1,7 +1,6 @@
 import dgram from 'dgram'
 import useLogger from '../composables/useLogger'
 import { useScheduler } from '#scheduler'
-import { plexOptions } from '~/server/lib/squeezePlexHub'
 
 const broadcastAddress = '239.0.0.250'
 const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
