@@ -85,7 +85,7 @@ export default eventHandler(async (event) => {
   logger.debug(`Polling player ${targetClientIdentifier} status ..: ${JSON.stringify(event.node.req.headers)}`)
   try {
     const serverKeys = await storage.getKeys('players/')
-    if (!serverKeys || serverKeys.length === 0) {
+    if (!serverKeys || serverKeys.length === 0) {1
       throw new Error('No LMS found in storage, skipping')
     }
 
@@ -145,8 +145,8 @@ export default eventHandler(async (event) => {
     const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'text/xml')
     //logger.info(`Polling player ${targetClientIdentifier} status: ${playerPollStatus}`)
     return event.respondWith(new Response(xmlString, { status: 200, headers }))
-  } catch (error) {
-    logger.warn(`Error when polling for player '${targetClientIdentifier}'`, error)
+  } catch (error: any) {
+    logger.info(`Could not poll player '${targetClientIdentifier}', try again later. Reason: ${error.message}`)
     return event.respondWith(
       new Response(`Player '${targetClientIdentifier}' not available for polling yet, try again later`, { status: 404 })
     )

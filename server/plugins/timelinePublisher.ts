@@ -49,7 +49,7 @@ function publishTimeline() {
       allPlayers.forEach(async ([serverId, playerInfo]) => {
         const subscriberKeys = await storage.getKeys(`subscribers/${playerInfo.playerid}`)
         if (!subscriberKeys || subscriberKeys.length === 0) {
-          logger.info(`No subscribers found for player ${playerInfo.playerid}, skipping`)
+          logger.debug(`No subscribers found for player ${playerInfo.playerid}, skipping`)
           return
         }
         const remoteSubscribers: RemoteSubscriber[] = []
@@ -69,7 +69,7 @@ function publishTimeline() {
         }
 
         // resolve player status and send timeline to all subscribers
-        logger.info(`Publishing timeline to ${remoteSubscribers.length} subscribers for player ${playerInfo.playerid} ..`)
+        logger.debug(`Publishing timeline to ${remoteSubscribers.length} subscribers for player ${playerInfo.playerid} ..`)
         const serverInfo = await storage.getItem<ServerInfo>(`servers/${serverId}`)
         if (!serverInfo || !serverInfo.ip) {
           throw new Error(`SqueezeServerStub not found in storage for player '${playerInfo.playerid}'`)

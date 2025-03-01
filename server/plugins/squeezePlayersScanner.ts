@@ -35,7 +35,7 @@ function squeezePlayersScanner() {
             const squeeze = new SqueezeServer(client)
             
             const playerInfos = await squeeze.getPlayerInfosAsync()
-            logger.info(`Found ${playerInfos.length} players on ${server.name} (${server.ip})`)
+            logger.debug(`Found ${playerInfos.length} players on ${server.name} (${server.ip})`)
             await storage.setItem(`players/${server.uuid}`, playerInfos)
 
             // TODO remove later
