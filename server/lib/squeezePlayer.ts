@@ -28,7 +28,7 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
     return this.stub.requestAsync([this.id, ['playlist', 'clear']])
   }
 
-  async selectTrackInPlaylist(index: number) {
+  async selectTrackInPlaylist(index: string) {
     return this.stub.requestAsync([this.id, ['playlist', 'index', index]])
   }
 

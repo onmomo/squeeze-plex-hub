@@ -2,22 +2,26 @@ import useLogger from '~/server/composables/useLogger'
 import { getRequestHeader, getQuery } from 'h3'
 import { SqueezeServerStub } from 'lms-squeeze-rpc'
 import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
-import type { PlexPlayQueue, PlexTrack } from '../playback/playMedia.get'
 import type { ServerInfo } from 'lms-discovery'
 import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
-import { extractMetadataKeyFromServerPath, getPlexApi, getPlexApiTrack, metadata, responseHeaders } from '~/server/lib/plexApi'
-import axios from 'axios'
+import { getPlexApi, getPlexApiTrack, metadata, responseHeaders } from '~/server/lib/plexApi'
+import axios, { AxiosError } from 'axios'
+import xml2js from 'xml2js'
+import type { PlayQueue } from '~/server/lib/plexPlayerTimeline'
 
 // catchAll route triggered: GET /player/playback/createPlayQueue?source=db8490d1d364f23ae031ccf6f1e4cdd3baeb228e&shuffle=0&uri=server%3A%2F%2Fdb8490d1d364f23ae031ccf6f1e4cdd3baeb228e%2Fcom.plexapp.plugins.library%2Flibrary%2Fmetadata%2F43809%2Fchildren&playlistID=undefined&token=transient-b652d039-e27d-4832-99c1-1ed133dc7512&includeExternalMedia=1&type=audio&protocol=https&address=10-0-1-5.d099fb26cfd04a089bfcd4b708291019.plex.direct&port=32400&machineIdentifier=db8490d1d364f23ae031ccf6f1e4cdd3baeb228e&commandID=14
 const logger = useLogger('playback.createPlayQueue')
 const storage = useStorage('DISCOVERY')
 
+/**
+ * This will create a play queue on plex server and play it on the target player.
+ */
 export default eventHandler(async (event) => {
   const query = getQuery(event)
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
-  //const plexToken = getRequestHeader(event, 'X-Plex-Token')  
+  //const plexToken = getRequestHeader(event, 'X-Plex-Token')
 
   const queryParameters = {
     source: query.source as string,
@@ -47,8 +51,10 @@ export default eventHandler(async (event) => {
     )
   }
 
-  logger.debug(`Creating play queue for player ${targetClientIdentifier} ..: ${JSON.stringify(event.node.req.headers)}`)
   try {
+    logger.info(`Creating play queue for player ${targetClientIdentifier} ..: ${JSON.stringify(event.node.req.headers)}`)
+    //logger.info(`Query: ${JSON.stringify(queryParameters)}`)
+
     const serverKeys = await storage.getKeys('players/')
     if (!serverKeys || serverKeys.length === 0) {
       throw new Error('No LMS found in storage, skipping')
@@ -91,61 +97,62 @@ export default eventHandler(async (event) => {
       protocol: queryParameters.protocol,
       token: queryParameters.token
     }
-    // TODO uri is there if full album is played, whereas key is there if a specific track is played from the album, WHY?!
-    const key = queryParameters.uri ? extractMetadataKeyFromServerPath(queryParameters.uri) : queryParameters.key
-    const url = getPlexApi(plexServer, key)
-    // retrieve playQueue information from plex
-    const response = await axios.get(url, {
-      headers: {
-        'X-Plex-Token': queryParameters.token,
-        Accept: 'application/json'
-      }
+
+    const playQueueUrl = getPlexApi(plexServer, '/playQueues')
+    const createPlayQueueUrl = `${playQueueUrl}?type=${queryParameters.type}&shuffle=${queryParameters.shuffle}&repeat=0&uri=${queryParameters.uri}`
+    logger.info(`Creating play queue on Plex server with URL: ${createPlayQueueUrl}`)
+    const createPlayQueueResponse = await axios
+      .post<string>(createPlayQueueUrl, '', {
+        headers: {
+          'X-Plex-Token': queryParameters.token,
+          'X-Plex-Client-Identifier': targetClientIdentifier, // TODO clientIdentifier or targetClientIdentifier? Who owns the play queue ultimatively?
+          Accept: 'application/xml'
+        }
+      })
+      .then((response) => {
+        if (!response.data) {
+          throw new Error('No playQueue responded from Plex server')
+        }
+        return response.data
+      })
+      .catch((error: AxiosError) => {
+        throw new Error(`Failed to create play queue on Plex server: ${error.message}`)
+      })
+
+    const parser = new xml2js.Parser()
+    const playQueue: PlayQueue = await parser.parseStringPromise(createPlayQueueResponse).catch((error) => {
+      throw new Error(`Failed to parse play queue response from Plex server: ${error.message}`)
     })
 
-    const playQueueSelectedItemOffset = response.data.MediaContainer.playQueueSelectedItemOffset || 0
-    const playQueue: PlexPlayQueue = {
-      tracks: response.data.MediaContainer.Metadata.map(
-        (item: any, index: number) =>
-          ({
-            title: item.title,
-            album: item.parentTitle,
-            artist: item.grandparentTitle,
-            file: item.Media[0].Part[0].key,
-            streamId: item.Media[0].Part[0].id,
-            guid: item.guid,
-            playQueueItemID: item.playQueueItemID,
-            duration: item.duration,
-            index: index,
-            key: item.key,
-            ratingKey: item.ratingKey
-          }) as PlexTrack
-      ),
-      playQueueSelectedItemOffset: playQueueSelectedItemOffset,
-      id: response.data.MediaContainer.playQueueID,
-      containerKey: `/playQueues/${response.data.MediaContainer.playQueueID}`,
-      playQueueVersion: response.data.MediaContainer.playQueueVersion,
-      playQueueShuffled: response.data.MediaContainer.playQueueShuffled || false,
-      count: response.data.MediaContainer.playQueueTotalCount,
-      server: {
-        host: queryParameters.address,
-        port: queryParameters.port,
-        protocol: queryParameters.protocol,
-        token: queryParameters.token
-      }
-    }
+    //logger.info(`Retrieved playQueue information from Plex for player '${JSON.stringify(createPlayQueueResponse.data)}'`)
+    //const playQueueSelectedItemOffset = createPlayQueueResponse.data.MediaContainer.playQueueSelectedItemOffset || 0
+    //logger.info(`Retrieved playQueue information from Plex for player '${JSON.stringify(createPlayQueueResponse.data)}'`)
+    //const playQueue: PlexPlayQueue = parsePlayQueueResult(createPlayQueueResponse.data)
+    if (!playQueue) {
+      throw new Error('No playQueue responded from Plex server')
+    }    
+
+    //logger.info(`Retrieved playQueue information from Plex for player '${playQueue.$.playQueueID}'`)
+
+    //logger.info(`Retrieved playQueue information from Plex for player '${playQueue.}'`)
+
+    //logger.info(`Retrieved playQueue information from Plex for player '${JSON.stringify(playQueue)}'`)
+
+    await storage.setItem(`playerQueue/${playerInfo.playerid}`, playQueue)
+    await storage.setItem(`playQueue/${playQueue.MediaContainer.$.playQueueID}`, playQueue)
+    logger.info(`Created play queue on Plex server with ID: ${playQueue.MediaContainer.$.playQueueID}`)
 
     await player.clearPlaylist()
-    for (const track of playQueue.tracks) {
-      logger.info(`Adding track '${track.title}' to player '${playerInfo.name}' playlist ..`)
-      const trackUrl = getPlexApiTrack(plexServer, track, queryParameters.token)
-      await player.addToPlaylist(trackUrl, metadata(track))
+    for (const meta of playQueue.MediaContainer.Track) {
+      logger.info(`Adding track '${meta.$.title}' to player '${playerInfo.name}' playlist ..`)
+      const trackUrl = getPlexApiTrack(plexServer, meta)
+      await player.addToPlaylist(trackUrl, metadata(meta))
     }
-
+    await player.selectTrackInPlaylist(playQueue.MediaContainer.$.playQueueSelectedItemOffset)
+    await player.play()
     logger.info(
-      `Playing playlist index '${playQueue.playQueueSelectedItemOffset}' on player ${serverInfo.ip} and port ${serverInfo.jsonPort}`
+      `Playing playlist index '${playQueue.MediaContainer.$.playQueueSelectedItemOffset}' on player ${serverInfo.ip} and port ${serverInfo.jsonPort}`
     )
-    await player.selectTrackInPlaylist(playQueue.playQueueSelectedItemOffset)
-    await storage.setItem(`playerQueue/${playerInfo.playerid}`, playQueue)
     // const playMediaResponse = {
     //   Response: {
     //     $: {

@@ -12,10 +12,17 @@ export default eventHandler(async (event) => {
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
   
   
+  const queryParameters = {
+    type: query.type as string,
+    commandId: query.commandID as string | undefined,
+    wait: query.wait as string | undefined,
+    includeMetadata: query.includeMetadata === '1'
+  }
+
   const plexPort = query.port as string | undefined
   const plexProtocol = query.protocol as string | undefined
 
-  let commandId = query.commandID !== undefined ? parseInt(query.commandID as string) : undefined
+  //let commandId = query.commandID !== undefined ? parseInt(query.commandID as string) : undefined
 
   if (
     !targetClientIdentifier ||
@@ -23,7 +30,7 @@ export default eventHandler(async (event) => {
     !deviceName ||    
     !plexProtocol ||
     !plexPort ||
-    commandId === undefined ||
+    !queryParameters.commandId ||
     !deviceName    
   ) {
     logger.warn(`Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers and 'commandID' query parameter), got:`, event.node.req.headers)
@@ -38,7 +45,7 @@ export default eventHandler(async (event) => {
   const subscriber: RemoteSubscriber = {
     clientIdentifier,
     deviceName,    
-    commandId,
+    commandId: queryParameters.commandId,
     poll: false,
     targetClientIdentifier,
     subscribedAt: new Date()   

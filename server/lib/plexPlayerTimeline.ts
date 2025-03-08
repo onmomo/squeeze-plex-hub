@@ -1,11 +1,199 @@
-import { Builder } from 'xml2js'
 import type { PlayerStatus } from '~/server/lib/squeezePlayer'
-import type { PlexPlayQueue, PlexTrack } from '../routes/player/playback/playMedia.get'
 import useLogger from '../composables/useLogger'
 import type { RemoteSubscriber } from '../routes/player/timeline/poll.get'
+import type { PlexServer } from './plexApi'
 
 const logger = useLogger('plexPlayerTimeline')
 const storage = useStorage('DISCOVERY')
+
+// interface for playlist
+
+export interface PlayQueue {
+  MediaContainer: MediaContainer
+}
+
+export interface MediaContainer {
+  $: {
+    size: string
+    identifier: string
+    mediaTagPrefix: string
+    mediaTagVersion: string
+    playQueueID: string
+    playQueueLastAddedItemID: string
+    playQueueSelectedItemID: string
+    playQueueSelectedItemOffset: string
+    playQueueSelectedMetadataItemID: string
+    playQueueShuffled: string
+    playQueueSourceURI: string
+    playQueueTotalCount: string
+    playQueueVersion: string
+  }
+  Track: Track[]
+}
+
+export interface Track {
+  $: {
+    playQueueItemID: string
+    ratingKey: string
+    key: string
+    parentRatingKey: string
+    grandparentRatingKey: string
+    guid: string
+    parentGuid: string
+    grandparentGuid: string
+    parentStudio: string
+    type: string
+    title: string
+    grandparentKey: string
+    parentKey: string
+    librarySectionTitle: string
+    librarySectionID: string
+    librarySectionKey: string
+    grandparentTitle: string
+    parentTitle: string
+    summary: string
+    index: string
+    parentIndex: string
+    ratingCount: string
+    viewCount: string
+    lastViewedAt: string
+    parentYear: string
+    thumb: string
+    art: string
+    parentThumb: string
+    grandparentThumb: string
+    grandparentArt: string
+    duration: string
+    addedAt: string
+    updatedAt: string
+    musicAnalysisVersion: string
+  }
+  Media: Media[]
+  Image: Image[]
+  Guid: Guid[]
+  Genre?: Genre[]
+  Mood?: Mood[]
+}
+
+export interface Media {
+  $: {
+    id: string
+    duration: string
+    bitrate: string
+    audioChannels: string
+    audioCodec: string
+    container: string
+    hasVoiceActivity: string
+  }
+  Part: Part[]
+}
+
+export interface Part {
+  $: {
+    id: string
+    key: string
+    duration: string
+    file: string
+    size: string
+    container: string
+    hasThumbnail: string
+  }
+  Stream: Stream[]
+}
+
+export interface Stream {
+  $: {
+    id: string
+    streamType: string
+    selected: string
+    codec: string
+    index: string
+    channels: string
+    bitrate: string
+    albumGain?: string
+    albumPeak?: string
+    albumRange?: string
+    audioChannelLayout?: string
+    bitDepth?: string
+    displayTitle: string
+    extendedDisplayTitle: string
+    gain?: string
+    loudness?: string
+    lra?: string
+    peak?: string
+    samplingRate: string
+    startRamp?: string
+    endRamp?: string
+    format?: string
+    key?: string
+    provider?: string
+  }
+}
+
+export interface Image {
+  $: {
+    alt: string
+    type: string
+    url: string
+  }
+}
+
+export interface Guid {
+  $: {
+    id: string
+  }
+}
+
+export interface Genre {
+  $: {
+    id: string
+    filter: string
+    tag: string
+  }
+}
+
+export interface Mood {
+  $: {
+    id: string
+    filter: string
+    tag: string
+  }
+}
+
+// interfaces for timeline xml
+export interface TimelineContainer {
+  MediaContainer: {
+    $: {
+      commandID: string
+    }
+    Timeline: Timeline[]
+  }
+}
+
+export interface Timeline {
+  $: {
+    state: string
+    type: string
+    itemType: string
+    duration?: string
+    time?: string,
+    playQueueItemID?: string
+    key?: string
+    ratingKey?: string
+    playQueueID?: string
+    playQueueVersion?: string
+    containerKey?: string
+    volume?: string
+    shuffle?: string
+    repeat?: string
+    controllable?: string
+    machineIdentifier?: string
+    protocol?: string
+    address?: string
+    port?: string
+  }
+  Track?: Track
+}
 
 /**
  * <MediaContainer commandID="0" location="navigation">
@@ -65,44 +253,44 @@ const storage = useStorage('DISCOVERY')
 
 <!-- GET /player/timeline/poll?wait=0&includeMetadata=1&commandID=346&type=music HTTP/1.1 -->
 <MediaContainer commandID="346">
-<Timeline state="playing" duration="302013" time="224245" playQueueItemID="582408" key="/library/metadata/40900"
-          ratingKey="40900" playQueueID="7509" playQueueVersion="5" containerKey="/playQueues/7509" type="music"
-          itemType="music" volume="100" shuffle="0" repeat="0"
-          controllable="volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext"
-          machineIdentifier="db8490d1d364f23ae031ccf6f1e4cdd3baeb228e" protocol="https"
-          address="10-0-1-5.d099fb26cfd04a089bfcd4b708291019.plex.direct" port="32400">
-    <Track playQueueItemID="582408" ratingKey="40900" key="/library/metadata/40900" parentRatingKey="40888"
-           grandparentRatingKey="40887" guid="local://40900" parentGuid="local://40888"
-           grandparentGuid="plex://artist/5d07bf25403c64029071b92d" type="track" title="Save You with My Love"
-           grandparentKey="/library/metadata/40887" parentKey="/library/metadata/40888" librarySectionTitle="Music"
-           librarySectionID="1" librarySectionKey="/library/sections/1" grandparentTitle="TheCityIsOurs"
-           parentTitle="COMA" summary="" index="12" parentIndex="1" viewCount="20" skipCount="1"
-           lastViewedAt="1739294768" parentYear="2021" thumb="/library/metadata/40888/thumb/1672307105"
-           parentThumb="/library/metadata/40888/thumb/1672307105"
-           grandparentThumb="/library/metadata/40887/thumb/1710899270" duration="302013" addedAt="1672307103"
-           musicAnalysisVersion="1" source="db8490d1d364f23ae031ccf6f1e4cdd3baeb228e">
-        <Media id="40244" duration="302013" bitrate="981" audioChannels="2" audioCodec="flac" container="flac"
-               hasVoiceActivity="0">
-            <Part id="40608" key="/library/parts/40608/1634904934/file.flac" duration="302013"
-                  file="/volume1/music/lossless/off-site/other/TheCityIsOurs - Coma (2021) FLAC/12 - Save You with My Love.flac"
-                  size="37060561" container="flac" hasThumbnail="1">
-                <Stream id="91959" streamType="2" selected="1" codec="flac" index="0" channels="2" bitrate="981"
-                        albumGain="-11.26" albumPeak="0.996246" albumRange="6.899354" audioChannelLayout="stereo"
-                        bitDepth="16"
-                        endRamp="-51.00 0.11;-39.62 1.71;-29.30 3.01;-23.93 4.11;-20.90 5.11;-17.98 6.01;-14.97 6.81;-11.96 8.31;-8.87 9.81;-5.81 11.81;-2.87 14.01;0.21 16.41;3.12 19.71;6.05 23.71;"
-                        gain="-11.26" loudness="-7.13" lra="8.77" peak="0.996216" samplingRate="44100"
-                        startRamp="-51.00 0.00;-39.48 2.00;-29.66 2.60;-23.98 3.10;-19.91 3.40;-17.27 3.70;-13.95 4.00;-10.53 4.30;-7.77 4.50;-3.51 4.70;-1.94 4.90;0.42 5.20;3.86 21.60;7.95 22.80;"
-                        displayTitle="FLAC (Stereo)" extendedDisplayTitle="FLAC (Stereo)"/>
-                <Stream id="91971" key="/library/streams/91971" streamType="4" codec="txt" format="txt"
-                        provider="com.plexapp.agents.lyricfind" displayTitle="TXT"
-                        extendedDisplayTitle="TXT (External)"/>
-            </Part>
-        </Media>
-    </Track>
-</Timeline>
-<Timeline type="video" state="stopped"/>
-<Timeline type="photo" state="stopped"/>
-    </MediaContainer>
+  <Timeline state="playing" duration="302013" time="224245" playQueueItemID="582408" key="/library/metadata/40900"
+            ratingKey="40900" playQueueID="7509" playQueueVersion="5" containerKey="/playQueues/7509" type="music"
+            itemType="music" volume="100" shuffle="0" repeat="0"
+            controllable="volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext"
+            machineIdentifier="db8490d1d364f23ae031ccf6f1e4cdd3baeb228e" protocol="https"
+            address="10-0-1-5.d099fb26cfd04a089bfcd4b708291019.plex.direct" port="32400">
+      <Track playQueueItemID="582408" ratingKey="40900" key="/library/metadata/40900" parentRatingKey="40888"
+            grandparentRatingKey="40887" guid="local://40900" parentGuid="local://40888"
+            grandparentGuid="plex://artist/5d07bf25403c64029071b92d" type="track" title="Save You with My Love"
+            grandparentKey="/library/metadata/40887" parentKey="/library/metadata/40888" librarySectionTitle="Music"
+            librarySectionID="1" librarySectionKey="/library/sections/1" grandparentTitle="TheCityIsOurs"
+            parentTitle="COMA" summary="" index="12" parentIndex="1" viewCount="20" skipCount="1"
+            lastViewedAt="1739294768" parentYear="2021" thumb="/library/metadata/40888/thumb/1672307105"
+            parentThumb="/library/metadata/40888/thumb/1672307105"
+            grandparentThumb="/library/metadata/40887/thumb/1710899270" duration="302013" addedAt="1672307103"
+            musicAnalysisVersion="1" source="db8490d1d364f23ae031ccf6f1e4cdd3baeb228e">
+          <Media id="40244" duration="302013" bitrate="981" audioChannels="2" audioCodec="flac" container="flac"
+                hasVoiceActivity="0">
+              <Part id="40608" key="/library/parts/40608/1634904934/file.flac" duration="302013"
+                    file="/volume1/music/lossless/off-site/other/TheCityIsOurs - Coma (2021) FLAC/12 - Save You with My Love.flac"
+                    size="37060561" container="flac" hasThumbnail="1">
+                  <Stream id="91959" streamType="2" selected="1" codec="flac" index="0" channels="2" bitrate="981"
+                          albumGain="-11.26" albumPeak="0.996246" albumRange="6.899354" audioChannelLayout="stereo"
+                          bitDepth="16"
+                          endRamp="-51.00 0.11;-39.62 1.71;-29.30 3.01;-23.93 4.11;-20.90 5.11;-17.98 6.01;-14.97 6.81;-11.96 8.31;-8.87 9.81;-5.81 11.81;-2.87 14.01;0.21 16.41;3.12 19.71;6.05 23.71;"
+                          gain="-11.26" loudness="-7.13" lra="8.77" peak="0.996216" samplingRate="44100"
+                          startRamp="-51.00 0.00;-39.48 2.00;-29.66 2.60;-23.98 3.10;-19.91 3.40;-17.27 3.70;-13.95 4.00;-10.53 4.30;-7.77 4.50;-3.51 4.70;-1.94 4.90;0.42 5.20;3.86 21.60;7.95 22.80;"
+                          displayTitle="FLAC (Stereo)" extendedDisplayTitle="FLAC (Stereo)"/>
+                  <Stream id="91971" key="/library/streams/91971" streamType="4" codec="txt" format="txt"
+                          provider="com.plexapp.agents.lyricfind" displayTitle="TXT"
+                          extendedDisplayTitle="TXT (External)"/>
+              </Part>
+          </Media>
+      </Track>
+  </Timeline>
+  <Timeline type="video" state="stopped"/>
+  <Timeline type="photo" state="stopped"/>
+</MediaContainer>
 
 
 
@@ -112,163 +300,246 @@ const storage = useStorage('DISCOVERY')
  * Generates the resources XML based on a set of players.
  */
 
+// const staticTest = (
+//   playerStatus: PlayerStatus,
+//   subscriber: RemoteSubscriber, // TODO REMOVE
+//   plexServer?: PlexServer,
+//   includeMetadata?: boolean, // TODO implement metadata
+//   playQueue?: PlexPlayQueue
+// ) => {
+//   return `
+// <MediaContainer commandID="${subscriber.commandId}">
+// <Timeline state="${playerStatus.mode == 'play' ? 'playing' : 'stopped'}" duration="${Math.round((playerStatus.duration || 1) * 1000)}" time="${Math.round(playerStatus.time * 1000)}" playQueueItemID="582408" key="/library/metadata/40900"
+//           ratingKey="40900" playQueueID="7509" playQueueVersion="5" containerKey="/playQueues/7509" type="music"
+//           itemType="music" volume="100" shuffle="0" repeat="0"
+//           controllable="volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext"
+//           machineIdentifier="${playerStatus.playerId}" protocol="${plexServer?.protocol}"
+//           address="${plexServer?.host}" port="${plexServer?.port}">
+//     <Track playQueueItemID="582408" ratingKey="40900" key="/library/metadata/40900" parentRatingKey="40888"
+//            grandparentRatingKey="40887" guid="local://40900" parentGuid="local://40888"
+//            grandparentGuid="plex://artist/5d07bf25403c64029071b92d" type="track" title="Save You with My Love"
+//            grandparentKey="/library/metadata/40887" parentKey="/library/metadata/40888" librarySectionTitle="Music"
+//            librarySectionID="1" librarySectionKey="/library/sections/1" grandparentTitle="TheCityIsOurs"
+//            parentTitle="COMA" summary="" index="12" parentIndex="1" viewCount="20" skipCount="1"
+//            lastViewedAt="1739294768" parentYear="2021" thumb="/library/metadata/40888/thumb/1672307105"
+//            parentThumb="/library/metadata/40888/thumb/1672307105"
+//            grandparentThumb="/library/metadata/40887/thumb/1710899270" duration="302013" addedAt="1672307103"
+//            musicAnalysisVersion="1" source="db8490d1d364f23ae031ccf6f1e4cdd3baeb228e">
+//         <Media id="40244" duration="302013" bitrate="981" audioChannels="2" audioCodec="flac" container="flac"
+//                hasVoiceActivity="0">
+//             <Part id="40608" key="/library/parts/40608/1634904934/file.flac" duration="302013"
+//                   file="/volume1/music/lossless/off-site/other/TheCityIsOurs - Coma (2021) FLAC/12 - Save You with My Love.flac"
+//                   size="37060561" container="flac" hasThumbnail="1">
+//                 <Stream id="91959" streamType="2" selected="1" codec="flac" index="0" channels="2" bitrate="981"
+//                         albumGain="-11.26" albumPeak="0.996246" albumRange="6.899354" audioChannelLayout="stereo"
+//                         bitDepth="16"
+//                         endRamp="-51.00 0.11;-39.62 1.71;-29.30 3.01;-23.93 4.11;-20.90 5.11;-17.98 6.01;-14.97 6.81;-11.96 8.31;-8.87 9.81;-5.81 11.81;-2.87 14.01;0.21 16.41;3.12 19.71;6.05 23.71;"
+//                         gain="-11.26" loudness="-7.13" lra="8.77" peak="0.996216" samplingRate="44100"
+//                         startRamp="-51.00 0.00;-39.48 2.00;-29.66 2.60;-23.98 3.10;-19.91 3.40;-17.27 3.70;-13.95 4.00;-10.53 4.30;-7.77 4.50;-3.51 4.70;-1.94 4.90;0.42 5.20;3.86 21.60;7.95 22.80;"
+//                         displayTitle="FLAC (Stereo)" extendedDisplayTitle="FLAC (Stereo)"/>
+//                 <Stream id="91971" key="/library/streams/91971" streamType="4" codec="txt" format="txt"
+//                         provider="com.plexapp.agents.lyricfind" displayTitle="TXT"
+//                         extendedDisplayTitle="TXT (External)"/>
+//             </Part>
+//         </Media>
+//     </Track>
+// </Timeline>
+// <Timeline type="video" state="stopped"/>
+// <Timeline type="photo" state="stopped"/>
+// </MediaContainer>
+// `
+// }
 
-// TODO refactor to use js objects instead of xml 
-// https://github.com/Leonidas-from-XIV/node-xml2js?tab=readme-ov-file#so-you-wanna-some-json
-export function timelineBody(
+const timelineContainer = (
   playerStatus: PlayerStatus,
-  subscriber: RemoteSubscriber, // TODO REMOVE
-  playQueue: PlexPlayQueue | null,
-  includeMetadata: boolean // TODO implement metadata
-) {
-  //logger.info(`Generating timeline XML for player ${JSON.stringify(playerStatus)} ..`)
-  //logger.info(`Generating timeline XML for playQueue ${JSON.stringify(playQueue)} ..`)
-  function findCurrentTrack() {
-    return playQueue?.tracks[playerStatus.playlist_cur_index] ? playQueue.tracks[playerStatus.playlist_cur_index] : undefined
-  }
-
-  // TODO fetch from plex api /metadata/$key
-  const metadata = (track?: PlexTrack) => {
-    if (!track) return undefined
-    return {
-      $: {
-        type: 'music',
-        itemType: 'music',
-        title: track.title,
-        parentTitle: track.album,
-        grandparentTitle: track.artist,
-        key: track.key,
-        ratingKey: track.ratingKey,
-        guid: track.guid,
-        playQueueItemID: track.playQueueItemID
-      }
-    }
-  }
-
-  const timeLineMusic = {
-    $: {
-      type: 'music',
-      itemType: 'music',
-      state: playerStatus.mode == 'play' ? 'playing' : 'stopped', // TODO map pause,stop and play, buffering and error
-      playQueueID: playQueue?.id,
-      playQueueVersion: playQueue?.playQueueVersion,
-      containerKey: playQueue?.containerKey,
-      key: findCurrentTrack()?.key,
-      playQueueItemID: findCurrentTrack()?.playQueueItemID,
-      audioStreamID: findCurrentTrack()?.streamId,
-      guid: findCurrentTrack()?.guid,
-      ratingKey: findCurrentTrack()?.ratingKey,
-      time: Math.round(playerStatus.time * 1000), // the current time of the track playing in ms
-      duration: Math.round((playerStatus.duration || 1) * 1000), // the total duration of the track in ms
-      seekRange: `0-${Math.round((playerStatus.duration || 1) * 1000)}`,
-      repeat: '0',
-      mute: '0',
-      volume: '50', // TODO
-      shuffle: playQueue?.playQueueShuffled ? '1' : '0',
-      //machineIdentifier: 'SqueezePlexHub', // this MUST match the clientIdentifier used to register SqueezePlexHub with Plex Server??
-      machineIdentifier: playerStatus.playerId,
-      //port: subscriber.plexServer?.port,
-      //address: subscriber.plexServer?.host,
-      //protocol: subscriber.plexServer?.protocol,
-      //token: subscriber.plexServer?.token,
-      controllable: 'volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext'
-      //controllable: 'playPause,stop,skipPrevious,skipNext'
-      //controllable: 'subtitleStream,videoStream,audioStream,shuffle,repeat,stop,playPause,stepBack,seekTo,stepForward,skipNext'
-    },
-    //Track: includeMetadata ? metadata(findCurrentTrack()) : undefined
-  }
-
-  function createEmptyTimeline(type: string) {
-    return {
-      $: {
-        type,
-        itemType: type,
-        state: 'stopped',                
-        mute: '0',
-        shuffle: '0',        
-        repeat: '0',        
-        volume: '50', // TODO
-        key: '',
-        containerKey: '',
-        guid: '',        
-        ratingKey: '',
-        time: '0',
-        duration: '0',
-        playQueueItemID: '',
-        audioStreamID: '',
-      }
-    }
-  }
-
-  // TODO check how we can match the playerStatus to the playQueue
-  const mediaContainer = {
+  subscriber: RemoteSubscriber,
+  plexServer?: PlexServer,
+  includeMetadata?: boolean,
+  playQueue?: PlayQueue
+) => {
+  return {
     MediaContainer: {
-      $: {        
-        commandID: subscriber.commandId,
-        location: 'fullScreenMusic',
-        //location: 'navigation',
-        //machineIdentifier: playerStatus.playerId
+      $: {
+        commandID: subscriber.commandId
       },
       Timeline: [
-        playQueue ? timeLineMusic : createEmptyTimeline('music'),
+        {
+          $: {
+            state: playerStatus.mode == 'play' ? 'playing' : 'stopped',  // TODO map pause,stop and play, buffering and error
+            duration: Math.round((playerStatus.duration || 1) * 1000).toString(), // the total duration of the track in ms
+            time: Math.round(playerStatus.time * 1000).toString(), // the current time of the track playing in ms
+            playQueueItemID: findCurrentTrack()?.$.playQueueItemID,
+            key: findCurrentTrack()?.$.key,
+            ratingKey: findCurrentTrack()?.$.ratingKey,
+            playQueueID: playQueue?.MediaContainer.$.playQueueID,
+            playQueueVersion: playQueue?.MediaContainer.$.playQueueVersion,
+            containerKey: playlistKey(),
+            type: 'music',
+            itemType: 'music',
+            volume: '100', // TODO get from LMS
+            shuffle: playQueue?.MediaContainer.$.playQueueShuffled ? '1' : '0',
+            repeat: '0',
+            controllable: 'volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext',
+            machineIdentifier: playerStatus.playerId,
+            protocol: plexServer?.protocol,
+            address: plexServer?.host,
+            port: plexServer?.port
+          },
+          Track: includeMetadata ? findCurrentTrack() : undefined
+        },
         createEmptyTimeline('video'),
         createEmptyTimeline('photo')
       ]
     }
   }
 
-  const mediaContainerEmpty = {
-    MediaContainer: {
+  function playlistKey() {
+    return playQueue ? `/playQueues/${playQueue.MediaContainer.$.playQueueID}` : undefined
+  }
+
+  function findCurrentTrack() {
+    return playQueue?.MediaContainer.Track?.[playerStatus.playlist_cur_index] ?? undefined    
+  }
+
+  function createEmptyTimeline(type: string): Timeline {
+    return {
       $: {
-        commandID: subscriber.commandId,
-        machineIdentifier: playerStatus.playerId,
-        location: 'fullScreenMusic',
-        size: '3'
-      },
-      Timeline: [
-        {
-          $: {
-            type: 'music',
-            time: '0',
-            seekRange: '0-0',
-            controllable: 'playPause,stop,skipPrevious,skipNext'
-          }
-        },
-        {
-          $: {
-            type: 'video',
-            time: '0',
-            seekRange: '0-0',
-            controllable: 'playPause,stop,skipPrevious,skipNext'
-          }
-        },
-        {
-          $: {
-            type: 'photo',
-            time: '0',
-            seekRange: '0-0',
-            controllable: 'playPause,stop,skipPrevious,skipNext'
-          }
-        }          
-      ]
+        type,
+        itemType: type,
+        state: 'stopped'
+      }
     }
   }
-  //const builder = new Builder({ headless: true })  
-  //return builder.buildObject(mediaContainer)
-  return mediaContainer
 }
 
-export async function timelineResponse(playerStatus: PlayerStatus, subscriber: RemoteSubscriber, includeMetadata: boolean) {
-  const playQueue = await storage.getItem<PlexPlayQueue>(`playerQueue/${playerStatus.playerId}`)
-  return timelineBody(playerStatus, subscriber, playQueue, includeMetadata)
-}
+// TODO refactor to use js objects instead of xml
+// https://github.com/Leonidas-from-XIV/node-xml2js?tab=readme-ov-file#so-you-wanna-some-json
+// export function timelineBody(
+//   playerStatus: PlayerStatus,
+//   subscriber: RemoteSubscriber, // TODO REMOVE
+//   plexServer?: PlexServer,
+//   includeMetadata?: boolean, // TODO implement metadata
+//   playQueue?: PlexPlayQueue
+// ) {
+//   //logger.info(`Generating timeline XML for player ${JSON.stringify(playerStatus)} ..`)
+//   //logger.info(`Generating timeline XML for playQueue ${JSON.stringify(playQueue)} ..`)
+//   function findCurrentTrack() {
+//     return playQueue?.MediaContainer.Metadata[playerStatus.playlist_cur_index]
+//   }
 
-export function subscriberUrl(protocol: string, address: string): string {
-  const subscriberTimelinePath = '/:/timeline'
-  return `${protocol}://${address}${subscriberTimelinePath}`
-}
+//   // TODO fetch from plex api /metadata/$key
+//   // TODO transform playQueue JSON to XML
+//   const metadata = (track?: PlexTrack) => {
+//     if (!track) return undefined
+//     return {
+//       $: {
+//         type: 'music',
+//         itemType: 'music',
+//         title: track.title,
+//         parentTitle: track.album,
+//         grandparentTitle: track.artist,
+//         key: track.key,
+//         ratingKey: track.ratingKey,
+//         guid: track.guid,
+//         playQueueItemID: track.playQueueItemID
+//       }
+//     }
+//   }
 
-export function playerResourcesUrl(protocol: string, address: string): string {
-  const subscriberTimelinePath = '/resources'
-  return `${protocol}://${address}${subscriberTimelinePath}`
+//   const timeLineMusic = {
+//     $: {
+//       type: 'music',
+//       itemType: 'music',
+//       state: playerStatus.mode == 'play' ? 'playing' : 'stopped', // TODO map pause,stop and play, buffering and error
+//       playQueueID: playQueue?.MediaContainer.playQueueID,
+//       playQueueVersion: playQueue?.MediaContainer.playQueueVersion,
+//       containerKey: `/playQueues/${playQueue?.MediaContainer.playQueueID}`,
+//       key: findCurrentTrack()?.key,
+//       playQueueItemID: findCurrentTrack()?.playQueueItemID,
+//       //audioStreamID: findCurrentTrack()?.Media[0].Part[0].Stream[0].id,
+//       //guid: findCurrentTrack()?.guid,
+//       ratingKey: findCurrentTrack()?.ratingKey,
+//       time: Math.round(playerStatus.time * 1000), // the current time of the track playing in ms
+//       duration: Math.round((playerStatus.duration || 1) * 1000), // the total duration of the track in ms
+//       seekRange: `0-${Math.round((playerStatus.duration || 1) * 1000)}`,
+//       repeat: '0',
+//       mute: '0',
+//       volume: '50', // TODO
+//       shuffle: playQueue?.MediaContainer.playQueueShuffled ? '1' : '0',
+//       //machineIdentifier: 'SqueezePlexHub', // this MUST match the clientIdentifier used to register SqueezePlexHub with Plex Server??
+//       machineIdentifier: playerStatus.playerId,
+//       port: plexServer?.port,
+//       address: plexServer?.host,
+//       protocol: plexServer?.protocol,
+//       //token: subscriber.plexServer?.token,
+//       controllable: 'volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext'
+//       //controllable: 'playPause,stop,skipPrevious,skipNext'
+//       //controllable: 'subtitleStream,videoStream,audioStream,shuffle,repeat,stop,playPause,stepBack,seekTo,stepForward,skipNext'
+//     }
+//     //Track: includeMetadata ? metadata(findCurrentTrack()) : undefined
+//   }
+
+//   // TODO check how we can match the playerStatus to the playQueue
+//   const mediaContainer = {
+//     MediaContainer: {
+//       $: {
+//         commandID: subscriber.commandId
+//         //location: 'fullScreenMusic',
+//         //location: 'navigation',
+//         //machineIdentifier: playerStatus.playerId
+//       },
+//       Timeline: [playQueue ? timeLineMusic : createEmptyTimeline('music'), createEmptyTimeline('video'), createEmptyTimeline('photo')]
+//     }
+//   }
+
+//   const mediaContainerEmpty = {
+//     MediaContainer: {
+//       $: {
+//         commandID: subscriber.commandId,
+//         machineIdentifier: playerStatus.playerId,
+//         location: 'fullScreenMusic',
+//         size: '3'
+//       },
+//       Timeline: [
+//         {
+//           $: {
+//             type: 'music',
+//             time: '0',
+//             seekRange: '0-0',
+//             controllable: 'playPause,stop,skipPrevious,skipNext'
+//           }
+//         },
+//         {
+//           $: {
+//             type: 'video',
+//             time: '0',
+//             seekRange: '0-0',
+//             controllable: 'playPause,stop,skipPrevious,skipNext'
+//           }
+//         },
+//         {
+//           $: {
+//             type: 'photo',
+//             time: '0',
+//             seekRange: '0-0',
+//             controllable: 'playPause,stop,skipPrevious,skipNext'
+//           }
+//         }
+//       ]
+//     }
+//   }
+//   //const builder = new Builder({ headless: true })
+//   //return builder.buildObject(mediaContainer)
+//   return mediaContainer
+// }
+
+export async function timelineResponse(
+  playerStatus: PlayerStatus,
+  subscriber: RemoteSubscriber,
+  plexServer?: PlexServer,
+  includeMetadata?: boolean
+): Promise<TimelineContainer> {
+  const playQueue = await storage.getItem<PlayQueue>(`playerQueue/${playerStatus.playerId}`)
+  return timelineContainer(playerStatus, subscriber, plexServer, includeMetadata, playQueue ?? undefined)  
+  //return staticTest(playerStatus, subscriber, plexServer)
 }
