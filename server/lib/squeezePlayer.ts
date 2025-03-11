@@ -40,6 +40,14 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
     return this.stub.requestAsync([this.id, ['stop']])
   }
 
+  async skipNext() {    
+    return this.stub.requestAsync([this.id, ['playlist', 'index', '+1']])
+  }
+
+  async skipPrevious() {    
+    return this.stub.requestAsync([this.id, ['playlist', 'index', '-1']])
+  }
+
   async status() {
     const response: any = await this.stub.requestAsync([this.id, ['status', '-', 1, 'tags:uo']])
     if (response) {

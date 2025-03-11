@@ -104,8 +104,8 @@ function publishTimeline() {
           for (const subscriber of remoteSubscribers || []) {
             const timelineRoot = await timelineResponse(playerStatus, subscriber, plexServer, true) // TODO support includeMetadata
             const xmlString = builder.buildObject(timelineRoot)
-            //const xmlBody = await new Parser().parseStringPromise(xmlString)
-            const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'text/xml')
+            
+            const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'application/xml')
             headers.append('X-Plex-Token', token)
 
             timelineRoot.MediaContainer.Timeline.forEach(async (timeline) => {
@@ -118,6 +118,7 @@ function publishTimeline() {
                 !timeline.$.type ||
                 !timeline.$.ratingKey ||
                 !timeline.$.playQueueID ||
+                !timeline.$.playQueueVersion ||
                 !timeline.$.duration ||                
                 !timeline.$.playQueueItemID ||
                 !timeline.$.containerKey
@@ -127,7 +128,7 @@ function publishTimeline() {
                 )
                 return
               }
-              logger.info(
+              logger.debug(
                 `sending update: ${timeline.$.state} / ${timeline.$.time} / ${timeline.$.key} / ${timeline.$.type} / ${timeline.$.ratingKey} / ${timeline.$.playQueueID} / ${timeline.$.duration} / ${timeline.$.playQueueItemID} / ${timeline.$.containerKey}`
               )
               const url = new URL(serverTimelineUrl)
@@ -136,13 +137,16 @@ function publishTimeline() {
               url.searchParams.append('key', timeline.$.key)
               url.searchParams.append('type', timeline.$.type)
               url.searchParams.append('ratingKey', timeline.$.ratingKey)
-              url.searchParams.append('playQueueID', timeline.$.playQueueID)
+              url.searchParams.append('playQueueID', timeline.$.playQueueID)            
+              url.searchParams.append('playQueueVersion', timeline.$.playQueueVersion)
               url.searchParams.append('duration', timeline.$.duration.toString())
               url.searchParams.append('playbackTime', timeline.$.time.toString()) // this vs time? why was this introduced by Plex Controller?
               url.searchParams.append('time', timeline.$.time.toString())
               url.searchParams.append('playQueueItemID', timeline.$.playQueueItemID)
-              url.searchParams.append('containerKey', timeline.$.containerKey)
-              //url.searchParams.append('guid', timeline.$.guid) // TODO why is it required to have query params instead of the xml body?!
+              url.searchParams.append('containerKey', timeline.$.containerKey)              
+              url.searchParams.append('hasMDE', '1')
+              url.searchParams.append('includeFields', 'thumbBlurHash')          
+              //url.searchParams.append('guid,url,source', timeline.$.guid) // TODO why is it required to have query params instead of the xml body?!
 
               await axios
                 .post(url.toString(), xmlString, {

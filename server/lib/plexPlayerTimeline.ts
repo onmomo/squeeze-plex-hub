@@ -376,7 +376,7 @@ const timelineContainer = (
             containerKey: playlistKey(),
             type: 'music',
             itemType: 'music',
-            volume: '100', // TODO get from LMS
+            volume: '50', // TODO get from LMS
             shuffle: playQueue?.MediaContainer.$.playQueueShuffled ? '1' : '0',
             repeat: '0',
             controllable: 'volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext',
@@ -540,6 +540,6 @@ export async function timelineResponse(
   includeMetadata?: boolean
 ): Promise<TimelineContainer> {
   const playQueue = await storage.getItem<PlayQueue>(`playerQueue/${playerStatus.playerId}`)
-  return timelineContainer(playerStatus, subscriber, plexServer, includeMetadata, playQueue ?? undefined)  
+  return timelineContainer(playerStatus, subscriber, plexServer, true, playQueue ?? undefined)  
   //return staticTest(playerStatus, subscriber, plexServer)
 }

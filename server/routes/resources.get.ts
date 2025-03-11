@@ -11,7 +11,8 @@ export default eventHandler(async (event) => {
    * Generates the resources XML based on a set of players.
    */
   function resourcesXml(players: IPlayerInfo[]): string {
-    const mediaContainer = { // TODO fix that each player has a different is exposed via different port otherwise plex will only show one player
+    const mediaContainer = {
+      // TODO fix that each player has a different is exposed via different port otherwise plex will only show one player
       MediaContainer: {
         $: {
           size: players.length
@@ -28,7 +29,7 @@ export default eventHandler(async (event) => {
             protocolVersion: plexOptions.protocolVersion,
             model: plexOptions.model,
             device: plexOptions.device,
-            protocolCapabilities: 'timeline,playback,playqueues,playqueues-creation',
+            protocolCapabilities: plexOptions.protocolCapabilities,
             //protocolCapabilities: 'timeline,playback',
             port: plexOptions.port,
             deviceClass: plexOptions.deviceClass
@@ -41,21 +42,26 @@ export default eventHandler(async (event) => {
     return builder.buildObject(mediaContainer)
   }
 
-  const xmlResponse = await storage.getKeys('players/').then(async (serverKey) => {
-    if (!serverKey) {
-      logger.debug('No LMS found in storage, skipping')
-      return resourcesXml([])
-    }
+  try {
+    const xmlResponse = await storage.getKeys('players/').then(async (serverKey) => {
+      if (!serverKey) {
+        logger.debug('No LMS found in storage, skipping')
+        return resourcesXml([])
+      }
 
-    const allPlayers: IPlayerInfo[] = []
-    for (const key of serverKey) {
-      const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
-      allPlayers.push(...(playerInfos || []))
-    }
+      const allPlayers: IPlayerInfo[] = []
+      for (const key of serverKey) {
+        const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
+        allPlayers.push(...(playerInfos || []))
+      }
 
-    logger.info(`Responding with ${allPlayers.length} players to /resources api caller ..`)
-    return resourcesXml(allPlayers)
-  })
+      logger.info(`Responding with ${allPlayers.length} players to /resources api caller ..`)
+      return resourcesXml(allPlayers)
+    })
 
-  event.respondWith(new Response(xmlResponse, { status: 200, headers: { 'Content-Type': 'application/xml' } }))
+    event.respondWith(new Response(xmlResponse, { status: 200, headers: { 'Content-Type': 'application/xml' } }))
+  } catch (error) {
+    logger.error('Error generating resources XML:', error)
+    return sendNoContent(event, 404)
+  }
 })

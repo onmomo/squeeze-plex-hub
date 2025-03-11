@@ -26,7 +26,7 @@ export default eventHandler(async (event) => {
   //const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
   //const plexToken = getRequestHeader(event, 'X-Plex-Token')  // would be available
 
-  logger.info(`queries: ${JSON.stringify(query)}`)
+  //logger.info(`queries: ${JSON.stringify(query)}`)
   const queryParameters = {
     window: query.window as string,
     deviceName: getRequestHeader(event, 'X-Plex-Device-Name') as string // sent via query param

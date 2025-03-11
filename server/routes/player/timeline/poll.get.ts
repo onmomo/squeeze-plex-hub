@@ -128,10 +128,10 @@ export default eventHandler(async (event) => {
     }
 
     if (queryParameters.wait === '1') {
-      // don't send timeline response immediately, wait for player to change state and send timeline response in timelinePublisher
-      await new Promise((resolve) => setTimeout(resolve, 5000))
+      // don't send timeline response immediately, wait for player to change state and send timeline response in timelinePublisher      
       await storage.setItem(`subscribers/${targetClientIdentifier}/${clientIdentifier}`, subscriber)
       logger.info(`Client ${clientIdentifier} subscribed to player ${targetClientIdentifier} for polling`)
+      await new Promise((resolve) => setTimeout(resolve, 5000)) // TODO try to pass the event to the subscriber and complete the response in timelinePublisher
     }
 
     const serverResponse = await storage.getItem<PlexServerResponse>(`plexServer`)
@@ -155,7 +155,7 @@ export default eventHandler(async (event) => {
     //const playQueue = await storage.getItem<PlexPlayQueue>(`playerQueue/${playerInfo.playerid}`)
     const timelineXml = await timelineResponse(playerStatus, subscriber, plexServer, queryParameters.includeMetadata)
     const xmlString = builder.buildObject(timelineXml)
-    const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'application/xml')
+    const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'text/xml')
     logger.debug(`Polling player ${targetClientIdentifier}, includeMeta: ${queryParameters.includeMetadata}, timeline: ${xmlString}`)
     return event.respondWith(new Response(xmlString, { status: 200, headers }))
   } catch (error: any) {
