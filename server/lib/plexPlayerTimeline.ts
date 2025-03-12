@@ -383,7 +383,8 @@ const timelineContainer = (
             containerKey: playlistKey(),
             type: 'music',
             itemType: 'music',
-            volume: '50', // TODO get from LMS
+            volume: volume(),
+            mute: mute(),
             shuffle: playerQueue?.playQueue?.MediaContainer.$.playQueueShuffled ? '1' : '0',
             repeat: '0',
             controllable: 'volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext',
@@ -422,6 +423,21 @@ const timelineContainer = (
       default:
         return 'stopped'
     }
+  }
+
+  
+  /**
+   * volume is a number between 0 and 100. If volume is negative, the player is muted
+   */
+  function volume() {
+    return playerStatus.volume < 0 ? '0' : playerStatus.volume.toString()
+  }
+
+  /**
+   * If volume is negative, the player is muted
+   */
+  function mute() {
+    return playerStatus.volume < 0 ? '1' : '0'
   }
 
   function createEmptyTimeline(type: string): Timeline {
