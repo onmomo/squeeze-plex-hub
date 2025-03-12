@@ -6,7 +6,6 @@ import type { ServerInfo } from 'lms-discovery'
 import { type PlayerPlayQueue, timelineResponse } from '../../../lib/plexPlayerTimeline'
 import { responseHeaders } from '~/server/lib/plexApi'
 import { Builder } from 'xml2js'
-import type { EventHandlerRequest, H3Event } from 'h3'
 
 const logger = useLogger('timeline.poll.get')
 const storage = useStorage('DISCOVERY')

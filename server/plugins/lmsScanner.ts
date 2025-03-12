@@ -1,6 +1,5 @@
 import useLogger from '../composables/useLogger'
 import discovery from 'lms-discovery'
-import { SqueezeServerStub } from 'lms-squeeze-rpc'
 
 const logger = useLogger('lmsScanner')
 
@@ -13,8 +12,7 @@ export default defineNitroPlugin(() => {
  */
 function squeezeScanner() {
   try {
-    const storage = useStorage('DISCOVERY')
-    // const scheduler = useScheduler();
+    const storage = useStorage('DISCOVERY')    
     discovery.start()
     logger.debug('Scanning for squeeze devices ..')
 

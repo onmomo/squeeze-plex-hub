@@ -1,8 +1,6 @@
 import { useScheduler } from '#scheduler'
 import useLogger from '../composables/useLogger'
-import { SqueezeServerStub, SqueezeServer, SqueezePlayer } from 'lms-squeeze-rpc'
-import ExtendedSqueezePlayer from '../lib/squeezePlayer'
-import type { IPlayerInfo, IPlayerStatus } from 'lms-squeeze-rpc/dist/modelTypes'
+import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc'
 import type { ServerInfo } from 'lms-discovery'
 
 
@@ -37,21 +35,6 @@ function squeezePlayersScanner() {
             const playerInfos = await squeeze.getPlayerInfosAsync()
             logger.debug(`Found ${playerInfos.length} players on ${server.name} (${server.ip})`)
             await storage.setItem(`players/${server.uuid}`, playerInfos)
-
-            // TODO remove later
-            // const storedPlayerInfos = (await storage.getItem<IPlayerInfo[]>(`players/${server.uuid}`)) || []
-            // for (const storedPlayerInfo of storedPlayerInfos) {
-            //   logger.info(`Stored Player: ${storedPlayerInfo.name} (${storedPlayerInfo.playerid})`)
-            //   var player = new ExtendedSqueezePlayer(client, storedPlayerInfo)
-            //   await player.clearPlaylist()
-            //   await player.addToPlaylist('http://stream.radioparadise.com/flacm', 'Radio Paradise - FLAC')
-            //   await player.getStatusAsync().then((status) => {
-            //     if (status) {
-            //       logger.info(`Player status: ${status.power} - ${status.volume}`)
-            //     }                
-            //   })
-            //   storedPlayerInfo
-            // }
           }
         }
       })

@@ -48,7 +48,7 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
   async skipPrevious() {    
     return this.stub.requestAsync([this.id, ['playlist', 'index', '-1']])
   }
-// mixer volume ?
+
   async status() {
     const response: any = await this.stub.requestAsync([this.id, ['status', '-', 1, 'tags:uo']])
     if (response) {      
