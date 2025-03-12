@@ -3,23 +3,30 @@ import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
 import { SqueezeServerStub } from 'lms-squeeze-rpc'
 import type { ServerInfo } from 'lms-discovery'
-import { getPlayQueue, metadata, responseHeaders, type PlexServer, getPlexApiTrack } from '../../../lib/plexApi'
-import type { PlayQueue } from '~/server/lib/plexPlayerTimeline'
+import { getPlayQueue, metadata, responseHeaders, getPlexApiTrack } from '../../../lib/plexApi'
+import type { PlayerPlayQueue, PlayQueue } from '~/server/lib/plexPlayerTimeline'
 
 const logger = useLogger('playback.playMedia.get')
 const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {
-  const query = getQuery(event)
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
-  const commandId = query.commandID as string | undefined
-  const plexAddress = query.address as string | undefined
-  const plexProtocol = query.protocol as string | undefined
-  const plexPort = query.port as string | undefined
-  const plexToken = query.token as string | undefined
-  const containerKey = query.containerKey as string | undefined
-  const key = query.key as string | undefined
-  if (!targetClientIdentifier || !commandId || !plexAddress || !plexProtocol || !plexPort || !plexToken || !containerKey || !key) {
+  const query = getQuery(event)
+  const queryParameters = {    
+    key: query.key as string,
+    containerKey: query.containerKey as string | undefined,
+    token: query.token as string,    
+    type: query.type as string,
+    protocol: query.protocol as string,
+    address: query.address as string,
+    port: query.port as string,
+    machineIdentifier: query.machineIdentifier as string,
+    commandID: query.commandID as string
+  }
+
+
+
+  if (!targetClientIdentifier || !queryParameters.commandID || !queryParameters.address || !queryParameters.protocol || !queryParameters.port || !queryParameters.token || !queryParameters.containerKey || !queryParameters.key) {
     logger.warn(
       `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers and 'commandID' query parameter), got:`,
       event.node.req.headers
@@ -32,7 +39,7 @@ export default eventHandler(async (event) => {
     )
   }
 
-logger.info(`queries: ${JSON.stringify(query)}`)
+  logger.debug(`PlayMedia Queries: ${JSON.stringify(query)}`)
 
   try {
     const serverKeys = await storage.getKeys('players/')
@@ -64,15 +71,22 @@ logger.info(`queries: ${JSON.stringify(query)}`)
       throw new Error(`SqueezeServerStub not found in storage for player '${playerInfo.playerid}'`)
     }
 
-    const plexServer: PlexServer = {
-      host: plexAddress,
-      port: plexPort,
-      protocol: plexProtocol,
-      token: plexToken
+    const plexServer = {
+      server: {
+        protocol: queryParameters.protocol,
+        localAddress: queryParameters.address,
+        port: Number(queryParameters.port),
+        resourceIdentifier: queryParameters.machineIdentifier
+      },
+      token: queryParameters.token
     }
     
-    const playQueue: PlayQueue = await getPlayQueue(plexServer, containerKey)
-
+    const playQueue: PlayQueue = await getPlayQueue(plexServer, queryParameters.containerKey)
+    const playerQueue: PlayerPlayQueue = {
+      playerId: playerInfo.playerid,
+      playQueue,
+      plexServer
+  }
     const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
     var player = new ExtendedSqueezePlayer(serverStub, playerInfo)
     await player.clearPlaylist()
@@ -83,8 +97,8 @@ logger.info(`queries: ${JSON.stringify(query)}`)
     }
 
     logger.info(`Playing playlist item '${playQueue.MediaContainer.$.playQueueSelectedItemOffset}' on player '${playerInfo.name}'`)
-    await player.selectTrackInPlaylist(playQueue.MediaContainer.$.playQueueSelectedItemOffset)
-    await storage.setItem(`playerQueue/${playerInfo.playerid}`, playQueue)
+    await player.selectTrackInPlaylist(playQueue.MediaContainer.$.playQueueSelectedItemOffset)    
+    await storage.setItem(`playerQueue/${playerInfo.playerid}`, playerQueue)
 
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
@@ -93,5 +107,3 @@ logger.info(`queries: ${JSON.stringify(query)}`)
     return event.respondWith(new Response(`Player '${targetClientIdentifier}' failed to play media, try again later`, { status: 503 }))
   }
 })
-
-// TODO {"url":"/player/playback/skipNext?commandID=2&type=music","statusCode":404,"statusMessage":"Page not found: /player/playback/skipNext?commandID=2&type=music","message":"Page not found: /player/playback/skipNext?commandID=2&type=music","stack":"","data":{"path":"/player/playback/skipNext?commandID=2&type=music"}}

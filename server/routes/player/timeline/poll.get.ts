@@ -3,23 +3,19 @@ import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import { SqueezeServerStub } from 'lms-squeeze-rpc'
 import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
 import type { ServerInfo } from 'lms-discovery'
-import { timelineResponse } from '../../../lib/plexPlayerTimeline'
-import { type PlexServer, responseHeaders } from '~/server/lib/plexApi'
+import { type PlayerPlayQueue, timelineResponse } from '../../../lib/plexPlayerTimeline'
+import { responseHeaders } from '~/server/lib/plexApi'
 import { Builder } from 'xml2js'
-import type { PlexServerResponse } from '~/server/plugins/gdmDiscovery'
+import type { EventHandlerRequest, H3Event } from 'h3'
 
 const logger = useLogger('timeline.poll.get')
 const storage = useStorage('DISCOVERY')
-const credentials = useStorage('CREDENTIALS')
-const config = useRuntimeConfig()
 
 export interface RemoteSubscriber {
   // the client that subscribes to the targetClientIdentifier player
   clientIdentifier: string
   // the device name of the client
   deviceName: string
-  // the url of the client
-  //address: string
   // the commandId of the timeline request
   commandId: string
   // whether the client subscribed via /timeline/poll or /timeline/subscribe
@@ -28,7 +24,6 @@ export interface RemoteSubscriber {
   targetClientIdentifier: string
   // the date when the client subscribed
   subscribedAt: Date
-  //plexServer?: PlexServer
 }
 
 export default eventHandler(async (event) => {
@@ -36,24 +31,6 @@ export default eventHandler(async (event) => {
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
-  //const plexToken = getRequestHeader(event, 'X-Plex-Token')
-  //const aMethod = getRequestHeader(event, 'access-control-request-headers')
-  //logger.info(`access-control-request-headers: ${aMethod}`)
-
-  // "x-forwarded-for":"127.0.0.1","x-forwarded-port":"60570"
-  //const clientHost = getRequestHost(event)
-  //const clientProtocol = getRequestProtocol(event)
-
-  // Log all values from event.node.req.socket that might contain the client IP and the port to respond to
-  // TODO seems like impossible to get the remote control (also /resources) port out of a plexamp player, plexamp also does not seems to support POST /-/timeline request, returns 404
-  //logger.info(`remoteAddress: ${remoteAddress}`)
-  //logger.info(`remotePort: ${remotePort}`)
-  //logger.info(`forwardedProto: ${forwardedProto}`)
-  //logger.info(`clientProtocol: ${clientProtocol}`)
-
-  // subscribe case ->
-  //const plexPort = query.port as string | undefined
-  //const plexToken = query.token as string | undefined
 
   const queryParameters = {
     type: query.type as string,
@@ -118,45 +95,43 @@ export default eventHandler(async (event) => {
       throw new Error(`Player ${targetClientIdentifier} status available yet`)
     }
 
+    /**
+     * Represents a plex client that subscribed to a squeeze player for polling.
+     */
     const subscriber: RemoteSubscriber = {
+      // the id of the plex client that subscribed
       clientIdentifier,
       deviceName,
       commandId: queryParameters.commandId,
       poll: true,
+      // the id of the squeeze player
       targetClientIdentifier,
       subscribedAt: new Date()
     }
 
+    const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
+    const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'text/xml')
     if (queryParameters.wait === '1') {
-      // don't send timeline response immediately, wait for player to change state and send timeline response in timelinePublisher      
+      // don't send timeline response immediately, wait for player to change state and send timeline response in timelinePublisher
       await storage.setItem(`subscribers/${targetClientIdentifier}/${clientIdentifier}`, subscriber)
       logger.info(`Client ${clientIdentifier} subscribed to player ${targetClientIdentifier} for polling`)
-      await new Promise((resolve) => setTimeout(resolve, 5000)) // TODO try to pass the event to the subscriber and complete the response in timelinePublisher
+      // TODO don't really understand the wait === 1 logic, this works as a workaround for now to prevent the client going wild with subscribing
+      await new Promise((resolve) => setTimeout(resolve, 5000))      
+      const status = await player.status()
+      if (status) {
+        const timelineXml = await timelineResponse(status, subscriber, playerQueue, queryParameters.includeMetadata)
+        const xmlString = builder.buildObject(timelineXml)
+        return event.respondWith(new Response(xmlString, { status: 200, headers }))
+      }
+      // will result in a 204 no content
+      return
     }
 
-    const serverResponse = await storage.getItem<PlexServerResponse>(`plexServer`)
-    if (!serverResponse) {
-      throw new Error(`No plex server found in storage and playQueue not available`)
-    }
-
-    const token = (await credentials.getItem<string>('plexToken')) || config.plexToken
-    if (!token) {
-      logger.warn('No plex token available, abort timeline subscriber update. Please ensure to authenticate Squeeze Plex Hub.')
-      throw new Error(`No Plex token found in storage`)
-    }
-
-    const plexServer: PlexServer = {
-      host: serverResponse.localAddress,
-      port: serverResponse.port.toString(),
-      protocol: 'http',
-      token: token
-    }
-
-    //const playQueue = await storage.getItem<PlexPlayQueue>(`playerQueue/${playerInfo.playerid}`)
-    const timelineXml = await timelineResponse(playerStatus, subscriber, plexServer, queryParameters.includeMetadata)
-    const xmlString = builder.buildObject(timelineXml)
-    const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'text/xml')
-    logger.debug(`Polling player ${targetClientIdentifier}, includeMeta: ${queryParameters.includeMetadata}, timeline: ${xmlString}`)
+    const timelineXml = await timelineResponse(playerStatus, subscriber, playerQueue, queryParameters.includeMetadata)
+    const xmlString = builder.buildObject(timelineXml)    
+    logger.debug(
+      `Polling player ${targetClientIdentifier}, includeMeta: ${queryParameters.includeMetadata}, timeline: ${xmlString}, queue ${playerQueue?.playerId}`
+    )
     return event.respondWith(new Response(xmlString, { status: 200, headers }))
   } catch (error: any) {
     logger.info(`Could not poll player '${targetClientIdentifier}', try again later. Reason: ${error.message}`)

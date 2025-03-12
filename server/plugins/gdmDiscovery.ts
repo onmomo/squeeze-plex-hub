@@ -1,17 +1,11 @@
 import dgram from 'dgram'
 import useLogger from '../composables/useLogger'
 import { useScheduler } from '#scheduler'
+import { unchangedTextChangeRange } from 'typescript'
 
 const broadcastAddress = '239.0.0.250'
 const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
 const discoveryPort = 32414
-
-interface PlexServer {
-  name: string
-  address: string
-  port: number
-  protocol: string
-}
 
 const logger = useLogger('gdmAnnouncer')
 const storage = useStorage('DISCOVERY')
@@ -21,14 +15,17 @@ export default defineNitroPlugin(() => {
 })
 
 export interface PlexServerResponse {
-  contentType: string
-  host: string
-  name: string
+  protocol: string
+  contentType?: string
+  host?: string
+  name?: string
   port: number
   resourceIdentifier: string
-  updatedAt: number
-  version: string
+  updatedAt?: number
+  version?: string
   localAddress: string
+  relayAddress?: string
+  relayProtocol?: string
 }
 
 /**
@@ -64,11 +61,11 @@ async function gdmDiscovery() {
             if (!plexServer || plexServer.contentType !== 'plex/media-server') {
               logger.warn('Unexpected GDM Discovery response:', responseData)
               return
-            }
+            }            
             logger.info(
-              `Found PLEX server '${plexServer.name}' at ${plexServer.localAddress}:${plexServer.port} (external: ${plexServer.host})`
+              `Found PLEX server '${plexServer.name}' at ${plexServer.localAddress}:${plexServer.port} (host: ${plexServer.host})`
             )
-            await storage.setItem('plexServer', plexServer)
+            await storage.setItem(`plexServer`, plexServer)
             discoverySocket.close()
             return
           }
@@ -89,6 +86,8 @@ function parseServerResponse(response: string, localAddress: string): PlexServer
   const lines = response.split('\n')
   const result: Partial<PlexServerResponse> = {}
   result.localAddress = localAddress
+  result.protocol = 'http' // we only get the local address here, so we assume http
+  
 
   for (const line of lines) {
     const cleanLine = line.trim().replace(/,$/, '') // Remove trailing comma
@@ -102,6 +101,8 @@ function parseServerResponse(response: string, localAddress: string): PlexServer
         break
       case 'Host':
         result.host = value
+        result.relayAddress = localAddress.replace(/\./g, '-') + '.' + value
+        result.relayProtocol = 'https'
         break
       case 'Name':
         result.name = value

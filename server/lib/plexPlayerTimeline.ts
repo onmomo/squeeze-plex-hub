@@ -7,6 +7,14 @@ const logger = useLogger('plexPlayerTimeline')
 const storage = useStorage('DISCOVERY')
 
 // interface for playlist
+export interface PlayerPlayQueue {
+  // The loaded playQueue of the player
+  playQueue: PlayQueue
+  // The plex server that hosts the playQueue
+  plexServer: PlexServer
+  // The player id of the player that loaded the playQueue
+  playerId: string
+}
 
 export interface PlayQueue {
   MediaContainer: MediaContainer
@@ -176,7 +184,7 @@ export interface Timeline {
     type: string
     itemType: string
     duration?: string
-    time?: string,
+    time?: string
     playQueueItemID?: string
     key?: string
     ratingKey?: string
@@ -353,9 +361,8 @@ export interface Timeline {
 const timelineContainer = (
   playerStatus: PlayerStatus,
   subscriber: RemoteSubscriber,
-  plexServer?: PlexServer,
-  includeMetadata?: boolean,
-  playQueue?: PlayQueue
+  playerQueue?: PlayerPlayQueue,
+  includeMetadata?: boolean
 ) => {
   return {
     MediaContainer: {
@@ -365,25 +372,25 @@ const timelineContainer = (
       Timeline: [
         {
           $: {
-            state: playerStatus.mode == 'play' ? 'playing' : 'stopped',  // TODO map pause,stop and play, buffering and error
+            state: state(),
             duration: Math.round((playerStatus.duration || 1) * 1000).toString(), // the total duration of the track in ms
             time: Math.round(playerStatus.time * 1000).toString(), // the current time of the track playing in ms
             playQueueItemID: findCurrentTrack()?.$.playQueueItemID,
             key: findCurrentTrack()?.$.key,
             ratingKey: findCurrentTrack()?.$.ratingKey,
-            playQueueID: playQueue?.MediaContainer.$.playQueueID,
-            playQueueVersion: playQueue?.MediaContainer.$.playQueueVersion,
+            playQueueID: playerQueue?.playQueue?.MediaContainer.$.playQueueID,
+            playQueueVersion: playerQueue?.playQueue?.MediaContainer.$.playQueueVersion,
             containerKey: playlistKey(),
             type: 'music',
             itemType: 'music',
             volume: '50', // TODO get from LMS
-            shuffle: playQueue?.MediaContainer.$.playQueueShuffled ? '1' : '0',
+            shuffle: playerQueue?.playQueue?.MediaContainer.$.playQueueShuffled ? '1' : '0',
             repeat: '0',
             controllable: 'volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext',
-            machineIdentifier: playerStatus.playerId,
-            protocol: plexServer?.protocol,
-            address: plexServer?.host,
-            port: plexServer?.port
+            machineIdentifier: playerQueue?.plexServer?.server.resourceIdentifier, // THIS IS ESSENTIAL TO GET THE TIMELINE TO WORK, needs to reflect the serverId of the server that hosts the playQueue. All the server information must match with what was received in createPlayeQueue request
+            protocol: playerQueue?.plexServer?.server.protocol,
+            address: playerQueue?.plexServer?.server.localAddress,
+            port: playerQueue?.plexServer?.server.port.toString()
           },
           Track: includeMetadata ? findCurrentTrack() : undefined
         },
@@ -394,11 +401,27 @@ const timelineContainer = (
   }
 
   function playlistKey() {
-    return playQueue ? `/playQueues/${playQueue.MediaContainer.$.playQueueID}` : undefined
+    return playerQueue?.playQueue ? `/playQueues/${playerQueue.playQueue.MediaContainer.$.playQueueID}` : undefined
   }
 
   function findCurrentTrack() {
-    return playQueue?.MediaContainer.Track?.[playerStatus.playlist_cur_index] ?? undefined    
+    return playerQueue?.playQueue?.MediaContainer.Track?.[playerStatus.playlist_cur_index] ?? undefined
+  }
+
+  /**
+   * Plex accepts one of the following states: stopped, paused, playing, buffering, error.
+   * Whereas LMS has play, pause, stop, and mode undefined == off.
+   * @returns one of stopped, paused, playing
+   */
+  function state() {
+    switch (playerStatus.mode) {
+      case 'play':
+        return 'playing'
+      case 'pause':
+        return 'paused'
+      default:
+        return 'stopped'
+    }
   }
 
   function createEmptyTimeline(type: string): Timeline {
@@ -536,10 +559,11 @@ const timelineContainer = (
 export async function timelineResponse(
   playerStatus: PlayerStatus,
   subscriber: RemoteSubscriber,
-  plexServer?: PlexServer,
+  playerQueue?: PlayerPlayQueue,
   includeMetadata?: boolean
 ): Promise<TimelineContainer> {
-  const playQueue = await storage.getItem<PlayQueue>(`playerQueue/${playerStatus.playerId}`)
-  return timelineContainer(playerStatus, subscriber, plexServer, true, playQueue ?? undefined)  
-  //return staticTest(playerStatus, subscriber, plexServer)
+  logger.debug(
+    `Generating timeline line XML for playqueue ${playerQueue?.playQueue.MediaContainer.$.playQueueID}, server ${playerQueue?.plexServer.server.localAddress} and player ${playerQueue?.playerId} ..`
+  )
+  return timelineContainer(playerStatus, subscriber, playerQueue, includeMetadata)
 }
