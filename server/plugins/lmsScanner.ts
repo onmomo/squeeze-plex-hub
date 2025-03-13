@@ -2,6 +2,7 @@ import useLogger from '../composables/useLogger'
 import discovery from 'lms-discovery'
 
 const logger = useLogger('lmsScanner')
+const storage = useStorage('DISCOVERY')
 
 export default defineNitroPlugin(() => {
   squeezeScanner()
@@ -12,21 +13,24 @@ export default defineNitroPlugin(() => {
  */
 function squeezeScanner() {
   try {
-    const storage = useStorage('DISCOVERY')    
     discovery.start()
-    logger.debug('Scanning for squeeze devices ..')
-
+    logger.info('Scanning for LMS ..')
     discovery.on('discovered', async (server) => {
-      try {
-        if (server) {
-          logger.info('Server discovered:', server)          
-          await storage.setItem('servers/' + server.uuid, server)          
-        }
-      } catch (error) {
-        logger.error('Error processing discovered server:', error)
+      if (server) {
+        logger.info(`LMS '${server.name}' @ '${server.ip}:${server.jsonPort}' discovered`)
+        await storage.setItem('servers/' + server.uuid, server)
       }
     })
+    discovery.on('lost', async (server) => {
+      if (server) {
+        logger.info(`LMS ${server.name} @ ${server.ip}:${server.jsonPort} lost`)
+        await storage.remove('servers/' + server.uuid, server)
+      }
+    })
+    discovery.on('error', async (error) => {
+      logger.warn('Error while scanning for LMS:', error)
+    })
   } catch (error) {
-    logger.error('Error in squeezeScanner:', error)
+    logger.error('Error scanning for LMS, restart Squeeze Plex Hub to:', error)
   }
 }

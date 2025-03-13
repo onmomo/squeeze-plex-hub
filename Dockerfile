@@ -1,7 +1,7 @@
 ARG NODE_VERSION=lts
 
 # Create build stage
-FROM node:${NODE_VERSION} AS build
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION} AS build
 
 # Enable corepack and set Yarn as the package manager
 RUN corepack enable && corepack prepare yarn@stable --activate
@@ -24,7 +24,7 @@ RUN yarn install
 RUN yarn build
 
 # Create a new stage for the production image
-FROM node:${NODE_VERSION}-slim
+FROM --platform=$BUILDPLATFORM node:${NODE_VERSION}-slim
 
 # Set the working directory inside the container
 WORKDIR /app

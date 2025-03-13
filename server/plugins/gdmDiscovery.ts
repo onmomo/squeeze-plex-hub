@@ -1,7 +1,6 @@
 import dgram from 'dgram'
 import useLogger from '../composables/useLogger'
-import { useScheduler } from '#scheduler'
-import { unchangedTextChangeRange } from 'typescript'
+import { useScheduler } from "#scheduler"
 
 const broadcastAddress = '239.0.0.250'
 const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
@@ -33,7 +32,7 @@ export interface PlexServerResponse {
  * @returns List of Plex servers found on the network
  */
 async function gdmDiscovery() {
-  logger.debug('Starting GDM Discovery ...')
+  logger.info('Starting GDM Plex server discovery ...')
 
   const scheduler = useScheduler()
   scheduler

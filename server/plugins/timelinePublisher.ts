@@ -30,7 +30,7 @@ function publishTimeline() {
 
         const serverKeys = await storage.getKeys('players/')
         if (!serverKeys || serverKeys.length === 0) {
-          logger.info('No LMS found in storage, skipping')
+          logger.debug('No LMS found in storage, skipping')
           return
         }
 
