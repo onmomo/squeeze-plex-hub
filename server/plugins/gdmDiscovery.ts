@@ -4,6 +4,7 @@ import { useScheduler } from "#scheduler"
 
 const broadcastAddress = '239.0.0.250'
 const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
+// needs to broadcast on this port to receive a response from plex servers in the local network
 const discoveryPort = 32414
 
 const logger = useLogger('gdmAnnouncer')

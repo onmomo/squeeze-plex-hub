@@ -17,13 +17,13 @@ function squeezeScanner() {
     logger.info('Scanning for LMS ..')
     discovery.on('discovered', async (server) => {
       if (server) {
-        logger.info(`LMS '${server.name}' @ '${server.ip}:${server.jsonPort}' discovered`)
+        logger.info(`LMS '${server.name}'@'${server.ip}:${server.jsonPort}' discovered`)
         await storage.setItem('servers/' + server.uuid, server)
       }
     })
     discovery.on('lost', async (server) => {
       if (server) {
-        logger.info(`LMS ${server.name} @ ${server.ip}:${server.jsonPort} lost`)
+        logger.info(`LMS ${server.name}@${server.ip}:${server.jsonPort} lost`)
         await storage.remove('servers/' + server.uuid, server)
       }
     })

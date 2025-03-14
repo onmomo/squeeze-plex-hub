@@ -6,8 +6,11 @@ import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 
 const logger = useLogger('gdmAnnouncer')
 const storage = useStorage('DISCOVERY')
+// Needs to listen on this port for discovery requests from plex clients in the local network
+const gdmAnnouncerPort = 32412
 
 export default defineNitroPlugin(() => {
+  // Since other devices may also want to announce on this port, we should not block it? Or how should that work if multiple devices want to announce on the same port? Like having plex client and plexamp running on the same machine?
   gdmAnnouncer()
 })
 
@@ -23,7 +26,7 @@ function gdmAnnouncer() {
       try {
       server.addMembership('239.0.0.250')
       server.setMulticastTTL(5)
-      logger.info('GDM Announcer is listening on port 32412')
+      logger.info(`GDM Announcer is listening on port ${gdmAnnouncerPort} to announce LMS squeeze players ..`)
     } catch (error) {
       logger.warn('Error listening for gdm messages:', error)
     }
@@ -43,10 +46,10 @@ function gdmAnnouncer() {
             for (const key of serverKey) {
               const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
               if (playerInfos) {
-                logger.debug(`Announcing ${playerInfos.length} players from LMS ${key} to Plex device ${rinfo.address}:${rinfo.port} ..`)
+                logger.debug(`Announcing '${playerInfos.length}' players from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`)
                 for (const playerInfo of playerInfos) {
                   logger.info(
-                    `Announcing squeeze player ${playerInfo.playerid} from LMS ${key} to Plex device ${rinfo.address}:${rinfo.port} ..`
+                    `Announcing squeeze player '${playerInfo.name}' from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
                   )
                   const message = announceMessage(playerInfo)
                   server.send(message, 0, message.length, rinfo.port, rinfo.address)
@@ -60,9 +63,14 @@ function gdmAnnouncer() {
       }
     })
 
-    server.bind(32412) // Bind to a specific port
+    server.on('error', (err) => {
+      logger.error('Error on gdm announcer:', err)
+      server.close()
+    });
+
+    server.bind(gdmAnnouncerPort) 
   } catch (error) {
-    logger.warn('Error announcing squeeze players:', error)
+    logger.warn(`Error announcing squeeze players on port ${gdmAnnouncerPort}:`, error)        
   }
 }
 

@@ -66,7 +66,7 @@ export default eventHandler(async (event) => {
     const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
     var player = new ExtendedSqueezePlayer(serverStub, playerInfo)
 
-    await player.stop()
+    await player.pause()
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
   } catch (error) {

@@ -41,6 +41,10 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
     return this.stub.requestAsync([this.id, ['stop']])
   }
 
+  async pause() {
+    return this.stub.requestAsync([this.id, ['pause']])
+  }
+
   async skipNext() {    
     return this.stub.requestAsync([this.id, ['playlist', 'index', '+1']])
   }
