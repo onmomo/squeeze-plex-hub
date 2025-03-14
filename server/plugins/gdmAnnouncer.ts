@@ -20,16 +20,19 @@ export default defineNitroPlugin(() => {
 function gdmAnnouncer() {
   try {
     const decoder = new StringDecoder('utf8')
-    const server = dgram.createSocket('udp4')
+    // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
+    // Essential that we can run multiple Plex clients or server next to Squeeze Plex Hub on the same host
+    const server = dgram.createSocket({ type: 'udp4', reuseAddr: true }) 
 
     server.on('listening', () => {
       try {
-      server.addMembership('239.0.0.250')
-      server.setMulticastTTL(5)
-      logger.info(`GDM Announcer is listening on port ${gdmAnnouncerPort} to announce LMS squeeze players ..`)
-    } catch (error) {
-      logger.warn('Error listening for gdm messages:', error)
-    }
+        server.addMembership('239.255.255.250')
+        server.setMulticastTTL(5)
+        server.setTTL(64)
+        logger.info(`GDM Announcer is listening on port ${gdmAnnouncerPort} to announce LMS squeeze players ..`)
+      } catch (error) {
+        logger.warn('Error listening for gdm messages:', error)
+      }
     })
 
     server.on('message', async (msg, rinfo) => {
@@ -46,7 +49,9 @@ function gdmAnnouncer() {
             for (const key of serverKey) {
               const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
               if (playerInfos) {
-                logger.debug(`Announcing '${playerInfos.length}' players from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`)
+                logger.debug(
+                  `Announcing '${playerInfos.length}' players from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
+                )
                 for (const playerInfo of playerInfos) {
                   logger.info(
                     `Announcing squeeze player '${playerInfo.name}' from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
@@ -64,13 +69,13 @@ function gdmAnnouncer() {
     })
 
     server.on('error', (err) => {
-      logger.error('Error on gdm announcer:', err)
+      logger.error('Error on gdm announcer:', err)            
       server.close()
-    });
+    })
 
-    server.bind(gdmAnnouncerPort) 
+    server.bind(gdmAnnouncerPort)
   } catch (error) {
-    logger.warn(`Error announcing squeeze players on port ${gdmAnnouncerPort}:`, error)        
+    logger.warn(`Error announcing squeeze players on port ${gdmAnnouncerPort}:`, error)
   }
 }
 
@@ -90,9 +95,9 @@ function announceMessage(player: IPlayerInfo) {
   //appendParameter(sb, 'Device', plexOptions.device)
   //appendParameter(sb, 'Model', plexOptions.model)
   appendParameter(sb, 'Protocol', plexOptions.protocol)
-  appendParameter(sb, 'Protocol-Version', plexOptions.protocolVersion)  
+  appendParameter(sb, 'Protocol-Version', plexOptions.protocolVersion)
   appendParameter(sb, 'Protocol-Capabilities', plexOptions.protocolCapabilities)
-  //appendParameter(sb, 'Provides', 'player')  
+  //appendParameter(sb, 'Provides', 'player')
   appendParameter(sb, 'Resource-Identifier', player.playerid)
   sb.push('\r\n')
 

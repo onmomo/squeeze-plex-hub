@@ -2,7 +2,7 @@ import dgram from 'dgram'
 import useLogger from '../composables/useLogger'
 import { useScheduler } from "#scheduler"
 
-const broadcastAddress = '239.0.0.250'
+const broadcastAddress = '239.255.255.250'
 const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
 // needs to broadcast on this port to receive a response from plex servers in the local network
 const discoveryPort = 32414
@@ -39,7 +39,8 @@ async function gdmDiscovery() {
   scheduler
     .run(async () => {
       try {
-        const discoverySocket = dgram.createSocket('udp4')
+        // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port        
+        const discoverySocket = dgram.createSocket({ type: 'udp4', reuseAddr: true })
 
         discoverySocket.bind(() => {
           discoverySocket.setBroadcast(true)
@@ -76,7 +77,7 @@ async function gdmDiscovery() {
           discoverySocket.close()
         }, 150000)
       } catch (error) {
-        logger.error('Error during GDM Discovery:', error)
+        logger.error('Error during GDM Discovery:', error)        
       }
     })
     .everySeconds(30)
