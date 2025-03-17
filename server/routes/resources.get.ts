@@ -60,7 +60,7 @@ export default eventHandler(async (event) => {
       // Only return the player that matches the targetClientIdentifier
       const player = allPlayers.find((p) => p.playerid === targetClientIdentifier)
       if (!player) {
-        logger.warn(`Player '${targetClientIdentifier}' not available yet for /resources consumer`)
+        logger.debug(`Player '${targetClientIdentifier}' not available yet for /resources consumer`)
         return undefined
       }
 

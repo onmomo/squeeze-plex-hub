@@ -8,6 +8,7 @@ export default defineEventHandler(async (event) => {
   const logger = useLogger('session.get')
   const credentials = useStorage('CREDENTIALS')
   const discovery = useStorage('DISCOVERY')
+  const config = useRuntimeConfig()
 
   const plexServer = await discovery.getItem<PlexServerResponse>('plexServer')
   if (!plexServer) {
@@ -15,7 +16,7 @@ export default defineEventHandler(async (event) => {
     return { status: 'plex-not-found' }
   }
 
-  const token = await credentials.getItem('plexToken')
+  const token = await credentials.getItem<string>('plexToken') || config.plexToken
   if (!token) {
     logger.info('No token found in storage')
     return { status: 'unauthorized' }

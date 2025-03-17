@@ -10,5 +10,6 @@ export const plexOptions = {
     protocol: 'plex',
     protocolVersion: '1',
     protocolCapabilities: 'timeline,playback,playqueues,playqueues-creation',
+    controllable: 'volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause',
     port: '3000' // needs to be aligned with the port the server is bound to    
   }

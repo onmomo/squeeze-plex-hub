@@ -64,7 +64,7 @@ async function gdmDiscovery() {
               return
             }            
             logger.info(
-              `Found PLEX server '${plexServer.name}' at ${plexServer.localAddress}:${plexServer.port} (host: ${plexServer.host})`
+              `Discovered PLEX server '${plexServer.name}' at ${plexServer.localAddress}:${plexServer.port} (host: ${plexServer.host})`
             )
             await storage.setItem(`plexServer`, plexServer)
             discoverySocket.close()
@@ -72,10 +72,14 @@ async function gdmDiscovery() {
           }
         })
 
-        setTimeout(() => {
-          logger.info('GDM Discovery timeout. No response received within 15s, trying again later ..')
+        discoverySocket.on('error', (err) => {
+          logger.error('Error on GDM Discovery:', err)
           discoverySocket.close()
-        }, 150000)
+        })        
+        setTimeout(() => {
+          logger.info('GDM Discovery no response received within 30s, trying again later ..')
+          discoverySocket.close()
+        }, 300000)
       } catch (error) {
         logger.error('Error during GDM Discovery:', error)        
       }

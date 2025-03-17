@@ -2,6 +2,7 @@ import type { PlayerStatus } from '~/server/lib/squeezePlayer'
 import useLogger from '../composables/useLogger'
 import type { RemoteSubscriber } from '../routes/player/timeline/poll.get'
 import type { PlexServer } from './plexApi'
+import { plexOptions } from './squeezePlexHub'
 
 const logger = useLogger('plexPlayerTimeline')
 const storage = useStorage('DISCOVERY')
@@ -183,18 +184,19 @@ export interface Timeline {
     state: string
     type: string
     itemType: string
+    volume: string
+    controllable: string
+    time: string
     duration?: string
-    time?: string
+    shuffle?: string
+    repeat?: string
+    mute?: string
     playQueueItemID?: string
     key?: string
     ratingKey?: string
     playQueueID?: string
     playQueueVersion?: string
     containerKey?: string
-    volume?: string
-    shuffle?: string
-    repeat?: string
-    controllable?: string
     machineIdentifier?: string
     protocol?: string
     address?: string
@@ -364,6 +366,8 @@ const timelineContainer = (
   playerQueue?: PlayerPlayQueue,
   includeMetadata?: boolean
 ) => {
+  const currentTrack = findCurrentTrack()
+
   return {
     MediaContainer: {
       $: {
@@ -373,11 +377,11 @@ const timelineContainer = (
         {
           $: {
             state: state(),
-            duration: Math.round((playerStatus.duration || 1) * 1000).toString(), // the total duration of the track in ms
+            duration: Math.round((playerStatus.duration || 0) * 1000).toString(), // the total duration of the track in ms
             time: Math.round(playerStatus.time * 1000).toString(), // the current time of the track playing in ms
-            playQueueItemID: findCurrentTrack()?.$.playQueueItemID,
-            key: findCurrentTrack()?.$.key,
-            ratingKey: findCurrentTrack()?.$.ratingKey,
+            playQueueItemID: currentTrack?.$.playQueueItemID,
+            key: currentTrack?.$.key,
+            ratingKey: currentTrack?.$.ratingKey,
             playQueueID: playerQueue?.playQueue?.MediaContainer.$.playQueueID,
             playQueueVersion: playerQueue?.playQueue?.MediaContainer.$.playQueueVersion,
             containerKey: playlistKey(),
@@ -387,16 +391,16 @@ const timelineContainer = (
             mute: mute(),
             shuffle: playerQueue?.playQueue?.MediaContainer.$.playQueueShuffled ? '1' : '0',
             repeat: '0',
-            controllable: 'volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext',
+            controllable: plexOptions.controllable,
             machineIdentifier: playerQueue?.plexServer?.server.resourceIdentifier, // THIS IS ESSENTIAL TO GET THE TIMELINE TO WORK, needs to reflect the serverId of the server that hosts the playQueue. All the server information must match with what was received in createPlayeQueue request
             protocol: playerQueue?.plexServer?.server.protocol,
             address: playerQueue?.plexServer?.server.localAddress,
             port: playerQueue?.plexServer?.server.port.toString()
           },
-          ...(includeMetadata && findCurrentTrack() ? { Track: findCurrentTrack() } : {}) // THIS IS ESSENTIAL since Plexamp struggles with </Track> tag if no playQueue is loaded
+          ...(includeMetadata && currentTrack ? { Track: currentTrack } : {}) // THIS IS ESSENTIAL since Plexamp struggles with </Track> tag if no playQueue is loaded
         },
-        createEmptyTimeline('video'),
-        createEmptyTimeline('photo')
+        createEmptyTimeline('video', playerStatus),
+        createEmptyTimeline('photo', playerStatus)
       ]
     }
   }
@@ -425,7 +429,6 @@ const timelineContainer = (
     }
   }
 
-  
   /**
    * volume is a number between 0 and 100. If volume is negative, the player is muted
    */
@@ -440,12 +443,15 @@ const timelineContainer = (
     return playerStatus.volume < 0 ? '1' : '0'
   }
 
-  function createEmptyTimeline(type: string): Timeline {
+  function createEmptyTimeline(type: string, playerStatus: PlayerStatus): Timeline {
     return {
       $: {
         type,
         itemType: type,
-        state: 'stopped'
+        state: 'stopped',
+        time: Math.round(playerStatus.time * 1000).toString(), // the current time of the track playing in ms
+        volume: volume(),
+        controllable: plexOptions.controllable
       }
     }
   }
