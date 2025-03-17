@@ -100,6 +100,7 @@ export default eventHandler(async (event) => {
     const subscriber: RemoteSubscriber = {
       // the id of the plex client that subscribed
       clientIdentifier,
+      // the name of the squeeze player the subscriber subscribed tos
       deviceName,
       commandId: queryParameters.commandId,
       poll: true,
@@ -108,14 +109,14 @@ export default eventHandler(async (event) => {
       subscribedAt: new Date()
     }
 
-    const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
+    const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined    
     const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'text/xml')
     if (queryParameters.wait === '1') {
       // don't send timeline response immediately, wait for player to change state and send timeline response in timelinePublisher
-      await storage.setItem(`subscribers/${targetClientIdentifier}/${clientIdentifier}`, subscriber)
-      logger.info(`Client ${clientIdentifier} subscribed to player ${targetClientIdentifier} for polling`)
+      //await storage.setItem(`subscribers/${targetClientIdentifier}/${clientIdentifier}`, subscriber)
+      logger.info(`Client '${clientIdentifier}' subscribed to player '${playerInfo.name}' for polling`)
       // TODO don't really understand the wait === 1 logic, this works as a workaround for now to prevent the client going wild with subscribing
-      await new Promise((resolve) => setTimeout(resolve, 5000))      
+      await new Promise((resolve) => setTimeout(resolve, 2000))      
       const status = await player.status()
       if (status) {
         const timelineXml = await timelineResponse(status, subscriber, playerQueue, queryParameters.includeMetadata)
@@ -129,7 +130,7 @@ export default eventHandler(async (event) => {
     const timelineXml = await timelineResponse(playerStatus, subscriber, playerQueue, queryParameters.includeMetadata)
     const xmlString = builder.buildObject(timelineXml)    
     logger.debug(
-      `Polling player ${targetClientIdentifier}, includeMeta: ${queryParameters.includeMetadata}, timeline: ${xmlString}, queue ${playerQueue?.playerId}`
+      `Polling player ${playerInfo.name}, wait: ${queryParameters.wait}, includeMeta: ${queryParameters.includeMetadata}, timeline: ${xmlString}, queue ${playerQueue?.playerId}`
     )
     return event.respondWith(new Response(xmlString, { status: 200, headers }))
   } catch (error: any) {

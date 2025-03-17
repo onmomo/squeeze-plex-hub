@@ -72,6 +72,7 @@ async function gdmDiscovery() {
           }
         })
 
+        // TODO catch on('error') and close socket
         setTimeout(() => {
           logger.info('GDM Discovery timeout. No response received within 15s, trying again later ..')
           discoverySocket.close()

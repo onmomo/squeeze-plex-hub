@@ -52,11 +52,16 @@ function gdmAnnouncer() {
                 logger.debug(
                   `Announcing '${playerInfos.length}' players from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
                 )
-                for (const playerInfo of playerInfos) {
+                for (const playerInfo of playerInfos) {                  
+                  const playerPort = await storage.get<number>(`playerPorts/${playerInfo.playerid}`)
+                  if (!playerPort) {
+                    logger.warn(`Player ${playerInfo.name} not bound to a port, skipping ..`)
+                    continue
+                  }
                   logger.info(
-                    `Announcing squeeze player '${playerInfo.name}' from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
+                    `Announcing squeeze player '${playerInfo.name}:${playerPort}' from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
                   )
-                  const message = announceMessage(playerInfo)
+                  const message = announceMessage(playerInfo, playerPort)
                   server.send(message, 0, message.length, rinfo.port, rinfo.address)
                 }
               }
@@ -83,13 +88,13 @@ function appendParameter(sb: string[], key: string, value: string): void {
   sb.push(`${key}: ${value}\r\n`)
 }
 
-function announceMessage(player: IPlayerInfo) {
+function announceMessage(player: IPlayerInfo, port: number): string {  
   const sb = ['HTTP/1.1 200 OK\r\n']
   appendParameter(sb, 'Content-Type', 'plex/media-player')
   appendParameter(sb, 'Device-Class', plexOptions.deviceClass)
   appendParameter(sb, 'Name', player.name)
   //appendParameter(sb, 'RawName', player.name)
-  appendParameter(sb, 'Port', plexOptions.port)
+  appendParameter(sb, 'Port', port.toString())
   appendParameter(sb, 'Product', plexOptions.product)
   appendParameter(sb, 'Version', plexOptions.version)
   //appendParameter(sb, 'Device', plexOptions.device)
