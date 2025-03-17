@@ -2,25 +2,29 @@ import { Builder } from 'xml2js'
 import useLogger from '../composables/useLogger'
 import { plexOptions } from '~/server/lib/squeezePlexHub'
 import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
+import { responseHeaders } from '../lib/plexApi'
 
 const logger = useLogger('resources.get')
 const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {
+  const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
+
   /**
-   * Generates the resources XML based on a set of players.
+   * Generates the resources XML based on the provided player
+   * @param player The player to generate the XML for
+   * @returns The XML string
    */
-  function resourcesXml(players: IPlayerInfo[]): string {
-    const mediaContainer = {
-      // TODO fix that each player has a different is exposed via different port otherwise plex will only show one player
+  function resourcesXml(player: IPlayerInfo): string {
+    const mediaContainer = {      
       MediaContainer: {
         $: {
-          size: players.length
+          size: '1'
         },
-        Player: [...players].map((boundPlayer) => ({
+        Player: {
           $: {
-            machineIdentifier: boundPlayer.playerid,
-            title: boundPlayer.name,
+            machineIdentifier: player.playerid,
+            title: player.name,
             platform: plexOptions.platform,
             platformVersion: plexOptions.platformVersion,
             product: plexOptions.product,
@@ -30,11 +34,9 @@ export default eventHandler(async (event) => {
             model: plexOptions.model,
             device: plexOptions.device,
             protocolCapabilities: plexOptions.protocolCapabilities,
-            //protocolCapabilities: 'timeline,playback',
-            port: plexOptions.port,
             deviceClass: plexOptions.deviceClass
           }
-        }))
+        }
       }
     }
 
@@ -46,7 +48,7 @@ export default eventHandler(async (event) => {
     const xmlResponse = await storage.getKeys('players/').then(async (serverKey) => {
       if (!serverKey) {
         logger.debug('No LMS found in storage, skipping')
-        return resourcesXml([])
+        return undefined
       }
 
       const allPlayers: IPlayerInfo[] = []
@@ -55,13 +57,25 @@ export default eventHandler(async (event) => {
         allPlayers.push(...(playerInfos || []))
       }
 
-      logger.info(`Responding with ${allPlayers.length} players to /resources api caller ..`)
-      return resourcesXml(allPlayers)
+      // Only return the player that matches the targetClientIdentifier
+      const player = allPlayers.find((p) => p.playerid === targetClientIdentifier)
+      if (!player) {
+        logger.warn(`Player '${targetClientIdentifier}' not available yet for /resources consumer`)
+        return undefined
+      }
+
+      setResponseHeaders(event, Object.fromEntries(responseHeaders(player.playerid, player.name, 'text/xml').entries()))
+      logger.info(`Responding with '${player.name}' player to /resources consumer ..`)      
+      return resourcesXml(player)
     })
 
-    event.respondWith(new Response(xmlResponse, { status: 200, headers: { 'Content-Type': 'application/xml' } }))
+    if (!xmlResponse) {
+      return sendNoContent(event, 404)
+    }
+
+    event.respondWith(new Response(xmlResponse, { status: 200, headers: { 'Content-Type': 'text/xml' } }))
   } catch (error) {
-    logger.error('Error generating resources XML:', error)
+    logger.error(`Error generating resources XML for player '${targetClientIdentifier}':`, error)
     return sendNoContent(event, 404)
   }
 })
