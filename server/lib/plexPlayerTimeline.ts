@@ -393,7 +393,7 @@ const timelineContainer = (
             address: playerQueue?.plexServer?.server.localAddress,
             port: playerQueue?.plexServer?.server.port.toString()
           },
-          Track: includeMetadata ? findCurrentTrack() : undefined
+          ...(includeMetadata && findCurrentTrack() ? { Track: findCurrentTrack() } : {}) // THIS IS ESSENTIAL since Plexamp struggles with </Track> tag if no playQueue is loaded
         },
         createEmptyTimeline('video'),
         createEmptyTimeline('photo')
