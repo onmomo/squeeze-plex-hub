@@ -10,7 +10,8 @@ export default createConfigForNuxt({
   .override('nuxt/typescript/rules', {
     rules: {
       // ...Override rules, for example:
-      '@typescript-eslint/ban-types': 'off'
+      '@typescript-eslint/ban-types': 'off',
+      '@typescript-eslint/no-explicit-any': 'off'
     }
   })
   // ...you can chain more operations as needed

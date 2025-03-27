@@ -1,18 +1,8 @@
 import useLogger from '~/server/composables/useLogger'
 import { getRequestHeader, getQuery } from 'h3'
-import { SqueezeServerStub } from 'lms-squeeze-rpc'
-import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
-import type { ServerInfo } from 'lms-discovery'
-import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
-import { getPlexApi, getPlexApiTrack, metadata, responseHeaders } from '~/server/lib/plexApi'
-import axios, { AxiosError } from 'axios'
-import xml2js from 'xml2js'
-import type { PlayQueue } from '~/server/lib/plexPlayerTimeline'
-import type { PlexServerResponse } from '~/server/plugins/gdmDiscovery'
 
 // catchAll route triggered: GET /player/playback/refreshPlayQueue?playQueueID=7868&commandID=4400&type=music
 const logger = useLogger('playback.refreshPlayQueue')
-const storage = useStorage('DISCOVERY')
 
 /**
  * This will create a play queue on plex server and play it on the target player.
@@ -28,20 +18,20 @@ export default eventHandler(async (event) => {
   logger.info(`Query parameters: ${JSON.stringify(query)}`)
   logger.info(`Headers: ${JSON.stringify(event.node.req.headers)}`)
 
-  const queryParameters = {
-    source: query.source as string,
-    shuffle: query.shuffle as string,
-    uri: query.uri as string,
-    key: query.key as string,
-    token: query.token as string,
-    includeExternalMedia: query.includeExternalMedia as string,
-    type: query.type as string,
-    protocol: query.protocol as string,
-    address: query.address as string,
-    port: query.port as string,
-    machineIdentifier: query.machineIdentifier as string,
-    commandID: query.commandID as string
-  }
+  // const queryParameters = {
+  //   source: query.source as string,
+  //   shuffle: query.shuffle as string,
+  //   uri: query.uri as string,
+  //   key: query.key as string,
+  //   token: query.token as string,
+  //   includeExternalMedia: query.includeExternalMedia as string,
+  //   type: query.type as string,
+  //   protocol: query.protocol as string,
+  //   address: query.address as string,
+  //   port: query.port as string,
+  //   machineIdentifier: query.machineIdentifier as string,
+  //   commandID: query.commandID as string
+  // }
 
   if (!targetClientIdentifier || !clientIdentifier || !deviceName) {
     logger.warn(

@@ -58,8 +58,7 @@ export default eventHandler(async (event) => {
     const builder = new Builder({ headless: true })
     logger.debug(`Polling player ${targetClientIdentifier} status ..: ${JSON.stringify(event.node.req.headers)}`)
     const serverKeys = await storage.getKeys('players/')
-    if (!serverKeys || serverKeys.length === 0) {
-      1
+    if (!serverKeys || serverKeys.length === 0) {      
       throw new Error('No LMS found in storage, skipping')
     }
 

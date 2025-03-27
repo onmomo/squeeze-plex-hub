@@ -1,6 +1,4 @@
-import PlexPin from 'node-plex-api-pinauth'
-
-import { defineEventHandler, getQuery } from 'h3'
+import { defineEventHandler } from 'h3'
 import useLogger from '~/server/composables/useLogger'
 
 

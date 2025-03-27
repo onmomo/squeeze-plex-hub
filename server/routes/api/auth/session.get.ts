@@ -1,10 +1,10 @@
 import { plexOptions } from '~/server/lib/squeezePlexHub'
-import { defineEventHandler, getQuery } from 'h3'
+import { defineEventHandler } from 'h3'
 import useLogger from '~/server/composables/useLogger'
 import type { PlexServerResponse } from '~/server/plugins/gdmDiscovery'
 import axios from 'axios'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler(async () => {
   const logger = useLogger('session.get')
   const credentials = useStorage('CREDENTIALS')
   const discovery = useStorage('DISCOVERY')

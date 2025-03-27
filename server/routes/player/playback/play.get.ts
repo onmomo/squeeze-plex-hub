@@ -1,5 +1,5 @@
 import useLogger from '~/server/composables/useLogger'
-import { getRequestHeader, getQuery } from 'h3'
+import { getRequestHeader } from 'h3'
 import { SqueezeServerStub } from 'lms-squeeze-rpc'
 import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
 import type { ServerInfo } from 'lms-discovery'
@@ -9,16 +9,10 @@ import { responseHeaders } from '~/server/lib/plexApi'
 const logger = useLogger('playback.play')
 const storage = useStorage('DISCOVERY')
 
-export default eventHandler(async (event) => {
-  const query = getQuery(event)
+export default eventHandler(async (event) => {  
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
-  const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
-
-  const queryParameters = {
-    type: query.type as string,
-    commandID: query.commandID as string
-  }
+  const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')  
 
   if (!targetClientIdentifier || !clientIdentifier || !deviceName) {
     logger.warn(

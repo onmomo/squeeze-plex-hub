@@ -5,7 +5,6 @@ import type { PlexServer } from './plexApi'
 import { plexOptions } from './squeezePlexHub'
 
 const logger = useLogger('plexPlayerTimeline')
-const storage = useStorage('DISCOVERY')
 
 // interface for playlist
 export interface PlayerPlayQueue {
