@@ -5,10 +5,11 @@ import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
 import type { ServerInfo } from 'lms-discovery'
 import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import { getPlexApi, getPlexApiTrack, metadata, responseHeaders } from '~/server/lib/plexApi'
-import axios, { AxiosError } from 'axios'
+import type { AxiosError } from 'axios';
+import axios from 'axios'
 import xml2js from 'xml2js'
 import type { PlayerPlayQueue, PlayQueue } from '~/server/lib/plexPlayerTimeline'
-import { type PlexServerResponse } from '~/server/plugins/gdmDiscovery'
+import type { PlexServerResponse } from '~/server/plugins/gdmDiscovery'
 
 // GET /player/playback/createPlayQueue?source=db8490d1d364f23ae031ccf6f1e4cdd3bxxxxxx&shuffle=0&uri=server%3A%2F%2Fdb8490d1d364f23ae031ccf6f1e4cdd3baeb228e%2Fcom.plexapp.plugins.library%2Flibrary%2Fmetadata%2F43961%2Fchildren&playlistID=undefined&token=transient-xxxx&includeExternalMedia=1&type=audio&protocol=https&address=10-0-1-5.d099fb26cfd04a089bfcd4b708xxxxx.plex.direct&port=32400&machineIdentifier=db8490d1d364f23ae031ccf6f1e4cdd3bxxxxxx&commandID=25317 HTTP/1.1
 // Host: 10.0.1.105:32500
@@ -105,7 +106,7 @@ export default eventHandler(async (event) => {
     }
 
     const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
-    var player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
     const playerStatus = await player.status()
     if (!playerStatus) {
       throw new Error(`Player ${targetClientIdentifier} status available yet`)

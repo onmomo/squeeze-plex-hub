@@ -6,7 +6,7 @@ import type { ServerInfo } from 'lms-discovery'
 import { getPlayQueue, metadata, responseHeaders, getPlexApiTrack } from '../../../lib/plexApi'
 import type { PlayerPlayQueue, PlayQueue } from '~/server/lib/plexPlayerTimeline'
 
-const logger = useLogger('playback.playMedia.get')
+const logger = useLogger('playback.playMedia')
 const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {
@@ -88,7 +88,7 @@ export default eventHandler(async (event) => {
       plexServer
   }
     const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
-    var player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
     await player.clearPlaylist()
     for (const track of playQueue.MediaContainer.Track) {
       logger.info(`Adding track '${track.$.title}' to player '${playerInfo.name}' playlist ..`)

@@ -65,7 +65,7 @@ export default eventHandler(async (event) => {
     }
 
     const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
-    var player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
 
     await player.skipPrevious()
     logger.info(`Player '${targetClientIdentifier}' skipped to previous track`)

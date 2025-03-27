@@ -75,7 +75,7 @@ function publishTimeline() {
             throw new Error(`SqueezeServerStub not found in storage for player '${playerInfo.playerid}'`)
           }
           const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
-          var player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+          const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
           const playerStatus = await player.status()
           if (!playerStatus) {
             throw new Error(`Player ${playerInfo.playerid} status available yet`)

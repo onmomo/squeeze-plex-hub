@@ -3,7 +3,7 @@ import { plexOptions } from './squeezePlexHub'
 import useLogger from '../composables/useLogger'
 import type { PlayQueue, Track } from './plexPlayerTimeline'
 import { parseStringPromise } from 'xml2js'
-import { type PlexServerResponse } from '../plugins/gdmDiscovery'
+import type { PlexServerResponse } from '../plugins/gdmDiscovery'
 
 const logger = useLogger('plexApi')
 

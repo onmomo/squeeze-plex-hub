@@ -68,7 +68,7 @@ export default eventHandler(async (event) => {
     }
 
     const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
-    var player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
 
     if (queryParameters.volume) {
       await player.setVolumeAsync(parseInt(queryParameters.volume))

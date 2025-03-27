@@ -8,7 +8,7 @@ import { getPlexApi, getPlexApiTrack, metadata, responseHeaders } from '~/server
 import axios, { AxiosError } from 'axios'
 import xml2js from 'xml2js'
 import type { PlayQueue } from '~/server/lib/plexPlayerTimeline'
-import { type PlexServerResponse } from '~/server/plugins/gdmDiscovery'
+import type { PlexServerResponse } from '~/server/plugins/gdmDiscovery'
 
 // catchAll route triggered: GET /player/playback/refreshPlayQueue?playQueueID=7868&commandID=4400&type=music
 const logger = useLogger('playback.createPlayQueue')

@@ -9,7 +9,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading">
       <p>Loading PIN...</p>
-      <div class="spinner"></div>
+      <div class="spinner"/>
     </div>
 
     <!-- Error State -->
