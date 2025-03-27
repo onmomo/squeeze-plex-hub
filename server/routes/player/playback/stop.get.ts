@@ -6,7 +6,7 @@ import type { ServerInfo } from 'lms-discovery'
 import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import { responseHeaders } from '~/server/lib/plexApi'
 
-const logger = useLogger('playback.play')
+const logger = useLogger('playback.stop')
 const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {

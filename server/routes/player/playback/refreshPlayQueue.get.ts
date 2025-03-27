@@ -11,7 +11,7 @@ import type { PlayQueue } from '~/server/lib/plexPlayerTimeline'
 import type { PlexServerResponse } from '~/server/plugins/gdmDiscovery'
 
 // catchAll route triggered: GET /player/playback/refreshPlayQueue?playQueueID=7868&commandID=4400&type=music
-const logger = useLogger('playback.createPlayQueue')
+const logger = useLogger('playback.refreshPlayQueue')
 const storage = useStorage('DISCOVERY')
 
 /**
@@ -24,8 +24,8 @@ export default eventHandler(async (event) => {
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
   //const plexToken = getRequestHeader(event, 'X-Plex-Token')
 
+  logger.info(`Refresh play queue for player '${targetClientIdentifier}' ..`)
   logger.info(`Query parameters: ${JSON.stringify(query)}`)
-
   logger.info(`Headers: ${JSON.stringify(event.node.req.headers)}`)
 
   const queryParameters = {

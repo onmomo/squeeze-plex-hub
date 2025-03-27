@@ -5,7 +5,6 @@ import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
 import type { ServerInfo } from 'lms-discovery'
 import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import { responseHeaders } from '~/server/lib/plexApi'
-import { log } from 'winston'
 
 const logger = useLogger('playback.skipPrevious')
 const storage = useStorage('DISCOVERY')

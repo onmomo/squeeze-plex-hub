@@ -4,7 +4,7 @@ import { plexOptions } from '~/server/lib/squeezePlexHub'
 import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import { responseHeaders } from '../lib/plexApi'
 
-const logger = useLogger('resources.get')
+const logger = useLogger('resources')
 const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {

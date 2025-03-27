@@ -1,7 +1,7 @@
 import useLogger from '~/server/composables/useLogger'
 import type { RemoteSubscriber } from './poll.get'
 
-const logger = useLogger('timeline.subscribe.get')
+const logger = useLogger('timeline.subscribe')
 const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {

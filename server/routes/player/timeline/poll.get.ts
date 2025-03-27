@@ -7,7 +7,7 @@ import { type PlayerPlayQueue, timelineResponse } from '../../../lib/plexPlayerT
 import { responseHeaders } from '~/server/lib/plexApi'
 import { Builder } from 'xml2js'
 
-const logger = useLogger('timeline.poll.get')
+const logger = useLogger('timeline.poll')
 const storage = useStorage('DISCOVERY')
 
 export interface RemoteSubscriber {

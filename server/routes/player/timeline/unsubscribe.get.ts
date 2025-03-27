@@ -1,6 +1,6 @@
 import useLogger from '~/server/composables/useLogger'
 
-const logger = useLogger('timeline.unsubscribe.get')
+const logger = useLogger('timeline.unsubscribe')
 const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {
