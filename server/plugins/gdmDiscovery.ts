@@ -9,6 +9,7 @@ const discoveryPort = 32414
 
 const logger = useLogger('gdmAnnouncer')
 const storage = useStorage('DISCOVERY')
+const scheduler = useScheduler()
 
 export default defineNitroPlugin(() => {
   gdmDiscovery()
@@ -33,9 +34,7 @@ export interface PlexServerResponse {
  * @returns List of Plex servers found on the network
  */
 async function gdmDiscovery() {
-  logger.info('Starting GDM Plex server discovery ...')
-
-  const scheduler = useScheduler()
+  logger.info('Starting GDM Plex server discovery ...')  
   scheduler
     .run(async () => {
       try {

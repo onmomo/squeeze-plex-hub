@@ -11,6 +11,8 @@ import { Builder } from 'xml2js'
 import { responseHeaders } from '../lib/plexApi'
 
 const logger = useLogger('timelinePublisher')
+const storage = useStorage('DISCOVERY')
+const scheduler = useScheduler()
 
 export default defineNitroPlugin(() => {
   publishTimeline()
@@ -20,9 +22,7 @@ export default defineNitroPlugin(() => {
  * Publishes the timeline to the players to all plex clients that are subscribed to the timeline.
  */
 function publishTimeline() {
-  const storage = useStorage('DISCOVERY')
-  const scheduler = useScheduler()
-  const builder = new Builder({ headless: true })
+  const builder = new Builder()
   scheduler
     .run(async () => {
       try {
@@ -90,7 +90,7 @@ function publishTimeline() {
           const serverTimelineUrl = `http://${playerQueue.plexServer.server.localAddress}:${playerQueue.plexServer.server.port}/:/timeline`
           for (const subscriber of playerSubscribers || []) {
             const timeline = await timelineResponse(playerStatus, subscriber, playerQueue, true) // TODO support includeMetadata
-            const timelineString = builder.buildObject(timeline)          
+            const timelineString = builder.buildObject(timeline)
             timeline.MediaContainer.Timeline.forEach(async (timelineItem) => {
               logger.debug(`Sending timeline '${timelineItem.$.itemType}' to subscriber ${subscriber.deviceName} ..`)
 
@@ -131,7 +131,7 @@ function publishTimeline() {
               url.searchParams.append('includeFields', 'thumbBlurHash')
               //url.searchParams.append('guid,url,source', timeline.$.guid) // TODO why is it required to have query params instead of the xml body?!
 
-              const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'application/xml')            
+              const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'application/xml')
               headers.append('X-Plex-Token', playerQueue.plexServer.token)
               // this will send the player timeline to plex server to indicate the current playback status
               await axios
