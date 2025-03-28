@@ -12,6 +12,9 @@ export interface PlayerStatus {
   volume: number
 }
 
+/**
+ * @see https://github.com/elParaguayo/LMS-CLI-Documentation
+ */
 class ExtendedSqueezePlayer extends SqueezePlayer {
   private stub: SqueezeServerStub
   private id: string
@@ -52,6 +55,14 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
 
   async skipPrevious() {    
     return this.stub.requestAsync([this.id, ['playlist', 'index', '-1']])
+  }
+
+  /**
+   * Seeks to a particular position in a song by specifying a number of seconds to seek to.
+   * @param offset track offset in seconds
+   */
+  async seekTo(offset: number) {    
+    return this.stub.requestAsync([this.id, ['time', offset.toString()]])
   }
 
   async status() {

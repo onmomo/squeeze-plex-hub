@@ -6,32 +6,28 @@ import type { ServerInfo } from 'lms-discovery'
 import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import { responseHeaders } from '~/server/lib/plexApi'
 
-const logger = useLogger('playback.setParameters')
+const logger = useLogger('playback.seekTo')
 const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {
   const query = getQuery(event)
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
-  const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
-  const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
-
-  logger.info(`queries: ${JSON.stringify(query)}`)
+  const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')  
+  
   const queryParameters = {
     type: query.type as string,
     commandID: query.commandID as string,
-    shuffle: query.shuffle as string | undefined, // TODO implement
-    volume: query.volume as string | undefined,
-    repeat: query.repeat as string | undefined, // TODO implement
+    offset: query.offset as string | undefined
   }
 
-  if (!targetClientIdentifier || !clientIdentifier || !deviceName) {
+  if (!targetClientIdentifier || !clientIdentifier || !queryParameters.offset) {
     logger.warn(
-      `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers), got:`,
+      `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier' headers), got:`,
       event.node.req.headers
     )
     return event.respondWith(
       new Response(
-        `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers)`,
+        `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier' headers or offset parameter)`,
         { status: 400 }
       )
     )
@@ -70,17 +66,18 @@ export default eventHandler(async (event) => {
     const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
     const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
 
-    if (queryParameters.volume) {
-      await player.setVolumeAsync(parseInt(queryParameters.volume))
-      logger.info(`Player '${targetClientIdentifier}' set volume to ${queryParameters.volume}.`)
+    if (queryParameters.offset) {      
+      const offsetInSeconds = parseInt(queryParameters.offset, 10) / 1000
+      logger.info(`Seeking track to ${offsetInSeconds}s on player '${playerInfo.name}' (ID: '${targetClientIdentifier}') ..`)
+      await player.seekTo(offsetInSeconds)
     }
     
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
   } catch (error) {
-    logger.warn(`Error when skipping to next track player '${targetClientIdentifier}'`, error)
+    logger.warn(`Error when seeking track on player '${targetClientIdentifier}'`, error)
     return event.respondWith(
-      new Response(`Player '${targetClientIdentifier}' not available to set parameters, try again later`, { status: 404 })
+      new Response(`Player '${targetClientIdentifier}' not available to seek track, try again later`, { status: 404 })
     )
   }
 })
