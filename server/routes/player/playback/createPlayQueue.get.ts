@@ -118,7 +118,7 @@ export default eventHandler(async (event) => {
         port: Number(queryParameters.port),
         resourceIdentifier: queryParameters.machineIdentifier
       },
-      token: queryParameters.token
+      token: queryParameters.token // we need this later so LMS can stream the tracks from plex server
     }
 
     const playQueueUrl = getPlexApi(plexServer, '/playQueues')
