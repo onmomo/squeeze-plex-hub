@@ -115,8 +115,8 @@ function publishTimeline() {
                 `sending update: ${timelineItem.$.state} / ${timelineItem.$.time} / ${timelineItem.$.key} / ${timelineItem.$.type} / ${timelineItem.$.ratingKey} / ${timelineItem.$.playQueueID} / ${timelineItem.$.duration} / ${timelineItem.$.playQueueItemID} / ${timelineItem.$.containerKey}`
               )
               const url = new URL(serverTimelineUrl)
-              url.searchParams.append('commandID', timeline.MediaContainer.$.commandID) // TODO why is it required to have query params instead of the xml body?!
-              url.searchParams.append('state', timelineItem.$.state) // TODO why is it required to have query params instead of the xml body?!
+              url.searchParams.append('commandID', timeline.MediaContainer.$.commandID) // TODO why is it required to have query params instead of the xml body?
+              url.searchParams.append('state', timelineItem.$.state) // TODO why is it required to have query params instead of the xml body?
               url.searchParams.append('key', timelineItem.$.key)
               url.searchParams.append('type', timelineItem.$.type)
               url.searchParams.append('ratingKey', timelineItem.$.ratingKey)
@@ -128,8 +128,7 @@ function publishTimeline() {
               url.searchParams.append('playQueueItemID', timelineItem.$.playQueueItemID)
               url.searchParams.append('containerKey', timelineItem.$.containerKey)
               url.searchParams.append('hasMDE', '1')
-              url.searchParams.append('includeFields', 'thumbBlurHash')
-              //url.searchParams.append('guid,url,source', timeline.$.guid) // TODO why is it required to have query params instead of the xml body?!
+              url.searchParams.append('includeFields', 'thumbBlurHash')              
 
               const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'application/xml')
               headers.append('X-Plex-Token', playerQueue.plexServer.token)

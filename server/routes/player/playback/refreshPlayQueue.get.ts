@@ -12,26 +12,10 @@ export default eventHandler(async (event) => {
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
-  //const plexToken = getRequestHeader(event, 'X-Plex-Token')
 
   logger.info(`Refresh play queue for player '${targetClientIdentifier}' ..`)
   logger.info(`Query parameters: ${JSON.stringify(query)}`)
   logger.info(`Headers: ${JSON.stringify(event.node.req.headers)}`)
-
-  // const queryParameters = {
-  //   source: query.source as string,
-  //   shuffle: query.shuffle as string,
-  //   uri: query.uri as string,
-  //   key: query.key as string,
-  //   token: query.token as string,
-  //   includeExternalMedia: query.includeExternalMedia as string,
-  //   type: query.type as string,
-  //   protocol: query.protocol as string,
-  //   address: query.address as string,
-  //   port: query.port as string,
-  //   machineIdentifier: query.machineIdentifier as string,
-  //   commandID: query.commandID as string
-  // }
 
   if (!targetClientIdentifier || !clientIdentifier || !deviceName) {
     logger.warn(
@@ -47,7 +31,7 @@ export default eventHandler(async (event) => {
   }
 
   try {
-    
+    // TODO figure what to do here, how to refresh the playQueue and when is this triggered?
     return sendNoContent(event, 200)
   } catch (error) {
     logger.warn(`Error when refreshing play queue for player '${targetClientIdentifier}'`, error)
