@@ -1,8 +1,6 @@
 import useLogger from '~/server/composables/useLogger'
-import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
+import usePlayerInfo from '~/server/composables/usePlayerInfo'
 import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
-import { SqueezeServerStub } from 'lms-squeeze-rpc'
-import type { ServerInfo } from 'lms-discovery'
 import { getPlayQueue, metadata, responseHeaders, getPlexApiTrack } from '../../../lib/plexApi'
 import type { PlayerPlayQueue, PlayQueue } from '~/server/lib/plexPlayerTimeline'
 
@@ -24,8 +22,6 @@ export default eventHandler(async (event) => {
     commandID: query.commandID as string
   }
 
-
-
   if (!targetClientIdentifier || !queryParameters.commandID || !queryParameters.address || !queryParameters.protocol || !queryParameters.port || !queryParameters.token || !queryParameters.containerKey || !queryParameters.key) {
     logger.warn(
       `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers and 'commandID' query parameter), got:`,
@@ -41,36 +37,7 @@ export default eventHandler(async (event) => {
 
   logger.debug(`PlayMedia Queries: ${JSON.stringify(query)}`)
 
-  try {
-    const serverKeys = await storage.getKeys('players/')
-    if (!serverKeys || serverKeys.length === 0) {
-      throw new Error('No LMS found in storage, skipping')
-    }
-
-    const allPlayers: [string, IPlayerInfo][] = [] // Array of tuples (serverId, IPlayerInfo)
-
-    for (const key of serverKeys) {
-      const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
-      const serverId = key.split(':')[1] // e.g. players:de443cee-943b-421a-8db3-575e5b4cddc6 where the later is the serverId
-      if (playerInfos) {
-        for (const player of playerInfos) {
-          allPlayers.push([serverId, player])
-        }
-      }
-    }
-
-    const playerServerTuple = allPlayers.find(([_, p]) => p.playerid === targetClientIdentifier)
-    if (!playerServerTuple) {
-      throw new Error(`Player not found in storage for playMedia`)
-    }
-
-    const [serverId, playerInfo] = playerServerTuple // Extract key and playerInfo
-
-    const serverInfo = await storage.getItem<ServerInfo>(`servers/${serverId}`)
-    if (!serverInfo || !serverInfo.ip) {
-      throw new Error(`SqueezeServerStub not found in storage for player '${playerInfo.playerid}'`)
-    }
-
+  try {  
     const plexServer = {
       server: {
         protocol: queryParameters.protocol,
@@ -81,14 +48,16 @@ export default eventHandler(async (event) => {
       token: queryParameters.token
     }
     
+    const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
+    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+
     const playQueue: PlayQueue = await getPlayQueue(plexServer, queryParameters.containerKey)
     const playerQueue: PlayerPlayQueue = {
       playerId: playerInfo.playerid,
       playQueue,
       plexServer
   }
-    const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
-    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    
     await player.clearPlaylist()
     for (const track of playQueue.MediaContainer.Track) {
       logger.info(`Adding track '${track.$.title}' to player '${playerInfo.name}' playlist ..`)

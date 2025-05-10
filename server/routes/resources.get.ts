@@ -1,14 +1,27 @@
 import { Builder } from 'xml2js'
 import useLogger from '../composables/useLogger'
+import usePlayerInfo from '~/server/composables/usePlayerInfo'
 import { plexOptions } from '~/server/lib/squeezePlexHub'
 import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import { responseHeaders } from '../lib/plexApi'
 
 const logger = useLogger('resources')
-const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
+
+  if (!targetClientIdentifier) {
+    logger.warn(
+      `Missing required parameters ('X-Plex-Target-Client-Identifier' header), got:`,
+      event.node.req.headers
+    )
+    return event.respondWith(
+      new Response(
+        `Missing required parameters ('X-Plex-Target-Client-Identifier' header)`,
+        { status: 400 }
+      )
+    )
+  }
 
   /**
    * Generates the resources XML based on the provided player
@@ -45,28 +58,10 @@ export default eventHandler(async (event) => {
   }
 
   try {
-    const xmlResponse = await storage.getKeys('players/').then(async (serverKey) => {
-      if (!serverKey) {
-        logger.debug('No LMS found in storage, skipping')
-        return undefined
-      }
-
-      const allPlayers: IPlayerInfo[] = []
-      for (const key of serverKey) {
-        const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
-        allPlayers.push(...(playerInfos || []))
-      }
-
-      // Only return the player that matches the targetClientIdentifier
-      const player = allPlayers.find((p) => p.playerid === targetClientIdentifier)
-      if (!player) {
-        logger.debug(`Player '${targetClientIdentifier}' not available yet for /resources consumer`)
-        return undefined
-      }
-
-      setResponseHeaders(event, Object.fromEntries(responseHeaders(player.playerid, player.name, 'text/xml').entries()))
-      logger.info(`Responding with '${player.name}' player to /resources consumer ..`)      
-      return resourcesXml(player)
+    const xmlResponse = await usePlayerInfo(targetClientIdentifier).then(async ({ playerInfo }) => {
+      setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name, 'text/xml').entries()))
+      logger.info(`Responding with '${playerInfo.name}' player to /resources consumer ..`)      
+      return resourcesXml(playerInfo)
     })
 
     if (!xmlResponse) {

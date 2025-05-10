@@ -1,13 +1,10 @@
 import useLogger from '~/server/composables/useLogger'
+import usePlayerInfo from '~/server/composables/usePlayerInfo'
 import { getRequestHeader } from 'h3'
-import { SqueezeServerStub } from 'lms-squeeze-rpc'
 import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
-import type { ServerInfo } from 'lms-discovery'
-import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import { responseHeaders } from '~/server/lib/plexApi'
 
 const logger = useLogger('playback.skipNext')
-const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {  
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
@@ -28,36 +25,7 @@ export default eventHandler(async (event) => {
   }
 
   try {
-    const serverKeys = await storage.getKeys('players/')
-    if (!serverKeys || serverKeys.length === 0) {
-      throw new Error('No LMS found in storage, skipping')
-    }
-
-    const allPlayers: [string, IPlayerInfo][] = []
-
-    for (const key of serverKeys) {
-      const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
-      const serverId = key.split(':')[1]
-      if (playerInfos) {
-        for (const player of playerInfos) {
-          allPlayers.push([serverId, player])
-        }
-      }
-    }
-
-    const playerServerTuple = allPlayers.find(([_, p]) => p.playerid === targetClientIdentifier)
-    if (!playerServerTuple) {
-      throw new Error(`Player not found in storage for createPlayQueue`)
-    }
-
-    const [serverId, playerInfo] = playerServerTuple
-
-    const serverInfo = await storage.getItem<ServerInfo>(`servers/${serverId}`)
-    if (!serverInfo || !serverInfo.ip) {
-      throw new Error(`SqueezeServerStub not found in storage for player '${playerInfo.playerid}'`)
-    }
-
-    const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
+    const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
     const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
 
     await player.skipNext()

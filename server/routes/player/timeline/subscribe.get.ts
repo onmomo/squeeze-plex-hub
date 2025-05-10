@@ -22,8 +22,6 @@ export default eventHandler(async (event) => {
   const plexPort = query.port as string | undefined
   const plexProtocol = query.protocol as string | undefined
 
-  //let commandId = query.commandID !== undefined ? parseInt(query.commandID as string) : undefined
-
   if (
     !targetClientIdentifier ||
     !clientIdentifier ||

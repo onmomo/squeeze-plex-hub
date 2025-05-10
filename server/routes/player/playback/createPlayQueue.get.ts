@@ -1,9 +1,7 @@
 import useLogger from '~/server/composables/useLogger'
+import usePlayerInfo from '~/server/composables/usePlayerInfo'
 import { getRequestHeader, getQuery } from 'h3'
-import { SqueezeServerStub } from 'lms-squeeze-rpc'
 import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
-import type { ServerInfo } from 'lms-discovery'
-import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
 import { getPlexApi, getPlexApiTrack, metadata, responseHeaders } from '~/server/lib/plexApi'
 import type { AxiosError } from 'axios';
 import axios from 'axios'
@@ -41,11 +39,10 @@ export default eventHandler(async (event) => {
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
-  //const plexToken = getRequestHeader(event, 'X-Plex-Token')
 
   const queryParameters = {
     source: query.source as string,
-    shuffle: query.shuffle as string,
+    shuffle: query.shuffle as string | undefined, // seems not always provided
     uri: query.uri as string,
     key: query.key as string,
     token: query.token as string,
@@ -73,43 +70,9 @@ export default eventHandler(async (event) => {
   }
 
   try {
-    logger.debug(`Creating play queue for player ${targetClientIdentifier} ..: ${JSON.stringify(event.node.req.headers)} and Query: ${JSON.stringify(queryParameters)}`)    
-
-    const serverKeys = await storage.getKeys('players/')
-    if (!serverKeys || serverKeys.length === 0) {
-      throw new Error('No LMS found in storage, skipping')
-    }
-
-    const allPlayers: [string, IPlayerInfo][] = []
-
-    for (const key of serverKeys) {
-      const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
-      const serverId = key.split(':')[1]
-      if (playerInfos) {
-        for (const player of playerInfos) {
-          allPlayers.push([serverId, player])
-        }
-      }
-    }
-
-    const playerServerTuple = allPlayers.find(([_, p]) => p.playerid === targetClientIdentifier)
-    if (!playerServerTuple) {
-      throw new Error(`Player not found in storage for createPlayQueue`)
-    }
-
-    const [serverId, playerInfo] = playerServerTuple
-
-    const serverInfo = await storage.getItem<ServerInfo>(`servers/${serverId}`)
-    if (!serverInfo || !serverInfo.ip) {
-      throw new Error(`SqueezeServerStub not found in storage for player '${playerInfo.playerid}'`)
-    }
-
-    const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
-    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
-    const playerStatus = await player.status()
-    if (!playerStatus) {
-      throw new Error(`Player ${targetClientIdentifier} status available yet`)
-    }    
+    logger.debug(`Creating play queue for player ${targetClientIdentifier} ..: ${JSON.stringify(event.node.req.headers)} and Query: ${JSON.stringify(queryParameters)}`)
+    const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
+    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)        
 
     const plexServer = {
       server: {
@@ -122,8 +85,8 @@ export default eventHandler(async (event) => {
     }
 
     const playQueueUrl = getPlexApi(plexServer, '/playQueues')
-    const createPlayQueueUrl = `${playQueueUrl}?type=${queryParameters.type}&shuffle=${queryParameters.shuffle}&includeExternalMedia=${queryParameters.includeExternalMedia}&repeat=0&uri=${queryParameters.uri}`
-    logger.info(`Creating play queue on Plex server with URL: ${createPlayQueueUrl}`)
+    const createPlayQueueUrl = `${playQueueUrl}?type=${queryParameters.type}&shuffle=${queryParameters.shuffle || 0}&includeExternalMedia=${queryParameters.includeExternalMedia}&repeat=0&uri=${queryParameters.uri}`
+    logger.info(`Creating play queue on Plex server with URL: ${createPlayQueueUrl}..`)
     const createPlayQueueResponse = await axios
       .post<string>(createPlayQueueUrl, '', {
         headers: {
@@ -134,7 +97,7 @@ export default eventHandler(async (event) => {
       })
       .then((response) => {
         if (!response.data) {
-          throw new Error('No playQueue responded from Plex server')
+          throw new Error('No valid playQueue response from Plex server')
         }
         return response.data
       })
@@ -162,8 +125,7 @@ export default eventHandler(async (event) => {
     }
         
     await storage.setItem(`playerQueue/${playerInfo.playerid}`, playerQueue)
-    //await storage.setItem(`playQueue/${playQueue.MediaContainer.$.playQueueID}`, playQueue)
-    logger.info(`Created play queue on Plex server with ID: ${playQueue.MediaContainer.$.playQueueID}`)
+    logger.info(`Created play queue on Plex server with ID: ${playQueue.MediaContainer.$.playQueueID} for player ${playerInfo.name}`)
 
     await player.clearPlaylist()
     for (const meta of playQueue.MediaContainer.Track) {
