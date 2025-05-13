@@ -9,7 +9,7 @@ export default defineNitroPlugin(() => {
 })
 
 /**
- * Scans for LMS (Logitech Media Server) devices on the network and stores them in the DISCOVERY storage.
+ * Scans for LMS Lyron Music Server (former Logitech Media Server) devices on the network and stores them in the DISCOVERY storage.
  */
 function squeezeScanner() {
   try {

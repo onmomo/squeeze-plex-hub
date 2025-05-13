@@ -8,7 +8,7 @@
 <script lang="ts">
 import { defineComponent, ref, onMounted } from 'vue'
 import axios from 'axios'
-import PlexPinAuth from '@/components/PlexPinAuth.vue'
+import PlexPinAuth from '@/components/DiscoveredDevices.vue'
 import SessionStatus from '@/components/SessionStatus.vue'
 
 export default defineComponent({
