@@ -1,6 +1,6 @@
 <template>
   <div class="player-info-stage">
-    <h1>Discovered LMS and Squeeze Players</h1>
+    <h1>Discovered Squeezebox Players</h1>
     <p></p>
 
     <!-- Loading State -->
@@ -11,12 +11,19 @@
 
     <!-- Error State -->
     <div v-else-if="error">
-      <p class="error">Failed to resolve discovered squeeze players. Please reload page and try again.</p>
+      <p class="error">Failed to resolve discovered squeezebox players. Please reload page and try again.</p>
     </div>
 
-    <div v-for="player in players" :key="player.serverId" class="player-info">
-      <p><strong>LMS: </strong>{{ player.serverId }}</p>
-      <p><strong>Player: </strong>{{ player.playerInfo.name }} ({{ player.playerInfo.playerid }})</p>
+    <!-- Players -->
+    <div v-else>
+      <div v-for="player in players" :key="player.serverId" class="player-card">
+        <div class="card-content">
+            <p><strong>Player</strong></p>
+            <p>{{ player.playerInfo.name }} ({{ player.playerInfo.playerid }})</p>
+            <p><strong>LMS</strong></p>
+            <p>{{ player.serverId }}</p>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -86,18 +93,8 @@ export default defineComponent({
   padding: 20px;
   border-radius: 10px;
   background: #1e1e1e;
-  color: #fff;
+  color: rgb(130, 200, 190); /* Green */
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-}
-
-a {
-  color: #ff9800;
-  text-decoration: none;
-  font-weight: bold;
-}
-
-a:hover {
-  text-decoration: underline;
 }
 
 .loading {
@@ -127,15 +124,23 @@ a:hover {
   font-weight: bold;
 }
 
-.success {
-  color: #4caf50;
-  font-weight: bold;
+.player-card {
+  background: #ffffff;
+  color: #000;
+  border-radius: 8px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  margin: 10px auto;
+  padding: 20px;
+  max-width: 400px;
+  text-align: left;
 }
 
-.player-info {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 15px;
-  border-radius: 8px;
-  margin-top: 10px;
+.card-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-content p {
+  margin: 5px 0;
 }
 </style>

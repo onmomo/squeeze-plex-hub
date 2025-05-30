@@ -1,7 +1,6 @@
 export default {
   runtimeConfig: {
-    logLevel: 'info',
-    plexToken: undefined
+    logLevel: 'info'    
   },
   devServer: {
     host: '0.0.0.0', // required to allow plex server and players to connect and poll from squeeze plex hub players'

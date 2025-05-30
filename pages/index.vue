@@ -1,38 +1,61 @@
 <template>
   <div>
-    <PlexPinAuth v-if="!isSessionActive" />
-    <SessionStatus v-else />
+    <header>
+      <img src="/logo.png" alt="Squeeze Plex Hub" />      
+    </header>
+    <main>
+      <DiscoveredDevices />
+    </main>
+    <footer>
+      <p>Visit <a href="https://github.com/onmomo/squeeze-plex-hub">Squeeze Plex Hub</a></p>
+    </footer>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue'
-import axios from 'axios'
-import PlexPinAuth from '@/components/DiscoveredDevices.vue'
-import SessionStatus from '@/components/SessionStatus.vue'
+import { defineComponent } from 'vue'
+import DiscoveredDevices from '@/components/DiscoveredDevices.vue'
 
 export default defineComponent({
   components: {
-    PlexPinAuth,
-    SessionStatus
+    DiscoveredDevices: DiscoveredDevices,
   },
-  setup() {
-    const isSessionActive = ref(false)
-
-    onMounted(async () => {
-      const response = await axios.get('/api/auth/session')
-      isSessionActive.value = response.data.status === 'authorized'
-    })
-
-    return {
-      isSessionActive
-    }
-  }
 })
 </script>
 
 <style scoped>
-h1 {
-  color: #42b983;
+
+header {  
+  text-align: center;
+  margin: 20px 0;
+  padding: 20px;
+  background-color: white;
+  color: rgb(130, 200, 190); /* Green */
+  border-radius: 8px;
+  font-size: 2rem; /* Bigger text */
+  font-weight: bold; /* More bold */ 
+
+  img {
+    display: block; margin: 0 auto;
+    max-height: 130px;
+  }
+}
+
+footer {
+  text-align: center;
+  margin-top: 40px;
+  padding: 20px;
+  background: #000000; /* Black */
+  color: #D3D3D3; /* Gray */
+  border-radius: 8px;
+}
+
+footer a {  
+  color: rgb(130, 200, 190); /* Green */
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
 }
 </style>
