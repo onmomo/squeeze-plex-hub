@@ -16,12 +16,13 @@
 
     <!-- Players -->
     <div v-else>
-      <div v-for="player in players" :key="player.serverId" class="player-card">
-        <div class="card-content">
+      <div v-for="(group, serverId) in groupedPlayers" :key="serverId" class="server-group">
+        <h2>LMS Server: {{ serverId }}</h2>
+        <div v-for="player in group" :key="player.playerInfo.playerid" class="player-card">
+          <div class="card-content">
             <p><strong>Player</strong></p>
             <p>{{ player.playerInfo.name }} ({{ player.playerInfo.playerid }})</p>
-            <p><strong>LMS</strong></p>
-            <p>{{ player.serverId }}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -29,7 +30,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted, onUnmounted } from 'vue'
+import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import type { PlayerInfoWithServerId } from '~/server/composables/usePlayers'
 
@@ -57,6 +58,18 @@ export default defineComponent({
       }
     }
 
+    const groupedPlayers = computed(() => {
+      if (!players.value) return {}
+      return players.value.reduce((acc, player) => {
+        const serverId = player.serverId
+        if (!acc[serverId]) {
+          acc[serverId] = []
+        }
+        acc[serverId].push(player)
+        return acc
+      }, {} as Record<string, PlayerInfoWithServerId[]>)
+    })
+
     const startPolling = () => {
       if (!intervalId) {
         intervalId = setInterval(fetchPlayers, 5000) // Poll every 5 seconds
@@ -78,6 +91,7 @@ export default defineComponent({
 
     return {
       players,
+      groupedPlayers,
       loading,
       error
     }
@@ -122,6 +136,10 @@ export default defineComponent({
 .error {
   color: #ff5252;
   font-weight: bold;
+}
+
+.server-group {
+  margin: 20px 0;
 }
 
 .player-card {

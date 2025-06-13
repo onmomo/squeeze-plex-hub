@@ -1,6 +1,6 @@
-import type { SqueezeServerStub } from 'lms-squeeze-rpc';
-import { SqueezePlayer } from 'lms-squeeze-rpc'
-import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
+import type { SqueezeServerStub } from 'lms-squeeze-rpc-x';
+import { SqueezePlayer } from 'lms-squeeze-rpc-x'
+import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 
 export interface PlayerStatus {
   playerId: string

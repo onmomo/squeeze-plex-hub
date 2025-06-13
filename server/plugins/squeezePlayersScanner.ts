@@ -1,6 +1,6 @@
 import { useScheduler } from '#scheduler'
 import useLogger from '../composables/useLogger'
-import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc'
+import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc-x'
 import type { ServerInfo } from 'lms-discovery'
 
 const logger = useLogger('squeezePlayersScanner')
@@ -29,9 +29,20 @@ function squeezePlayersScanner() {
           if (server) {
             logger.debug(`Looking for players from LMS '${server.name} (${server.ip})' ..`)
             const client = new SqueezeServerStub(`http://${server.ip}:${server.jsonPort || '9000'}`)
-            const squeeze = new SqueezeServer(client)
+            const lms = new SqueezeServer(client)
 
-            const playerInfos = await squeeze.getPlayerInfosAsync()
+            // TODO also fetch model (e.g. baby) and other player info
+            // and add to playerInfo object
+            // http://lms/html/images/Players/baby_250x250_ffffff.png
+            const playerInfos = await lms.getPlayerInfosAsync()             
+            for (const playerInfo of playerInfos) {              
+              try {
+                logger.info(`Found player '${playerInfo.name}' (ID: '${playerInfo.playerid}', model: '${playerInfo.model}')`)
+              } catch (error) {
+                logger.error(`Failed to fetch model for player '${playerInfo.name}' (ID: '${playerInfo.playerid}'): ${error}`)
+              }
+            }
+
             logger.info(`Found '${playerInfos.length}' squeeze players on LMS '${server.name} (${server.ip})'`)
             await storage.setItem(`players/${server.uuid}`, playerInfos)
           }

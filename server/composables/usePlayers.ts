@@ -1,4 +1,4 @@
-import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
+import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 
 export type PlayerInfoWithServerId = {
   // LMS serverId

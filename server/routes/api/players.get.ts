@@ -1,10 +1,9 @@
-import { defineEventHandler, getQuery } from 'h3'
+import { defineEventHandler } from 'h3'
 import useLogger from '~/server/composables/useLogger'
 import usePlayers, { type PlayerInfoWithServerId } from '~/server/composables/usePlayers'
 
 export default defineEventHandler(async (event) => {
-  const logger = useLogger('token.get')
-  const storage = useStorage('CREDENTIALS')
+  const logger = useLogger('players.get')  
 
   const players = await usePlayers()  
 

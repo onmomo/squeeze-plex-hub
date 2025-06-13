@@ -1,4 +1,4 @@
-import { SqueezeServerStub } from 'lms-squeeze-rpc'
+import { SqueezeServerStub } from 'lms-squeeze-rpc-x'
 import type { ServerInfo } from 'lms-discovery'
 import usePlayers from './usePlayers'
 

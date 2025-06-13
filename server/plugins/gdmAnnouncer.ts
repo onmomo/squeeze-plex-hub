@@ -2,7 +2,7 @@ import dgram from 'dgram'
 import { StringDecoder } from 'string_decoder'
 import useLogger from '../composables/useLogger'
 import { plexOptions } from '~/server/lib/squeezePlexHub'
-import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
+import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 
 const logger = useLogger('gdmAnnouncer')
 const storage = useStorage('DISCOVERY')

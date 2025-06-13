@@ -2,7 +2,7 @@ import { Builder } from 'xml2js'
 import useLogger from '../composables/useLogger'
 import usePlayerInfo from '~/server/composables/usePlayerInfo'
 import { plexOptions } from '~/server/lib/squeezePlexHub'
-import type { IPlayerInfo } from 'lms-squeeze-rpc/dist/modelTypes'
+import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import { responseHeaders } from '../lib/plexApi'
 
 const logger = useLogger('resources')
