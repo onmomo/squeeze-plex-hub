@@ -1,18 +1,37 @@
 import { defineEventHandler } from 'h3'
+import type { ServerInfo } from 'lms-discovery'
+import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import useLogger from '~/server/composables/useLogger'
-import usePlayers, { type PlayerInfoWithServerId } from '~/server/composables/usePlayers'
+import usePlayerInfo from '~/server/composables/usePlayerInfo'
+import usePlayers from '~/server/composables/usePlayers'
+
+export type PlayerServerInfo = {
+  playerInfo: IPlayerInfo
+  serverInfo: ServerInfo
+}
 
 export default defineEventHandler(async (event) => {
-  const logger = useLogger('players.get')  
+  const logger = useLogger('players.get')
 
-  const players = await usePlayers()  
+  try {
+    const players = await usePlayers()
+    const playerServerInfo: PlayerServerInfo[] = await Promise.all(
+      players.map(async (player) => {
+        const playerResult = await usePlayerInfo(player.playerInfo.playerid)
+        return {
+          playerInfo: playerResult.playerInfo,
+          serverInfo: playerResult.serverInfo
+        }
+      })
+    )
 
-  interface PlayersResult {
-    players: PlayerInfoWithServerId[]    
+    logger.debug(`Found ${playerServerInfo.length} players`)
+
+    return playerServerInfo.sort((a, b) => a.playerInfo.model.localeCompare(b.playerInfo.model))
+  } catch (error) {
+    logger.info('No players found yet, try again later')
+    return event.respondWith(
+      new Response(`No players found yet, try again later`, { status: 404 })
+    )
   }
-
-  return {
-    players
-  } as PlayersResult
-  
 })

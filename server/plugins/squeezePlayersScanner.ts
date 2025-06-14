@@ -31,9 +31,6 @@ function squeezePlayersScanner() {
             const client = new SqueezeServerStub(`http://${server.ip}:${server.jsonPort || '9000'}`)
             const lms = new SqueezeServer(client)
 
-            // TODO also fetch model (e.g. baby) and other player info
-            // and add to playerInfo object
-            // http://lms/html/images/Players/baby_250x250_ffffff.png
             const playerInfos = await lms.getPlayerInfosAsync()             
             for (const playerInfo of playerInfos) {              
               try {
