@@ -117,14 +117,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.player-info-stage {
-  text-align: center;
-  margin: 20px auto;
-  max-width: 600px;
-  padding: 20px;
-  border-radius: 20px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.4);
-}
 
 .loading {
   display: flex;
@@ -153,10 +145,19 @@ export default defineComponent({
   font-weight: bold;
 }
 
+.player-info-stage {
+  text-align: center;
+  margin: 20px auto;
+  max-width: 700px;
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.4);
+}
+
 .server-group {
   color: rgb(130, 200, 190); /* Green */
   padding: 20px;
-  margin: 20px 20px;
+  margin: 20px 30px;
   background: #1e1e1e;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
   border-radius: 10px;
@@ -165,10 +166,10 @@ export default defineComponent({
 .player-card {
   background: #ff9800;
   color: #000;
-  border-radius: 10px;
+  border-radius: 30px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
   margin: 20px auto;
-  padding: 20px;
+  padding: 25px;
   max-width: 400px;
   text-align: center;
 }
