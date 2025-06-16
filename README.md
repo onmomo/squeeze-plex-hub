@@ -5,20 +5,19 @@ A Squeeze Plex Hub that allows you to play your Plex content on your Squeezebox 
 ## Project Structure
 
 ```
-my-nuxt-app
-├── assets          # Static assets such as images, fonts, and stylesheets
+squeeze-plex-hub
 ├── components      # Vue components
-│   └── ExampleComponent.vue
+│   └── DiscoveredDevices.vue
 ├── layouts         # Default layout for the application
 │   └── default.vue
 ├── middleware      # Custom middleware functions
 ├── pages           # Application pages
 │   └── index.vue   # Main page of the application
 ├── plugins         # JavaScript or TypeScript plugins
-├── static          # Static files served directly
-├── store           # Vuex store files
+├── public          # Static files served directly
+├── server          # Backend logic and API routes
 ├── nuxt.config.ts  # Nuxt configuration file
-├── tsconfig.json    # TypeScript configuration file
+├── tsconfig.json   # TypeScript configuration file
 ├── package.json    # npm configuration file
 └── README.md       # Project documentation
 ```
@@ -27,28 +26,31 @@ my-nuxt-app
 
 1. Clone the repository:
    ```
-   git clone <repository-url>
+   git clone https://github.com/onmomo/squeeze-plex-hub.git
    ```
 
 2. Navigate to the project directory:
    ```
-   cd my-nuxt-app
+   cd squeeze-plex-hub
    ```
 
-3. Install dependencies:
+3. Install dependencies using Yarn:
    ```
-   npm install
+   yarn install
    ```
 
 4. Run the development server:
    ```
-   npm run dev
+   yarn dev
    ```
 
 ## Usage
 
-- Navigate to `http://localhost:3000` to view the application.
-- Modify the files in the `components`, `pages`, and `layouts` directories to customize the application.
+- Navigate to `http://localhost:3000` to access the application.
+
+- The application will display all discovered Squeezebox players and Logitech / Lyron Media Servers (LMS), along with their metadata.
+- Use the interface to verify which Squeezebox players can be controlled via Plexamp and play your audio content on the available devices.
+
 
 ## License
 
