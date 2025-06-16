@@ -10,10 +10,8 @@ squeeze-plex-hub
 │   └── DiscoveredDevices.vue
 ├── layouts         # Default layout for the application
 │   └── default.vue
-├── middleware      # Custom middleware functions
 ├── pages           # Application pages
 │   └── index.vue   # Main page of the application
-├── plugins         # JavaScript or TypeScript plugins
 ├── public          # Static files served directly
 ├── server          # Backend logic and API routes
 ├── nuxt.config.ts  # Nuxt configuration file
