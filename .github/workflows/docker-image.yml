@@ -22,8 +22,8 @@ jobs:
         run: |
           echo "Running CI checks for PR commit"           
           yarn install --immutable
-          yarn test
           yarn build
+          yarn test          
 
   build:
     runs-on: ubuntu-latest
