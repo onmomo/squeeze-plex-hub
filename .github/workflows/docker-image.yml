@@ -2,21 +2,31 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "develop" ]
+    branches: ['develop']
   pull_request:
-    branches: [ "develop" ]
+    branches: ['develop']
 
 jobs:
+  ci:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run CI checks
+        run: |
+          echo "Running CI checks for PR commit"           
+          yarn install --immutable
+          yarn test
+          yarn build
 
   build:
-
     runs-on: ubuntu-latest
-
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     steps:
-    - uses: actions/checkout@v4
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag onmomo/squeeze-plex-hub:latest
-    - name: Push the Docker image
-      run: docker push onmomo/squeeze-plex-hub:latest
+      - uses: actions/checkout@v4
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+      - name: Build the Docker image
+        run: docker build . --file Dockerfile --tag onmomo/squeeze-plex-hub:latest
+      - name: Push the Docker image
+        run: docker push onmomo/squeeze-plex-hub:latest
