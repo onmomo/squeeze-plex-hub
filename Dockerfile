@@ -18,8 +18,6 @@ WORKDIR /app
 # Install dependencies
 RUN yarn install
 
-
-
 # Build the application
 RUN yarn build
 
