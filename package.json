@@ -10,7 +10,8 @@
     "start": "nuxt start",
     "generate": "nuxt generate",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test": "vitest"
   },
   "dependencies": {
     "@nuxt/kit": "^3.16.0",
@@ -34,7 +35,8 @@
     "eslint-plugin-vue": "^10.0.0",
     "prettier": "^3.5.3",
     "typescript": "^5.8.2",
-    "vue-tsc": "^2.2.8"
+    "vitest": "^0.34.0",
+    "vue-tsc": "^2.2.10"
   },
   "packageManager": "yarn@4.4.0"
 }
