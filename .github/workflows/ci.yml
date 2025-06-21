@@ -1,4 +1,4 @@
-name: CI
+name: Continuous Integration
 # This workflow runs continuous integration tasks such as linting, building, testing, and uploading coverage reports.
 
 on:
