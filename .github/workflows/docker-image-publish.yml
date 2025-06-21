@@ -1,4 +1,5 @@
-name: Docker Image CI
+name: Build and Publish Docker Image
+# This workflow builds and publishes the Docker image to Docker Hub when changes are pushed to the 'develop' branch.
 
 on:
   push:
