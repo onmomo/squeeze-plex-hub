@@ -23,13 +23,19 @@ jobs:
       #- name: Lint
       #  run: yarn lint
       - name: Build
-        run: yarn build      
+        run: yarn build
       - name: Run tests with coverage
         run: yarn test:coverage
       - name: Upload coverage to Codecov
+        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
