@@ -19,17 +19,19 @@
       <div v-for="(group, serverId) in groupedPlayers" :key="serverId" class="server-group">
         <h2 v-if="group.length > 0">{{ group[0].serverInfo.name }} ({{ group[0].serverInfo.ip }}) - {{ group.length }} player(s) found</h2>
         <p v-else>LMS ID: {{ serverId }} - No players found 😞</p>
-        <div v-for="player in group" :key="player.playerInfo.playerid" class="player-card">
-          <div class="card-content">
-            <p>
-              <strong>{{ player.playerInfo.name }} ({{ player.playerInfo.playerid }})</strong>
-            </p>
-            <p>v{{ player.playerInfo.firmware }}</p>
-            <img
-              :src="`http://${player.serverInfo.ip}:${player.serverInfo.jsonPort}/html/images/Players/${player.playerInfo.model}_250x250.png`"
-              :alt="`Player Model: ${player.playerInfo.model}`"
-              class="player-image"
-            />
+        <div class="server-group-cards">
+          <div v-for="player in group" :key="player.playerInfo.playerid" class="player-card">
+            <div class="card-content">
+              <p>
+                <strong>{{ player.playerInfo.name }} ({{ player.playerInfo.playerid }})</strong>
+              </p>
+              <p>v{{ player.playerInfo.firmware }}</p>
+              <img
+                :src="`http://${player.serverInfo.ip}:${player.serverInfo.jsonPort}/html/images/Players/${player.playerInfo.model}_250x250.png`"
+                :alt="`Player Model: ${player.playerInfo.model}`"
+                class="player-image"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -117,7 +119,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-
 .loading {
   display: flex;
   flex-direction: column;
@@ -148,7 +149,7 @@ export default defineComponent({
 .player-info-stage {
   text-align: center;
   margin: 20px auto;
-  max-width: 700px;
+  max-width: 900px;
   padding: 20px;
   border-radius: 20px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.4);
@@ -163,31 +164,46 @@ export default defineComponent({
   border-radius: 10px;
 }
 
+.server-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.server-group-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
 .player-card {
   background: #ff9800;
   color: #000;
   border-radius: 30px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-  margin: 20px auto;
-  padding: 25px;
-  max-width: 400px;
+  padding: 15px;
+  max-width: 300px;
   text-align: center;
 }
 
 .player-image {
   padding: 20px;
+  max-width: 250px;
 }
 
 .card-content {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .card-content p {
   margin: 5px 0;
 }
 
-.title {  
+.title {
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 10px;
