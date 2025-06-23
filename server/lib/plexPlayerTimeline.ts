@@ -388,7 +388,7 @@ const timelineContainer = (
             itemType: 'music',
             volume: volume(),
             mute: mute(),
-            shuffle: playerQueue?.playQueue?.MediaContainer.$.playQueueShuffled ? '1' : '0',
+            shuffle: playerQueue?.playQueue?.MediaContainer.$.playQueueShuffled,
             repeat: '0',
             controllable: plexOptions.controllable,
             machineIdentifier: playerQueue?.plexServer?.server.resourceIdentifier, // THIS IS ESSENTIAL TO GET THE TIMELINE TO WORK, needs to reflect the serverId of the server that hosts the playQueue. All the server information must match with what was received in createPlayeQueue request
@@ -455,127 +455,6 @@ const timelineContainer = (
     }
   }
 }
-
-// TODO refactor to use js objects instead of xml
-// https://github.com/Leonidas-from-XIV/node-xml2js?tab=readme-ov-file#so-you-wanna-some-json
-// export function timelineBody(
-//   playerStatus: PlayerStatus,
-//   subscriber: RemoteSubscriber, // TODO REMOVE
-//   plexServer?: PlexServer,
-//   includeMetadata?: boolean, // TODO implement metadata
-//   playQueue?: PlexPlayQueue
-// ) {
-//   //logger.info(`Generating timeline XML for player ${JSON.stringify(playerStatus)} ..`)
-//   //logger.info(`Generating timeline XML for playQueue ${JSON.stringify(playQueue)} ..`)
-//   function findCurrentTrack() {
-//     return playQueue?.MediaContainer.Metadata[playerStatus.playlist_cur_index]
-//   }
-
-//   // TODO fetch from plex api /metadata/$key
-//   // TODO transform playQueue JSON to XML
-//   const metadata = (track?: PlexTrack) => {
-//     if (!track) return undefined
-//     return {
-//       $: {
-//         type: 'music',
-//         itemType: 'music',
-//         title: track.title,
-//         parentTitle: track.album,
-//         grandparentTitle: track.artist,
-//         key: track.key,
-//         ratingKey: track.ratingKey,
-//         guid: track.guid,
-//         playQueueItemID: track.playQueueItemID
-//       }
-//     }
-//   }
-
-//   const timeLineMusic = {
-//     $: {
-//       type: 'music',
-//       itemType: 'music',
-//       state: playerStatus.mode == 'play' ? 'playing' : 'stopped', // TODO map pause,stop and play, buffering and error
-//       playQueueID: playQueue?.MediaContainer.playQueueID,
-//       playQueueVersion: playQueue?.MediaContainer.playQueueVersion,
-//       containerKey: `/playQueues/${playQueue?.MediaContainer.playQueueID}`,
-//       key: findCurrentTrack()?.key,
-//       playQueueItemID: findCurrentTrack()?.playQueueItemID,
-//       //audioStreamID: findCurrentTrack()?.Media[0].Part[0].Stream[0].id,
-//       //guid: findCurrentTrack()?.guid,
-//       ratingKey: findCurrentTrack()?.ratingKey,
-//       time: Math.round(playerStatus.time * 1000), // the current time of the track playing in ms
-//       duration: Math.round((playerStatus.duration || 1) * 1000), // the total duration of the track in ms
-//       seekRange: `0-${Math.round((playerStatus.duration || 1) * 1000)}`,
-//       repeat: '0',
-//       mute: '0',
-//       volume: '50', // TODO
-//       shuffle: playQueue?.MediaContainer.playQueueShuffled ? '1' : '0',
-//       //machineIdentifier: 'SqueezePlexHub', // this MUST match the clientIdentifier used to register SqueezePlexHub with Plex Server??
-//       machineIdentifier: playerStatus.playerId,
-//       port: plexServer?.port,
-//       address: plexServer?.host,
-//       protocol: plexServer?.protocol,
-//       //token: subscriber.plexServer?.token,
-//       controllable: 'volume,repeat,skipPrevious,seekTo,stepBack,stepForward,stop,playPause,shuffle,skipNext'
-//       //controllable: 'playPause,stop,skipPrevious,skipNext'
-//       //controllable: 'subtitleStream,videoStream,audioStream,shuffle,repeat,stop,playPause,stepBack,seekTo,stepForward,skipNext'
-//     }
-//     //Track: includeMetadata ? metadata(findCurrentTrack()) : undefined
-//   }
-
-//   // TODO check how we can match the playerStatus to the playQueue
-//   const mediaContainer = {
-//     MediaContainer: {
-//       $: {
-//         commandID: subscriber.commandId
-//         //location: 'fullScreenMusic',
-//         //location: 'navigation',
-//         //machineIdentifier: playerStatus.playerId
-//       },
-//       Timeline: [playQueue ? timeLineMusic : createEmptyTimeline('music'), createEmptyTimeline('video'), createEmptyTimeline('photo')]
-//     }
-//   }
-
-//   const mediaContainerEmpty = {
-//     MediaContainer: {
-//       $: {
-//         commandID: subscriber.commandId,
-//         machineIdentifier: playerStatus.playerId,
-//         location: 'fullScreenMusic',
-//         size: '3'
-//       },
-//       Timeline: [
-//         {
-//           $: {
-//             type: 'music',
-//             time: '0',
-//             seekRange: '0-0',
-//             controllable: 'playPause,stop,skipPrevious,skipNext'
-//           }
-//         },
-//         {
-//           $: {
-//             type: 'video',
-//             time: '0',
-//             seekRange: '0-0',
-//             controllable: 'playPause,stop,skipPrevious,skipNext'
-//           }
-//         },
-//         {
-//           $: {
-//             type: 'photo',
-//             time: '0',
-//             seekRange: '0-0',
-//             controllable: 'playPause,stop,skipPrevious,skipNext'
-//           }
-//         }
-//       ]
-//     }
-//   }
-//   //const builder = new Builder({ headless: true })
-//   //return builder.buildObject(mediaContainer)
-//   return mediaContainer
-// }
 
 export async function timelineResponse(
   playerStatus: PlayerStatus,
