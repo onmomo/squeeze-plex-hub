@@ -60,7 +60,8 @@ const mockTrack: Track = {
     duration: '302013',
     addedAt: '1672307103',
     updatedAt: '',
-    musicAnalysisVersion: '1'
+    musicAnalysisVersion: '1',
+    parentStudio: ''
   },
   Media: [],
   Image: [],
