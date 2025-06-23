@@ -9,8 +9,8 @@ import usePlayers from '~/server/composables/usePlayers'
 vi.mock('~/server/composables/useLogger', () => ({
   default: () => ({
     debug: vi.fn(),
-    info: vi.fn(),
-  }),
+    info: vi.fn()
+  })
 }))
 
 const mockPlayerInfo: IPlayerInfo = {
@@ -19,7 +19,7 @@ const mockPlayerInfo: IPlayerInfo = {
   model: 'A-Model',
   modelname: 'Test Model Name',
   firmware: '1.0',
-  ip: '1.0.0.127',
+  ip: '1.0.0.127'
 }
 
 const mockPlayerInfo2: IPlayerInfo = {
@@ -28,7 +28,7 @@ const mockPlayerInfo2: IPlayerInfo = {
   model: 'B-Model',
   modelname: 'Second Model Name',
   firmware: '2.0',
-  ip: '1.0.0.128',
+  ip: '1.0.0.128'
 }
 
 const mockServerInfo: ServerInfo = {
@@ -40,19 +40,22 @@ const mockServerInfo: ServerInfo = {
   cliPort: '9091'
 } as ServerInfo
 
-vi.mock('~/server/composables/usePlayers', () => ({  
-  default: vi.fn(),
+vi.mock('~/server/composables/usePlayers', () => ({
+  default: vi.fn()
 }))
 
 vi.mock('~/server/composables/usePlayerInfo', () => ({
-  default: vi.fn(),
+  default: vi.fn()
 }))
-
 
 function createEventMock() {
   return {
-    respondWith: vi.fn(),
-  }
+    __is_event__: true,
+    node: {},
+    context: {},
+    _handled: false,
+    respondWith: vi.fn()
+  } as any
 }
 
 describe('players.get API handler', () => {
@@ -61,11 +64,11 @@ describe('players.get API handler', () => {
   })
 
   it('returns sorted playerServerInfo array', async () => {
-    (usePlayers as Mock).mockResolvedValue([
+    ;(usePlayers as Mock).mockResolvedValue([
       { playerInfo: mockPlayerInfo, serverId: mockServerInfo.uuid },
-      { playerInfo: mockPlayerInfo2, serverId: mockServerInfo.uuid },
-    ]);
-    (usePlayerInfo as Mock).mockImplementation(async (playerid: string) => {
+      { playerInfo: mockPlayerInfo2, serverId: mockServerInfo.uuid }
+    ])
+    ;(usePlayerInfo as Mock).mockImplementation(async (playerid: string) => {
       if (playerid === mockPlayerInfo.playerid) {
         return { playerInfo: mockPlayerInfo, serverInfo: mockServerInfo }
       }
@@ -78,21 +81,21 @@ describe('players.get API handler', () => {
     const result = await playersGetHandler(event)
 
     expect(Array.isArray(result)).toBe(true)
-    expect((result as PlayerServerInfo[])).toHaveLength(2)
+    expect(result as PlayerServerInfo[]).toHaveLength(2)
     // Sorted by model
     expect((result as PlayerServerInfo[])[0].playerInfo.model).toBe('A-Model')
     expect((result as PlayerServerInfo[])[1].playerInfo.model).toBe('B-Model')
   })
 
   it('returns 404 and message if no LMS found, try/catch', async () => {
-    (usePlayers as Mock).mockRejectedValue(new Error('No LMS'))
+    ;(usePlayers as Mock).mockRejectedValue(new Error('No LMS'))
     const event = createEventMock()
-    await playersGetHandler(event)    
-    expect(event.respondWith).toHaveBeenCalledWith(expect.objectContaining({ status: 404 } as Response))    
+    await playersGetHandler(event)
+    expect(event.respondWith).toHaveBeenCalledWith(expect.objectContaining({ status: 404 } as Response))
   })
 
   it('returns empty array if no players found', async () => {
-    (usePlayers as Mock).mockResolvedValue([])
+    ;(usePlayers as Mock).mockResolvedValue([])
     const event = createEventMock()
     const result = await playersGetHandler(event)
     expect(result).toHaveLength(0)
