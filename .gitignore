@@ -14,7 +14,7 @@ yarn-error.log*
 .yarn/
 dist/
 coverage/
-junit-test-report.xml
+test-report.junit.xml
 
 
 # Environment variables
