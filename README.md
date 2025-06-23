@@ -1,5 +1,7 @@
 # Squeeze Plex Hub
 
+[![codecov](https://codecov.io/gh/onmomo/squeeze-plex-hub/graph/badge.svg?token=YKSKRGA15P)](https://codecov.io/gh/onmomo/squeeze-plex-hub)
+
 A Squeeze Plex Hub that allows you to play your Plex content on your Squeezebox devices.
 
 ## Project Structure
