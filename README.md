@@ -8,10 +8,8 @@ A Squeeze Plex Hub that allows you to play your Plex content on your Squeezebox 
 
 ```
 squeeze-plex-hub
-├── components      # Vue components
+├── components      # Vue components for application pages
 │   └── DiscoveredDevices.vue
-├── layouts         # Default layout for the application
-│   └── default.vue
 ├── pages           # Application pages
 │   └── index.vue   # Main page of the application
 ├── public          # Static files served directly
