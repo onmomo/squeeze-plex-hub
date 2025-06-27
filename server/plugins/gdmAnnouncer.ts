@@ -6,6 +6,7 @@ import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import { log } from 'console'
 
 const logger = useLogger('gdmAnnouncer')
+const storage = useStorage('DISCOVERY')
 
 // Needs to listen on this port for discovery requests from plex clients in the local network
 const gdmAnnouncerPort = 32412
@@ -18,8 +19,7 @@ export default defineNitroPlugin(() => {
 /**
  * Announces LMS players to Plex clients using GDM.
  */
-export function runGdmAnnouncer() {
-  const storage = useStorage('DISCOVERY')
+export function runGdmAnnouncer() {  
   try {
     const decoder = new StringDecoder('utf8')
     // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
