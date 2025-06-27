@@ -5,7 +5,6 @@ import { plexOptions } from '~/server/lib/squeezePlexHub'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 
 const logger = useLogger('gdmAnnouncer')
-const storage = useStorage('DISCOVERY')
 
 // Needs to listen on this port for discovery requests from plex clients in the local network
 const gdmAnnouncerPort = 32412
@@ -20,6 +19,7 @@ export default defineNitroPlugin(() => {
  */
 export function runGdmAnnouncer() {  
   try {
+    const storage = useStorage('DISCOVERY')
     const decoder = new StringDecoder('utf8')
     // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
     // Essential that we can run multiple Plex clients or server next to Squeeze Plex Hub on the same host
