@@ -3,6 +3,7 @@ import { StringDecoder } from 'string_decoder'
 import useLogger from '../composables/useLogger'
 import { plexOptions } from '~/server/lib/squeezePlexHub'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
+import { log } from 'console'
 
 const logger = useLogger('gdmAnnouncer')
 
@@ -40,8 +41,12 @@ export function runGdmAnnouncer() {
       try {
         const packetContent = decoder.write(msg).trim()
         if (packetContent.match(/M-SEARCH \* HTTP\/1\.[0-1]/)) {
-          logger.debug(`Received GDM discovery request from ${rinfo.address}:${rinfo.port}`)
-          storage.getKeys('players/').then(async (serverKey) => {
+          logger.debug(`Received GDM discovery request from ${rinfo.address}:${rinfo.port}`)          
+          console.log('blub')
+          console.log(await storage?.getKeys())
+          console.log('blubber')
+          await storage.getKeys('players/').then(async (serverKey) => {
+            console.log('serverKey', serverKey)
             if (!serverKey) {
               logger.debug('No LMS found in storage, skipping')
               return

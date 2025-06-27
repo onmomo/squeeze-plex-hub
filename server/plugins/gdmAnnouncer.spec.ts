@@ -1,37 +1,6 @@
-// @vitest-environment nuxt
 import dgram from 'dgram'
 import { describe, it, vi, beforeEach, afterEach, expect } from 'vitest'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
-
-//import type { NitroAppPlugin } from 'nitropack/types'
-
-//const defineNitroPluginMock = vi.fn((fn) => fn)
-//vi.stubGlobal('defineNitroPlugin', defineNitroPluginMock)
-
-
-
-// Mock dependencies
-
-// Create a mock NitroAppPlugin
-        //const plugin: NitroAppPlugin = vi.fn() as unknown as NitroAppPlugin
-//import { defineNitroPlugin } from 'nitropack/runtime/internal/plugin'
-        //const result = defineNitroPlugin(plugin)
-
-//vi.mock('nitropack/runtime/internal/plugin', () => ({
-//    defineNitroPlugin: vi.fn((fn) => fn as NitroAppPlugin)
-//}));
-
-// Add type declaration for defineNitroPlugin on globalThis
-
-
-const mockGetKeys = vi.fn()
-const mockGetItem = vi.fn()
-const useStorageMock = vi.fn().mockReturnValue({
-  getKeys: mockGetKeys,
-  getItem: mockGetItem
-})
-
-vi.stubGlobal('useStorage', useStorageMock)
 
 vi.mock('../composables/useLogger', () => ({
   default: () => ({
@@ -53,6 +22,16 @@ vi.mock('~/server/lib/squeezePlexHub', () => ({
     protocolCapabilities: 'cap1,cap2'
   }
 }))
+
+const mockGetKeys = vi.fn()
+const mockGetItem = vi.fn()
+function useStorage() {
+  return {
+    getKeys: mockGetKeys,
+    getItem: mockGetItem
+  }
+}
+vi.stubGlobal('useStorage', useStorage)
 
 import { runGdmAnnouncer } from './gdmAnnouncer'
 
@@ -81,9 +60,7 @@ describe('gdmAnnouncer', () => {
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()
-    mockGetKeys.mockReset()
-    mockGetItem.mockReset()
+    vi.restoreAllMocks()    
   })
 
   it('should bind to the correct port and set up listeners', () => {
@@ -105,6 +82,9 @@ describe('gdmAnnouncer', () => {
 
   it('should respond to M-SEARCH discovery requests with player info', async () => {
     const player: IPlayerInfo = { name: 'Player1', playerid: 'abc123' } as any
+    mockGetKeys.mockResolvedValue(['players/server1'])
+    mockGetItem.mockResolvedValue([player])
+
     runGdmAnnouncer()
     const msg = Buffer.from('M-SEARCH * HTTP/1.1')
     await messageHandler(msg, { address: '1.2.3.4', port: 12345 })

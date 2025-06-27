@@ -9203,22 +9203,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nitro-test-utils@npm:^0.9.2":
-  version: 0.9.2
-  resolution: "nitro-test-utils@npm:0.9.2"
-  dependencies:
-    dotenv: "npm:^16.4.7"
-    listhen: "npm:^1.9.0"
-    ofetch: "npm:^1.4.1"
-    pathe: "npm:^2.0.3"
-    ufo: "npm:^1.5.4"
-  peerDependencies:
-    nitropack: ^2
-    vitest: ^2 || ^3
-  checksum: 10c0/48e9676266ffdd0bed659ba3d5eae5dec579b6deda67a12215e6fa528deadff9a51a15413efe24a6d53a9129b4f1af3e6a0110219f63fef5813be18bfd7f7c5f
-  languageName: node
-  linkType: hard
-
 "nitropack@npm:^2.11.12":
   version: 2.11.12
   resolution: "nitropack@npm:2.11.12"
@@ -11586,7 +11570,6 @@ __metadata:
     eslint-plugin-vue: "npm:^10.0.0"
     lms-discovery: "npm:^1.1.0"
     lms-squeeze-rpc-x: "npm:1.1.0"
-    nitro-test-utils: "npm:^0.9.2"
     nuxt: "npm:^3.17.5"
     nuxt-scheduler: "npm:^0.1.9"
     prettier: "npm:^3.5.3"

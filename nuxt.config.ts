@@ -37,7 +37,5 @@ export default {
     typeCheck: true,
     strict: true
   },
-  buildModules: ['@nuxt/typescript-build'],
-  modules: ['nuxt-scheduler', '@nuxt/ui'],
-  //testUtils: {}
+  buildModules: ['@nuxt/typescript-build'],  modules: ['nuxt-scheduler', '@nuxt/ui'],
 }
