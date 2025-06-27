@@ -5,24 +5,25 @@ import { plexOptions } from '~/server/lib/squeezePlexHub'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 
 const logger = useLogger('gdmAnnouncer')
-const storage = useStorage('DISCOVERY')
+
 // Needs to listen on this port for discovery requests from plex clients in the local network
 const gdmAnnouncerPort = 32412
 
 export default defineNitroPlugin(() => {
   // Since other devices may also want to announce on this port, we should not block it? Or how should that work if multiple devices want to announce on the same port? Like having plex client and plexamp running on the same machine?
-  gdmAnnouncer()
+  runGdmAnnouncer()
 })
 
 /**
  * Announces LMS players to Plex clients using GDM.
  */
-function gdmAnnouncer() {
+export function runGdmAnnouncer() {
+  const storage = useStorage('DISCOVERY')
   try {
     const decoder = new StringDecoder('utf8')
     // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
     // Essential that we can run multiple Plex clients or server next to Squeeze Plex Hub on the same host
-    const server = dgram.createSocket({ type: 'udp4', reuseAddr: true }) 
+    const server = dgram.createSocket({ type: 'udp4', reuseAddr: true })
 
     server.on('listening', () => {
       try {
@@ -69,7 +70,7 @@ function gdmAnnouncer() {
     })
 
     server.on('error', (err) => {
-      logger.error('Error on gdm announcer:', err)            
+      logger.error('Error on gdm announcer:', err)
       server.close()
     })
 
@@ -88,17 +89,17 @@ function announceMessage(player: IPlayerInfo) {
   appendParameter(sb, 'Content-Type', 'plex/media-player')
   appendParameter(sb, 'Device-Class', plexOptions.deviceClass)
   appendParameter(sb, 'Name', player.name)
-  //appendParameter(sb, 'RawName', player.name)
   appendParameter(sb, 'Port', plexOptions.port)
   appendParameter(sb, 'Product', plexOptions.product)
   appendParameter(sb, 'Version', plexOptions.version)
-  //appendParameter(sb, 'Device', plexOptions.device)
-  //appendParameter(sb, 'Model', plexOptions.model)
   appendParameter(sb, 'Protocol', plexOptions.protocol)
   appendParameter(sb, 'Protocol-Version', plexOptions.protocolVersion)
   appendParameter(sb, 'Protocol-Capabilities', plexOptions.protocolCapabilities)
-  //appendParameter(sb, 'Provides', 'player')
   appendParameter(sb, 'Resource-Identifier', player.playerid)
+  //appendParameter(sb, 'Provides', 'player')
+  //appendParameter(sb, 'RawName', player.name)
+  //appendParameter(sb, 'Device', plexOptions.device)
+  //appendParameter(sb, 'Model', plexOptions.model)
   sb.push('\r\n')
 
   return sb.join('')
