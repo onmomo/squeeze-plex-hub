@@ -1,18 +1,14 @@
 import dgram from 'dgram'
 import useLogger from '../composables/useLogger'
-import { useScheduler } from "#scheduler"
+import { useScheduler } from '#scheduler'
 
 const broadcastAddress = '239.255.255.250'
 const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
 // needs to broadcast on this port to receive a response from plex servers in the local network
 const discoveryPort = 32414
 
-const logger = useLogger('gdmAnnouncer')
-const storage = useStorage('DISCOVERY')
-const scheduler = useScheduler()
-
 export default defineNitroPlugin(() => {
-  gdmDiscovery()
+  runGdmDiscovery()
 })
 
 export interface PlexServerResponse {
@@ -33,12 +29,15 @@ export interface PlexServerResponse {
  * Looks for Plex servers on the network using GDM (Global Discovery and Management).
  * @returns List of Plex servers found on the network
  */
-async function gdmDiscovery() {
-  logger.info('Starting GDM Plex server discovery ...')  
+async function runGdmDiscovery() {
+  const logger = useLogger('gdmDiscovery')
+  const storage = useStorage('DISCOVERY')
+  const scheduler = useScheduler()
+  logger.info('Starting GDM Plex server discovery ...')
   scheduler
     .run(async () => {
       try {
-        // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port        
+        // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
         const discoverySocket = dgram.createSocket({ type: 'udp4', reuseAddr: true })
 
         discoverySocket.bind(() => {
@@ -61,37 +60,35 @@ async function gdmDiscovery() {
             if (!plexServer || plexServer.contentType !== 'plex/media-server') {
               logger.warn('Unexpected GDM Discovery response:', responseData)
               return
-            }            
+            }
             logger.info(
               `Discovered PLEX server '${plexServer.name}' at ${plexServer.localAddress}:${plexServer.port} (host: ${plexServer.host})`
             )
             await storage.setItem(`plexServer`, plexServer)
             discoverySocket.close()
-            return
           }
         })
 
         discoverySocket.on('error', (err) => {
           logger.error('Error on GDM Discovery:', err)
           discoverySocket.close()
-        })        
+        })
         setTimeout(() => {
           logger.info('GDM Discovery no response received within 30s, trying again later ..')
           discoverySocket.close()
         }, 300000)
       } catch (error) {
-        logger.error('Error during GDM Discovery:', error)        
+        logger.error('Error during GDM Discovery:', error)
       }
     })
     .everySeconds(30)
 }
 
-function parseServerResponse(response: string, localAddress: string): PlexServerResponse | null {
+export function parseServerResponse(response: string, localAddress: string): PlexServerResponse | undefined {
   const lines = response.split('\n')
   const result: Partial<PlexServerResponse> = {}
   result.localAddress = localAddress
   result.protocol = 'http' // we only get the local address here, so we assume http
-  
 
   for (const line of lines) {
     const cleanLine = line.trim().replace(/,$/, '') // Remove trailing comma
@@ -139,5 +136,5 @@ function parseServerResponse(response: string, localAddress: string): PlexServer
     return result as PlexServerResponse
   }
 
-  return null
+  return undefined
 }
