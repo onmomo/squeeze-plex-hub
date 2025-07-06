@@ -20,7 +20,7 @@ squeeze-plex-hub
 └── README.md       # Project documentation
 ```
 
-## Setup Instructions
+## Dev Setup Instructions
 
 1. Clone the repository:
    ```
@@ -42,12 +42,27 @@ squeeze-plex-hub
    yarn dev
    ```
 
+## Container Run Instructions
+
+To run the application in a container using Docker:
+
+1. Build the Docker image:
+   ```
+   docker build -t squeeze-plex-hub .
+   ```
+
+2. Run the container:
+   ```
+   docker run -p 3000:3000 squeeze-plex-hub
+   ```
+
+The application will be available at `http://localhost:3000`.
+
 ## Usage
 
 - Navigate to `http://localhost:3000` to access the application.
-
 - The application will display all discovered Squeezebox players and Logitech / Lyron Media Servers (LMS), along with their metadata.
-- Use the interface to verify which Squeezebox players can be controlled via Plexamp and play your audio content on the available devices.
+- Use the interface to verify which Squeezebox players can be controlled via Plexamp and start to play your audio content on the discovered devices.
 
 
 ## License
