@@ -11,17 +11,23 @@ import { Builder } from 'xml2js'
 import { responseHeaders } from '../lib/plexApi'
 
 const logger = useLogger('timelinePublisher')
-const storage = useStorage('DISCOVERY')
-const scheduler = useScheduler()
 
 export default defineNitroPlugin(() => {
-  publishTimeline()
+  runPublishTimeline()
 })
 
 /**
  * Publishes the timeline to the players to all plex clients that are subscribed to the timeline.
+ * This is not required for Plexamp clients as they do not subscribe nor send wait=1 when calling poll.get and will receive the timeline updates as response to the poll request.
+ * This is required for all other clients that subscribe to the timeline via /timeline/subscribe or /timeline/poll with wait=1.
+ * The timeline is published every second to all subscribers of the players.
+ *
+ * This is probably LEGACY functionality for Plex web player and other clients that subscribe to the timeline.
+ *
  */
-function publishTimeline() {
+export function runPublishTimeline() {
+  const storage = useStorage('DISCOVERY')
+  const scheduler = useScheduler()
   const builder = new Builder()
   scheduler
     .run(async () => {
@@ -38,6 +44,7 @@ function publishTimeline() {
 
         for (const key of serverKeys) {
           const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
+          logger.debug(`Found ${playerInfos?.length || 0} players for server '${key}'`)
           const serverId = key.split(':')[1] // e.g. players:de443cee-943b-421a-8db3-575e5b4cddc6 where the later is the serverId
           if (playerInfos) {
             for (const player of playerInfos) {
@@ -89,10 +96,10 @@ function publishTimeline() {
 
           const serverTimelineUrl = `http://${playerQueue.plexServer.server.localAddress}:${playerQueue.plexServer.server.port}/:/timeline`
           for (const subscriber of playerSubscribers || []) {
-            const timeline = await timelineResponse(playerStatus, subscriber, playerQueue, true) // TODO support includeMetadata
+            const timeline = await timelineResponse(playerStatus, subscriber, playerQueue, true)            
             const timelineString = builder.buildObject(timeline)
             timeline.MediaContainer.Timeline.forEach(async (timelineItem) => {
-              logger.debug(`Sending timeline '${timelineItem.$.itemType}' to subscriber ${subscriber.deviceName} ..`)
+              logger.debug(`Sending timeline '${timelineItem.$.itemType}' to subscriber '${subscriber.deviceName}' ..`)
 
               if (
                 !timelineItem.$.state ||
@@ -107,12 +114,12 @@ function publishTimeline() {
                 !timelineItem.$.containerKey
               ) {
                 logger.debug(
-                  `Missing required parameters for timeline '${timelineItem.$.itemType}' for subscriber ${subscriber.deviceName} / ${subscriber.clientIdentifier}, skip timeline update.`
+                  `Missing required parameters for timeline '${timelineItem.$.itemType}' for subscriber '${subscriber.deviceName} / ${subscriber.clientIdentifier}', skip timeline update.`
                 )
                 return
               }
               logger.debug(
-                `sending update: ${timelineItem.$.state} / ${timelineItem.$.time} / ${timelineItem.$.key} / ${timelineItem.$.type} / ${timelineItem.$.ratingKey} / ${timelineItem.$.playQueueID} / ${timelineItem.$.duration} / ${timelineItem.$.playQueueItemID} / ${timelineItem.$.containerKey}`
+                `Sending update: ${timelineItem.$.state} / ${timelineItem.$.time} / ${timelineItem.$.key} / ${timelineItem.$.type} / ${timelineItem.$.ratingKey} / ${timelineItem.$.playQueueID} / ${timelineItem.$.duration} / ${timelineItem.$.playQueueItemID} / ${timelineItem.$.containerKey}`
               )
               const url = new URL(serverTimelineUrl)
               url.searchParams.append('commandID', timeline.MediaContainer.$.commandID) // TODO why is it required to have query params instead of the xml body?
@@ -128,7 +135,7 @@ function publishTimeline() {
               url.searchParams.append('playQueueItemID', timelineItem.$.playQueueItemID)
               url.searchParams.append('containerKey', timelineItem.$.containerKey)
               url.searchParams.append('hasMDE', '1')
-              url.searchParams.append('includeFields', 'thumbBlurHash')              
+              url.searchParams.append('includeFields', 'thumbBlurHash')
 
               const headers = responseHeaders(playerInfo.playerid, playerInfo.name, 'application/xml')
               headers.append('X-Plex-Token', playerQueue.plexServer.token)
@@ -140,25 +147,16 @@ function publishTimeline() {
                 .catch(async (error) => {
                   logger.error(
                     `Failed to update timeline '${timelineItem.$.itemType}' for subscriber ${subscriber.deviceName} / ${subscriber.clientIdentifier}, unsubscribe from squeezePlexHub: ${error.message}`
-                  )
+                  )                  
                   await storage.removeItem(`subscribers/${playerInfo.playerid}/${subscriber.clientIdentifier}`)
                   // abort if one timeline fails to send
                   return
                 })
-            })
-            //logger.info(`Sending timeline to subscriber ${subscriber.deviceName} @ ${subscriber.address} ..`)
-            //url.searchParams.append('url', musicTimeline.$.url) // TODO what value is here actually required?   artwork URL?
-            //url.searchParams.append('source', 'local') // TODO there must be another parameter to map it to source= on the controller it seems
-
-            //state=playing&duration=380906&time=89249&playQueueItemID=583873&key=/library/metadata/35460&ratingKey=35460&playQueueID=7570&playQueueVersion=1&contai
-
-            //logger.info(`Sending headers: ${JSON.stringify(headers)}`)
-
-            //const body = builder.buildObject(xmlBody)
+            })            
           }
         })
       } catch (error) {
-        logger.error(`Error when publishing timeline`, error)
+        logger.error(`Error when publishing timeline`, error)                  
       }
     })
     .everySeconds(1)
