@@ -2,7 +2,6 @@ import { useScheduler } from '#scheduler'
 import useLogger from '../composables/useLogger'
 import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc-x'
 import type { ServerInfo } from 'lms-discovery'
-import { log } from 'winston'
 
 export default defineNitroPlugin(() => {
   runSqueezePlayersScanner()
@@ -33,17 +32,13 @@ export function runSqueezePlayersScanner() {
             const lms = new SqueezeServer(client)
 
             const playerInfos = await lms.getPlayerInfosAsync()
-            for (const playerInfo of playerInfos) {
-              try {
-                logger.info(`Found player '${playerInfo.name}' (ID: '${playerInfo.playerid}', model: '${playerInfo.model}')`)
-              } catch (error) {
-                logger.error(`Failed to fetch model for player '${playerInfo.name}' (ID: '${playerInfo.playerid}'): ${error}`)
-              }
+            if (playerInfos.length === 0) {
+              logger.info(`No players found on LMS '${server.name}' (${server.ip})`)
+            } else {
+              logger.info(`Discovered ${playerInfos.length} player(s) on LMS '${server.name}' at ${server.ip}, storing player info`)
+              await storage.setItem(`players/${server.uuid}`, playerInfos)
+              logger.debug(`Stored player infos for LMS '${server.name}' (${server.ip})`)
             }
-
-            logger.info(`Found '${playerInfos.length}' squeeze players on LMS '${server.name} (${server.ip})'`)
-            await storage.setItem(`players/${server.uuid}`, playerInfos)
-            logger.debug(`Stored player infos for LMS '${server.name}' (${server.ip})`)
           }
         }
       })
