@@ -1,12 +1,12 @@
-import useLogger from '~/server/composables/useLogger'
+import { eventHandler, getRequestHeader, getQuery } from 'h3'
+import useLogger from '../../../composables/useLogger'
 import usePlayerInfo from '~/server/composables/usePlayerInfo'
-import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
 import { type PlayerPlayQueue, timelineResponse } from '../../../lib/plexPlayerTimeline'
 import { responseHeaders } from '~/server/lib/plexApi'
-import { Builder } from 'xml2js'
+import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
+import useXmlBuilder from '../../../composables/useXmlBuilder'
 
 const logger = useLogger('timeline.poll')
-const storage = useStorage('DISCOVERY')
 
 export interface RemoteSubscriber {
   // the client that subscribes to the targetClientIdentifier player
@@ -24,6 +24,7 @@ export interface RemoteSubscriber {
 }
 
 export default eventHandler(async (event) => {
+  const storage = useStorage('DISCOVERY')
   const query = getQuery(event)
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
@@ -49,15 +50,13 @@ export default eventHandler(async (event) => {
   }
 
   try {
-    const builder = new Builder({ headless: true })
     logger.debug(`Polling player ${targetClientIdentifier} status ..: ${JSON.stringify(event.node.req.headers)}`)
     
-    const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
-    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
-
-    const playerStatus = await player.status()
+    const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
+    const { player } = await useSqueezePlayer(targetClientIdentifier)
+    const playerStatus = await player.status()    
     if (!playerStatus) {
-      throw new Error(`Player ${targetClientIdentifier} status available yet`)
+      throw new Error(`Player '${targetClientIdentifier}' status not available yet`)
     }
 
     /**
@@ -86,7 +85,7 @@ export default eventHandler(async (event) => {
       const status = await player.status()
       if (status) {
         const timelineXml = await timelineResponse(status, subscriber, playerQueue, queryParameters.includeMetadata)
-        const xmlString = builder.buildObject(timelineXml)
+        const { xmlString } = useXmlBuilder(timelineXml, true)
         return event.respondWith(new Response(xmlString, { status: 200, headers }))
       }
       // will result in a 204 no content
@@ -94,7 +93,7 @@ export default eventHandler(async (event) => {
     }
 
     const timelineXml = await timelineResponse(playerStatus, subscriber, playerQueue, queryParameters.includeMetadata)
-    const xmlString = builder.buildObject(timelineXml)    
+    const { xmlString } = useXmlBuilder(timelineXml, true)
     logger.debug(
       `Polling player ${playerInfo.name}, wait: ${queryParameters.wait}, includeMeta: ${queryParameters.includeMetadata}, timeline: ${xmlString}, queue ${playerQueue?.playerId}`
     )
