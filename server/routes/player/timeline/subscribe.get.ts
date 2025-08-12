@@ -1,10 +1,11 @@
-import useLogger from '~/server/composables/useLogger'
+import { eventHandler, getRequestHeader, getQuery, sendNoContent } from 'h3'
+import useLogger from '../../../composables/useLogger'
 import type { RemoteSubscriber } from './poll.get'
 
 const logger = useLogger('timeline.subscribe')
-const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {
+  const storage = useStorage('DISCOVERY')
   const query = getQuery(event)
 
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')

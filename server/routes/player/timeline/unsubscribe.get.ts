@@ -1,9 +1,10 @@
-import useLogger from '~/server/composables/useLogger'
+import { eventHandler, getRequestHeader, sendNoContent } from 'h3'
+import useLogger from '../../../composables/useLogger'
 
 const logger = useLogger('timeline.unsubscribe')
-const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {
+  const storage = useStorage('DISCOVERY')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
 
