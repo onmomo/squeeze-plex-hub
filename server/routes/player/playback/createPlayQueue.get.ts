@@ -69,7 +69,7 @@ export default eventHandler(async (event) => {
     )
   }
 
-  try {
+  try {    
     logger.debug(`Creating play queue for player ${targetClientIdentifier} ..: ${JSON.stringify(event.node.req.headers)} and Query: ${JSON.stringify(queryParameters)}`)
     const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
     const player = new ExtendedSqueezePlayer(serverStub, playerInfo)        
@@ -85,7 +85,16 @@ export default eventHandler(async (event) => {
     }
 
     const playQueueUrl = getPlexApi(plexServer, '/playQueues')
-    const createPlayQueueUrl = `${playQueueUrl}?type=${queryParameters.type}&shuffle=${queryParameters.shuffle || 0}&includeExternalMedia=${queryParameters.includeExternalMedia}&repeat=0&uri=${queryParameters.uri}`
+    const params = new URLSearchParams({
+      includeLoudnessRamps: '1',
+      includeFields: 'thumbBlurHash',
+      type: queryParameters.type,
+      shuffle: (queryParameters.shuffle ?? '0').toString(),
+      includeExternalMedia: queryParameters.includeExternalMedia,
+      repeat: '0',
+      uri: queryParameters.uri
+    })
+    const createPlayQueueUrl = `${playQueueUrl}?${params.toString()}`
     logger.info(`Creating play queue on Plex server with URL: ${createPlayQueueUrl}..`)
     const createPlayQueueResponse = await axios
       .post<string>(createPlayQueueUrl, '', {
@@ -115,7 +124,7 @@ export default eventHandler(async (event) => {
     //logger.info(`Retrieved playQueue information from Plex for player '${JSON.stringify(createPlayQueueResponse.data)}'`)
     //const playQueue: PlexPlayQueue = parsePlayQueueResult(createPlayQueueResponse.data)
     if (!playQueue || playQueue.MediaContainer.Track === undefined) {
-      // should not happen, but sometimes plex just a playQueue with 0 tracks playing mixes
+      // should not happen, but sometimes plex server returns a playQueue with 0 tracks playing mixes or artist radios if there is no (sonically) similar artist available
       throw new Error(`Incomplete playQueue response received, skip: ${JSON.stringify(playQueue)}`)
     }
 
