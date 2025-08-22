@@ -97,7 +97,7 @@ export default eventHandler(async (event) => {
       })
       .then((response) => {
         if (!response.data) {
-          throw new Error('No valid playQueue response from Plex server')
+          throw new Error('Invalid playQueue response from Plex server received')
         }
         return response.data
       })
@@ -114,8 +114,9 @@ export default eventHandler(async (event) => {
     //const playQueueSelectedItemOffset = createPlayQueueResponse.data.MediaContainer.playQueueSelectedItemOffset || 0
     //logger.info(`Retrieved playQueue information from Plex for player '${JSON.stringify(createPlayQueueResponse.data)}'`)
     //const playQueue: PlexPlayQueue = parsePlayQueueResult(createPlayQueueResponse.data)
-    if (!playQueue) {
-      throw new Error(`No playQueue received from Plex server response for uri ${queryParameters.uri}`)
+    if (!playQueue || playQueue.MediaContainer.Track === undefined) {
+      // should not happen, but sometimes plex just a playQueue with 0 tracks playing mixes
+      throw new Error(`Incomplete playQueue response received, skip: ${JSON.stringify(playQueue)}`)
     }
 
     const playerQueue: PlayerPlayQueue = {
@@ -127,9 +128,12 @@ export default eventHandler(async (event) => {
     await storage.setItem(`playerQueue/${playerInfo.playerid}`, playerQueue)
     logger.info(`Created play queue on Plex server with ID: ${playQueue.MediaContainer.$.playQueueID} for player ${playerInfo.name}`)
 
-    await player.clearPlaylist()
+    await player.clearPlaylist()    
+    logger.info(
+      `Adding ${playQueue.MediaContainer.Track?.length} tracks to player '${playerInfo.name}' (id=${playerInfo.playerid}) from Plex playQueue ${playQueue.MediaContainer.$.playQueueID}`
+    )
     for (const meta of playQueue.MediaContainer.Track) {
-      logger.info(`Adding track '${meta.$.title}' to player '${playerInfo.name}' playlist ..`)
+      logger.info(`Adding track '${meta.$.title}' to player '${playerInfo.name}' queue ..`)
       const trackUrl = getPlexApiTrack(plexServer, meta)
       await player.addToPlaylist(trackUrl, metadata(meta))
     }
