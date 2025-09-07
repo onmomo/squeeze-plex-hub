@@ -1,9 +1,9 @@
 export default {
   runtimeConfig: {
-    logLevel: 'info'    
+    logLevel: 'info'
   },
   devServer: {
-    host: '0.0.0.0', // required to allow plex server and players to connect and poll from squeeze plex hub players'
+    host: '0.0.0.0' // required to allow plex server and players to connect and poll from squeeze plex hub players'
     //port: 32500
   },
   vite: {
@@ -19,17 +19,30 @@ export default {
   },
   compatibilityDate: '2025-01-25',
   devtools: {
-    enabled: true
+    enabled: process.env.NODE_ENV !== 'production'
   },
   target: 'server',
-  head: {
-    title: 'Squeeze Plex Hub',
-    meta: [
-      { charset: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { hid: 'description', name: 'description', content: 'Squeeze Plex Hub' }
-    ],
-    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }]
+  app: {
+    head: {
+      title: 'Squeeze Plex Hub',
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        {
+          hid: 'description',
+          name: 'description',
+          content:
+            'Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyron Media Server ecosystem so you can play Plex audio on Squeezebox (and compatible) players.'
+        }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'icon', type: 'image/png', sizes: '16x16', href: '/favicon-16x16.png' },
+        { rel: 'icon', type: 'image/png', sizes: '32x32', href: '/favicon-32x32.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/site.webmanifest' }
+      ]
+    }
   },
   plugins: [],
   components: true,
@@ -37,5 +50,6 @@ export default {
     typeCheck: true,
     strict: true
   },
-  buildModules: ['@nuxt/typescript-build'],  modules: ['nuxt-scheduler', '@nuxt/ui'],
+  buildModules: ['@nuxt/typescript-build'],
+  modules: ['nuxt-scheduler', '@nuxt/ui']
 }
