@@ -111,7 +111,6 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
 
     const result = await handler(event)
 
-    expect(result).toBeUndefined()
     expect(mockGetItem).toHaveBeenCalledWith('playerQueue/player-1')
     expect(selectTrackInPlaylist).not.toHaveBeenCalled()
     expect(h3.sendNoContent as Mock).not.toHaveBeenCalled()

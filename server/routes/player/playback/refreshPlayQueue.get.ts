@@ -32,6 +32,7 @@ export default eventHandler(async (event) => {
 
   try {
     // TODO figure what to do here, how to refresh the playQueue and when is this triggered?
+    // This route is triggered by plex app when a track has been added or removed from the playQueue
     return sendNoContent(event, 200)
   } catch (error) {
     logger.warn(`Error when refreshing play queue for player '${targetClientIdentifier}'`, error)
