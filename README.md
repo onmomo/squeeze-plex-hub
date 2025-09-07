@@ -1,4 +1,4 @@
-![Squeeze Plex Hub Logo](public/logo.png)
+![Squeeze Plex Hub Logo](public/logo_512.png)
 
 # Squeeze Plex Hub
 
