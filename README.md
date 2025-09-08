@@ -4,8 +4,11 @@
 <h3>Stream Plexamp to your Squeezebox players with instant discovery and native controls.</h3>
 
 <p>
-<a href="https://codecov.io/gh/onmomo/squeeze-plex-hub" target="_blank" rel="noopener noreferrer"><img src="https://codecov.io/gh/onmomo/squeeze-plex-hub/graph/badge.svg?token=YKSKRGA15P" alt="codecov coverage badge" style="vertical-align:middle;"></a> &bull;
-<a href="https://github.com/sponsors/onmomo" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Sponsor-❤-brightgreen" alt="sponsor me" style="vertical-align:middle;"></a> &bull;
+<a href="https://codecov.io/gh/onmomo/squeeze-plex-hub" target="_blank" rel="noopener noreferrer"><img src="https://codecov.io/gh/onmomo/squeeze-plex-hub/graph/badge.svg?token=YKSKRGA15P" alt="codecov coverage badge"></a>
+<a href="https://github.com/sponsors/onmomo" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Sponsor-❤-brightgreen" alt="sponsor me"></a>
+</p>
+
+<p>
 <a href="https://lyrion.org" target="_blank" rel="noopener noreferrer">🔊 Lyrion</a> &bull;
 <a href="https://www.plex.tv/plexamp" target="_blank" rel="noopener noreferrer">⏯️ Plexamp</a>
 </p>
