@@ -23,14 +23,18 @@
           <div v-for="player in group" :key="player.playerInfo.playerid" class="player-card">
             <div class="card-content">
               <p>
-                <strong>{{ player.playerInfo.name }} ({{ player.playerInfo.playerid }})</strong>
+                <strong>{{ player.playerInfo.name }}</strong>
               </p>
-              <p>v{{ player.playerInfo.firmware }}</p>
               <img
                 :src="`http://${player.serverInfo.ip}:${player.serverInfo.jsonPort}/html/images/Players/${player.playerInfo.model}_250x250.png`"
                 :alt="`Player Model: ${player.playerInfo.model}`"
                 class="player-image"
               />
+              <div>
+                <p>🏷️ {{ player.playerInfo.playerid }}</p>
+                <p>📶 {{ player.playerInfo.ip }}</p>
+                <p>⚙️ {{ player.playerInfo.firmware }}</p>                
+              </div>
             </div>
           </div>
         </div>
@@ -185,15 +189,15 @@ export default defineComponent({
   padding: 15px;
 
   width: 100%;
-  max-width: 300px;         /* responsive max width */
-  margin: 0 auto;           /* center when stacked */
+  max-width: 300px; /* responsive max width */
+  margin: 0 auto; /* center when stacked */
   text-align: center;
 }
 
 .player-image {
   display: block;
   width: 100%;
-  max-width: 250px;         /* keep image from growing too large */
+  max-width: 250px; /* keep image from growing too large */
   height: auto;
   margin: 0 auto;
 }
