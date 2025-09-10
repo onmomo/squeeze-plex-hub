@@ -17,7 +17,7 @@
 
 # Squeeze Plex Hub
 
-Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Media Server ecosystem so you can play Plex audio on Squeezebox (and compatible) players.
+Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server ecosystem so you can play Plex audio on Squeezebox (and compatible) players.
 
 ## Features
 
@@ -28,7 +28,7 @@ Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Media Server
 
 ## Requirements
 
-- Running Logitech / Lyrion Media Server (LMS) with at least one connected player
+- Running Lyrion Music Server (formerly Logitech Media Server) with at least one connected player
   - LMS JSON/CLI interfaces enabled (default)
 - Plex Media Server with your audio library
 - Plexamp client (desktop or mobile) signed into the same Plex account
@@ -65,7 +65,7 @@ docker run -d -p 3000:3000 --name squeeze-plex-hub onmomo/squeeze-plex-hub
 ```
 
 - Navigate to `http://localhost:3000` to access the Squeeze Plex Hub web interface.
-- The application will display all discovered Squeezebox players and Logitech / Lyrion Media Servers (LMS), along with their metadata.
+- The application will display all discovered Squeezebox players and Lyrion Music Server (formerly Logitech Media Server), along with their metadata.
 - Use the interface to verify which Squeezebox players can be controlled via Plexamp and start to play your audio content on the discovered devices.
 
 ## Project Structure
