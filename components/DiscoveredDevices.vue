@@ -150,7 +150,7 @@ export default defineComponent({
   text-align: center;
   margin: 20px auto;
   max-width: 900px;
-  padding: 20px;
+  padding-bottom: 10px;
   border-radius: 20px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.4);
 }
@@ -212,13 +212,13 @@ export default defineComponent({
 .title {
   font-size: 20px;
   font-weight: bold;
-  margin-bottom: 10px;
+  padding-top: 20px;
 }
 
 /* Mobile: 400px and below */
 @media (max-width: 400px) {
   .player-info-stage {
-    padding: 12px;
+    padding: 6px;
     margin: 10px auto;
   }
 
