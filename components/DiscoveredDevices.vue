@@ -1,7 +1,7 @@
 <template>
   <div class="player-info-stage">
     <h1 class="title">Discovered Squeezebox Players</h1>
-    <p v-if="!loading">Manage and control your Squeezebox Players seamlessly with Plexamp.</p>
+    <p v-if="!loading">Stream Plexamp to your Squeezebox players with instant discovery and native controls.</p>
 
     <!-- Loading State -->
     <div v-if="loading" class="loading">
@@ -91,7 +91,7 @@ export default defineComponent({
 
     const startPolling = () => {
       if (!intervalId) {
-        intervalId = setInterval(fetchPlayers, 5000) // Poll every 5 seconds
+        intervalId = setInterval(fetchPlayers, 5000)
       }
     }
 
@@ -155,25 +155,25 @@ export default defineComponent({
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.4);
 }
 
+/* Remove black background */
 .server-group {
-  color: rgb(130, 200, 190); /* Green */
+  color: rgb(130, 200, 190);
   padding: 20px;
   margin: 20px 30px;
-  background: #1e1e1e;
+  background: #efebeb;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
   border-radius: 10px;
-}
 
-.server-group {
   display: flex;
   flex-direction: column;
 }
 
+/* Center and make cards responsive */
 .server-group-cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  justify-content: space-evenly;
+  gap: 16px;
+  justify-content: center; /* center cards in all widths */
   align-items: center;
 }
 
@@ -183,13 +183,19 @@ export default defineComponent({
   border-radius: 30px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
   padding: 15px;
-  max-width: 300px;
+
+  width: 100%;
+  max-width: 300px;         /* responsive max width */
+  margin: 0 auto;           /* center when stacked */
   text-align: center;
 }
 
 .player-image {
-  padding: 20px;
-  max-width: 250px;
+  display: block;
+  width: 100%;
+  max-width: 250px;         /* keep image from growing too large */
+  height: auto;
+  margin: 0 auto;
 }
 
 .card-content {
@@ -207,5 +213,32 @@ export default defineComponent({
   font-size: 20px;
   font-weight: bold;
   margin-bottom: 10px;
+}
+
+/* Mobile: 400px and below */
+@media (max-width: 400px) {
+  .player-info-stage {
+    padding: 12px;
+    margin: 10px auto;
+  }
+
+  .server-group {
+    margin: 12px 0;
+    padding: 12px;
+  }
+
+  .server-group-cards {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .player-card {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .player-image {
+    max-width: 200px;
+  }
 }
 </style>
