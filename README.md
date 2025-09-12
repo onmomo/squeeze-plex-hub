@@ -15,8 +15,8 @@
 
 <h3>See how it works.</h3>
 <p>
-<img alt="Squeeze Plex Hub - Plexamp controls" src="public/docs/squeezePlexHub_Plexamp_controls.gif" width="320" style="border-radius: 16px;" />
-<img alt="Squeeze Plex Hub - Dashboard" src="public/docs/squeezePlexHub_dashboard.gif" width="320" style="border-radius: 16px;" />
+<img alt="Squeeze Plex Hub - Plexamp controls" src="public/docs/squeezePlexHub_Plexamp_controls.gif" width="320" style="border-radius:16px;" />
+<img alt="Squeeze Plex Hub - Dashboard" src="public/docs/squeezePlexHub_dashboard.gif" width="320" style="border-radius:16px;" />
 </p>
 </div>
 
