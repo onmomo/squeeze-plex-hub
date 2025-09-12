@@ -31,7 +31,7 @@
                 class="player-image"
               />
               <div>
-                
+                <p>🏷️ {{ player.playerInfo.playerid }}</p>
                 <p>📶 {{ player.playerInfo.ip }}</p>
                 <p>⚙️ {{ player.playerInfo.firmware }}</p>                
               </div>
