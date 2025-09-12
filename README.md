@@ -14,9 +14,10 @@
 </p>
 
 <h3>See how it works.</h3>
+<p>
 <img alt="Squeeze Plex Hub - Plexamp controls" src="public/docs/squeezePlexHub_Plexamp_controls.gif" width="320"/>
 <img alt="Squeeze Plex Hub - Dashboard" src="public/docs/squeezePlexHub_dashboard.gif" width="320"/>
-
+</p>
 </div>
 
 # Squeeze Plex Hub
@@ -64,6 +65,7 @@ After start:
 - Port conflict: If 3000 is already in use, publish a different host port (e.g. docker run -p 8080:3000 ...) and browse to http://localhost:8080.
 
 ## Known Issues
+
 - Plex Web player: The app handles device advertisement and timeline updates differently than Plexamp. Squeeze Plex Hub works, but with limited capabilities. For the best experience, use Plexamp.
 - Album artwork not showing on the Squeezebox display: Current LMS limitation; reading artwork from stream isn’t supported for Plex audio streams.
 
