@@ -1,6 +1,6 @@
 <div align="center">
 
-<img alt="Squeeze Plex Hub" src="public/docs/logo.png" width="400"/>
+<img alt="Squeeze Plex Hub" src="public/docs/logo.png" width="400" style="border-radius:16px;"/>
 <h3>Stream Plexamp to your Squeezebox players with instant discovery and native controls.</h3>
 
 <p>
@@ -15,8 +15,8 @@
 
 <h3>See how it works.</h3>
 <p>
-<img alt="Squeeze Plex Hub - Plexamp controls" src="public/docs/squeezePlexHub_Plexamp_controls.gif" width="320"/>
-<img alt="Squeeze Plex Hub - Dashboard" src="public/docs/squeezePlexHub_dashboard.gif" width="320"/>
+<img alt="Squeeze Plex Hub - Plexamp controls" src="public/docs/squeezePlexHub_Plexamp_controls.gif" width="320" style="border-radius: 16px;" />
+<img alt="Squeeze Plex Hub - Dashboard" src="public/docs/squeezePlexHub_dashboard.gif" width="320" style="border-radius: 16px;" />
 </p>
 </div>
 
