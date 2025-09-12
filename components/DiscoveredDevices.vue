@@ -6,7 +6,7 @@
     <!-- Loading State -->
     <div v-if="loading" class="loading">
       <div class="spinner" />
-      <p>Loading devices...</p>
+      <p>Scanning for players...</p>
     </div>
 
     <!-- Error State -->
@@ -31,7 +31,7 @@
                 class="player-image"
               />
               <div>
-                <p>🏷️ {{ player.playerInfo.playerid }}</p>
+                
                 <p>📶 {{ player.playerInfo.ip }}</p>
                 <p>⚙️ {{ player.playerInfo.firmware }}</p>                
               </div>
