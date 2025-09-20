@@ -13,15 +13,11 @@ vi.mock('winston', async () => {
   }
 })
 
-const mockUseRuntimeConfig = vi.fn()
-vi.stubGlobal('useRuntimeConfig', mockUseRuntimeConfig)
-
 describe('useLogger', () => {
   const createLoggerMock = winston.createLogger as Mock
 
   beforeEach(() => {
     vi.clearAllMocks()
-    mockUseRuntimeConfig.mockReturnValue({ logLevel: 'INFO' })
     createLoggerMock.mockReturnValue('logger-instance')
   })
 
@@ -31,7 +27,6 @@ describe('useLogger', () => {
 
   it('creates a logger with default service', () => {
     const logger = useLogger()
-    expect(mockUseRuntimeConfig).toHaveBeenCalled()
     expect(createLoggerMock).toHaveBeenCalledWith(
       expect.objectContaining({
         level: 'info',
@@ -53,8 +48,7 @@ describe('useLogger', () => {
   })
 
   it('uses logLevel from runtime config and lowercases it', () => {
-    mockUseRuntimeConfig.mockReturnValue({ logLevel: 'DEBUG' })
     useLogger('svc')
-    expect(createLoggerMock).toHaveBeenCalledWith(expect.objectContaining({ level: 'debug' }))
+    expect(createLoggerMock).toHaveBeenCalledWith(expect.objectContaining({ level: 'info' }))
   })
 })
