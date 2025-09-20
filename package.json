@@ -17,7 +17,7 @@
   "dependencies": {
     "@nuxt/kit": "^3.17.5",
     "@nuxt/ui": "^3.3.0",
-    "axios": "^1.11.0",
+    "axios": "^1.12.0",
     "lms-discovery": "^1.1.0",
     "lms-squeeze-rpc-x": "1.1.0",
     "nuxt": "^3.17.5",
