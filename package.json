@@ -20,7 +20,7 @@
     "axios": "^1.12.0",
     "lms-discovery": "^1.1.0",
     "lms-squeeze-rpc-x": "1.1.0",
-    "nuxt": "^3.17.5",
+    "nuxt": "^3.19.0",
     "nuxt-scheduler": "^0.1.9",
     "winston": "^3.17.0",
     "xml2js": "^0.6.2"
