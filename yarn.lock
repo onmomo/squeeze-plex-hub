@@ -12417,6 +12417,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^8.39.1"
     "@typescript-eslint/parser": "npm:^8.39.1"
     "@vitest/coverage-v8": "npm:^3.2.4"
+    "@vue/test-utils": "npm:^2.4.6"
     axios: "npm:^1.12.0"
     eslint: "npm:^9.33.0"
     eslint-plugin-nuxt: "npm:^4.0.0"
@@ -13959,6 +13960,15 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 10c0/add701f1e72596c002275782e38d0389ab400c1be330c93a3009804d62db68097a936ca1c53c3301df3aaacfe5e328eab547060f31ef9c49a277ae50df6ad4fb
+  languageName: node
+  linkType: hard
+
+"vitest-environment-nuxt@npm:^1.0.1":
+  version: 1.0.1
+  resolution: "vitest-environment-nuxt@npm:1.0.1"
+  dependencies:
+    "@nuxt/test-utils": "npm:>=3.13.1"
+  checksum: 10c0/453e36926799fb9914a7087488d5ad7ac3974762fbbe576c5735edc984ab377d403fa374bbd6e17cc891a41a191d0339371cb725ee75e65f81a25e6759affa99
   languageName: node
   linkType: hard
 
