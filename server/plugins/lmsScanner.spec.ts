@@ -40,6 +40,8 @@ describe('squeezeScanner', () => {
     // Simulate discovered event
     const server = { name: 'Test', ip: '1.2.3.4', jsonPort: 9000, uuid: 'abc' }
     const discoveredCallback = (discovery.on as Mock).mock.calls.find(([event]) => event === 'discovered')?.[1]
+    
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     discoveredCallback && discoveredCallback(server)
 
     expect(mockSetItem).toHaveBeenCalledWith('servers/abc', server)
@@ -52,6 +54,7 @@ describe('squeezeScanner', () => {
     // Simulate lost event
     const server = { name: 'Test', ip: '1.2.3.4', jsonPort: 9000, uuid: 'byebye' }
     const discoveredCallback = (discovery.on as Mock).mock.calls.find(([event]) => event === 'lost')?.[1]
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     discoveredCallback && discoveredCallback(server)
 
     expect(mockRemoveItem).toHaveBeenCalledWith('servers/byebye', server)
@@ -63,6 +66,7 @@ describe('squeezeScanner', () => {
     expect(discovery.start).toHaveBeenCalled()
     // Simulate error event    
     const discoveredCallback = (discovery.on as Mock).mock.calls.find(([event]) => event === 'error')?.[1]
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     discoveredCallback && discoveredCallback(new Error('Test error'))
 
     expect(mockSetItem).not.toHaveBeenCalled()

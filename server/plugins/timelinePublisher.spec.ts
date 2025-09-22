@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import axios from 'axios'
 import type { ServerInfo } from 'lms-discovery'
-import { type PlayerPlayQueue, type TimelineContainer } from '../lib/plexPlayerTimeline'
+import type { PlayerPlayQueue, TimelineContainer } from '../lib/plexPlayerTimeline'
 import { runPublishTimeline } from './timelinePublisher'
 
 vi.mock('axios', () => {

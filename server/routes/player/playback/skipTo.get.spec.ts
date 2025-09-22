@@ -109,7 +109,7 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
       respondWith: vi.fn()
     }
 
-    const result = await handler(event)
+    await handler(event)
 
     expect(mockGetItem).toHaveBeenCalledWith('playerQueue/player-1')
     expect(selectTrackInPlaylist).not.toHaveBeenCalled()

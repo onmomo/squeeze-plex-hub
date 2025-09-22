@@ -29,7 +29,7 @@
                 :src="`http://${player.serverInfo.ip}:${player.serverInfo.jsonPort}/html/images/Players/${player.playerInfo.model}_250x250.png`"
                 :alt="`Player Model: ${player.playerInfo.model}`"
                 class="player-image"
-              />
+              >
               <div>
                 
                 <p>📶 {{ player.playerInfo.ip }}</p>

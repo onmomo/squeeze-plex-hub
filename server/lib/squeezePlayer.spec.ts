@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
-import ExtendedSqueezePlayer, { type PlayerStatus } from './squeezePlayer'
+import ExtendedSqueezePlayer from './squeezePlayer'
 import type { SqueezeServerStub } from 'lms-squeeze-rpc-x'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 

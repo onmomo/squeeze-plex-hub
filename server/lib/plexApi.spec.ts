@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { parseStringPromise } from 'xml2js'
 import * as plexApi from './plexApi'
-import type { Track, PlayQueue } from './plexPlayerTimeline'
+import type { Track } from './plexPlayerTimeline'
 import { describe, expect, it, vi, type Mock } from 'vitest'
 
 vi.mock('axios')
