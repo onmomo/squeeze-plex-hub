@@ -1,8 +1,8 @@
 import useLogger from '~/server/composables/useLogger'
 import usePlayerInfo from '~/server/composables/usePlayerInfo'
-import { getRequestHeader } from 'h3'
-import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
+import { getRequestHeader, eventHandler, setResponseHeaders, sendNoContent  } from 'h3'
 import { responseHeaders } from '~/server/lib/plexApi'
+import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
 
 const logger = useLogger('playback.stop')
 
@@ -25,8 +25,8 @@ export default eventHandler(async (event) => {
   }
 
   try {
-    const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
-    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
+    const { player } = await useSqueezePlayer(targetClientIdentifier)
 
     await player.stop()
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
