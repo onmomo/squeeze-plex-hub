@@ -24,7 +24,7 @@ vi.stubGlobal('useStorage', () => ({
 }))
 
 const mockScheduler = {
-  run: vi.fn(function (fn) {
+  run: vi.fn(function () {
     return mockScheduler
   }),
   everySeconds: vi.fn()

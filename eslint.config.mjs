@@ -4,7 +4,6 @@ export default createConfigForNuxt({
   // options here
 })
   .prepend(
-    // ...Prepend some flat configs in front
   )
   // Override some rules in a specific config, based on their name
   .override('nuxt/typescript/rules', {
@@ -14,4 +13,4 @@ export default createConfigForNuxt({
       '@typescript-eslint/no-explicit-any': 'off'
     }
   })
-  // ...you can chain more operations as needed
+

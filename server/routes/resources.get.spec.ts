@@ -6,7 +6,7 @@ import usePlayerInfo from '~/server/composables/usePlayerInfo'
 
 vi.mock('xml2js', () => ({
   Builder: class {
-    buildObject(obj: any) {
+    buildObject() {
       return '<xml>mocked</xml>'
     }
   }

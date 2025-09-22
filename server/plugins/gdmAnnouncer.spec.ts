@@ -2,6 +2,8 @@ import dgram from 'dgram'
 import { describe, it, vi, beforeEach, afterEach, expect } from 'vitest'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 
+import { runGdmAnnouncer } from './gdmAnnouncer'
+
 vi.mock('../composables/useLogger', () => ({
   default: () => ({
     info: vi.fn(),
@@ -32,8 +34,6 @@ function useStorage() {
   }
 }
 vi.stubGlobal('useStorage', useStorage)
-
-import { runGdmAnnouncer } from './gdmAnnouncer'
 
 describe('gdmAnnouncer', () => {
   let server: any

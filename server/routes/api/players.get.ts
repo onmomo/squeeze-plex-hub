@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
     return playerServerInfo.sort((a, b) => a.playerInfo.model.localeCompare(b.playerInfo.model))
   } catch (error) {
-    logger.info('No players found yet, try again later')
+    logger.warn('No players found yet, try again later', error)
     return event.respondWith(
       new Response(`No players found yet, try again later`, { status: 404 })
     )

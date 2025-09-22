@@ -9,7 +9,8 @@ import usePlayers from '~/server/composables/usePlayers'
 vi.mock('~/server/composables/useLogger', () => ({
   default: () => ({
     debug: vi.fn(),
-    info: vi.fn()
+    info: vi.fn(),
+    warn: vi.fn()
   })
 }))
 
