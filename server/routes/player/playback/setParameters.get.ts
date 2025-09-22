@@ -1,8 +1,8 @@
 import useLogger from '~/server/composables/useLogger'
 import usePlayerInfo from '~/server/composables/usePlayerInfo'
-import { getRequestHeader, getQuery } from 'h3'
-import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
+import { getRequestHeader, getQuery, eventHandler, setResponseHeaders, sendNoContent  } from 'h3'
 import { responseHeaders } from '~/server/lib/plexApi'
+import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
 
 const logger = useLogger('playback.setParameters')
 
@@ -16,8 +16,8 @@ export default eventHandler(async (event) => {
   const queryParameters = {
     type: query.type as string,
     commandID: query.commandID as string,
-    shuffle: query.shuffle as string | undefined, // TODO implement
     volume: query.volume as string | undefined,
+    shuffle: query.shuffle as string | undefined, // TODO implement
     repeat: query.repeat as string | undefined, // TODO implement
   }
 
@@ -35,8 +35,8 @@ export default eventHandler(async (event) => {
   }
 
   try {
-    const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
-    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
+    const { player } = await useSqueezePlayer(targetClientIdentifier)
 
     if (queryParameters.volume) {
       await player.setVolumeAsync(parseInt(queryParameters.volume))
