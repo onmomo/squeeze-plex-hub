@@ -1,8 +1,8 @@
 import useLogger from '~/server/composables/useLogger'
 import usePlayerInfo from '~/server/composables/usePlayerInfo'
-import { getRequestHeader, getQuery } from 'h3'
-import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
+import { getRequestHeader, getQuery, eventHandler, setResponseHeaders, sendNoContent  } from 'h3'
 import { responseHeaders } from '~/server/lib/plexApi'
+import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
 
 const logger = useLogger('playback.seekTo')
 
@@ -24,15 +24,15 @@ export default eventHandler(async (event) => {
     )
     return event.respondWith(
       new Response(
-        `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier' headers or offset parameter)`,
+        `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier' headers or 'offset' query parameter)`,
         { status: 400 }
       )
     )
   }
 
   try {
-    const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
-    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
+    const { player } = await useSqueezePlayer(targetClientIdentifier)
 
     if (queryParameters.offset) {      
       const offsetInSeconds = parseInt(queryParameters.offset, 10) / 1000
