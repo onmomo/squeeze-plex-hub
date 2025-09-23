@@ -1,19 +1,19 @@
 import useLogger from '~/server/composables/useLogger'
 import usePlayerInfo from '~/server/composables/usePlayerInfo'
-import ExtendedSqueezePlayer from '~/server/lib/squeezePlayer'
 import { getPlayQueue, metadata, responseHeaders, getPlexApiTrack } from '../../../lib/plexApi'
 import type { PlayerPlayQueue, PlayQueue } from '~/server/lib/plexPlayerTimeline'
+import { getRequestHeader, getQuery, eventHandler, setResponseHeaders, sendNoContent } from 'h3'
+import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
 
 const logger = useLogger('playback.playMedia')
-const storage = useStorage('DISCOVERY')
 
 export default eventHandler(async (event) => {
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const query = getQuery(event)
-  const queryParameters = {    
+  const queryParameters = {
     key: query.key as string,
     containerKey: query.containerKey as string | undefined,
-    token: query.token as string,    
+    token: query.token as string,
     type: query.type as string,
     protocol: query.protocol as string,
     address: query.address as string,
@@ -22,7 +22,16 @@ export default eventHandler(async (event) => {
     commandID: query.commandID as string
   }
 
-  if (!targetClientIdentifier || !queryParameters.commandID || !queryParameters.address || !queryParameters.protocol || !queryParameters.port || !queryParameters.token || !queryParameters.containerKey || !queryParameters.key) {
+  if (
+    !targetClientIdentifier ||
+    !queryParameters.commandID ||
+    !queryParameters.address ||
+    !queryParameters.protocol ||
+    !queryParameters.port ||
+    !queryParameters.token ||
+    !queryParameters.containerKey ||
+    !queryParameters.key
+  ) {
     logger.warn(
       `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers and 'commandID' query parameter), got:`,
       event.node.req.headers
@@ -37,7 +46,7 @@ export default eventHandler(async (event) => {
 
   logger.debug(`PlayMedia Queries: ${JSON.stringify(query)}`)
 
-  try {  
+  try {
     const plexServer = {
       server: {
         protocol: queryParameters.protocol,
@@ -47,17 +56,18 @@ export default eventHandler(async (event) => {
       },
       token: queryParameters.token
     }
-    
-    const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
-    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+
+    const storage = useStorage('DISCOVERY')
+    const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
+    const { player } = await useSqueezePlayer(targetClientIdentifier)
 
     const playQueue: PlayQueue = await getPlayQueue(plexServer, queryParameters.containerKey)
     const playerQueue: PlayerPlayQueue = {
       playerId: playerInfo.playerid,
       playQueue,
       plexServer
-  }
-    
+    }
+
     await player.clearPlaylist()
     for (const track of playQueue.MediaContainer.Track) {
       logger.info(`Adding track '${track.$.title}' to player '${playerInfo.name}' playlist ..`)
@@ -66,7 +76,7 @@ export default eventHandler(async (event) => {
     }
 
     logger.info(`Playing playlist item '${playQueue.MediaContainer.$.playQueueSelectedItemOffset}' on player '${playerInfo.name}'`)
-    await player.selectTrackInPlaylist(playQueue.MediaContainer.$.playQueueSelectedItemOffset)    
+    await player.selectTrackInPlaylist(playQueue.MediaContainer.$.playQueueSelectedItemOffset)
     await storage.setItem(`playerQueue/${playerInfo.playerid}`, playerQueue)
 
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
