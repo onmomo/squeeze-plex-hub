@@ -49,11 +49,11 @@ export function runGdmAnnouncer() {
             for (const key of serverKey) {
               const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
               if (playerInfos) {
-                logger.debug(
+                logger.info(
                   `Announcing '${playerInfos.length}' players from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
                 )
                 for (const playerInfo of playerInfos) {
-                  logger.info(
+                  logger.debug(
                     `Announcing squeeze player '${playerInfo.name}' from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
                   )
                   const message = announceMessage(playerInfo)
