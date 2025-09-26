@@ -98,7 +98,7 @@ export default eventHandler(async (event) => {
       throw new Error(`Failed to parse play queue response from Plex server: ${error.message}`)
     })
 
-    logger.debug(`Retrieved playQueue information from Plex for player '${JSON.stringify(createPlayQueueResponse.data)}'`)
+    logger.debug(`Retrieved playQueue information from Plex for player '${JSON.stringify(playQueue)}'`)
     if (!playQueue || playQueue.MediaContainer?.Track === undefined) {
       // should not happen, but sometimes plex server returns a playQueue with 0 tracks playing mixes or artist radios if there is no (sonically) similar artist available
       throw new Error(`Incomplete playQueue response received, skip: ${JSON.stringify(playQueue)}`)
