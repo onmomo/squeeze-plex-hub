@@ -23,7 +23,9 @@ jobs:
       - name: Bump version and create tag
         run: |                    
           gh auth setup-git 
-          npx standard-version --release-as minor          
+          npx standard-version --release-as minor
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
       - name: Create and push tag
         run: git push --follow-tags origin develop
       - name: Log in to Docker Hub
