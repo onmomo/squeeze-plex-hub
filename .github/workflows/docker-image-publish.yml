@@ -21,12 +21,11 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable      
       - name: Bump version and create tag
-        run: |
+        run: |                    
+          gh auth setup-git 
           npx standard-version --release-as minor          
       - name: Create and push tag
-        run: |
-          gh auth setup-git
-          git push --follow-tags origin develop
+        run: git push --follow-tags origin develop
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
       - name: Build the Docker image
