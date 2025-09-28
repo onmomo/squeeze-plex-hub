@@ -35,7 +35,7 @@ Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server
 
 - Running Lyrion Music Server (formerly Logitech Media Server) with at least one connected player
   - LMS JSON/CLI interfaces enabled (default)
-- Plex Media Server with your audio library
+- Plex Media Server with your audio library to stream from. No further media required on Lyrion Music Server.
 - Plexamp client (desktop or mobile) signed into the same Plex account
 - Network: Squeeze Plex Hub must reach both LMS and Plexamp client (usually same LAN)
 
@@ -135,6 +135,15 @@ To run the application in a container using Docker:
 
 The application will be available at `http://localhost:3000`.
 
-## License
+## Disclaimer  
+**Squeeze Plex Hub** is an independent, open source project and is **not affiliated with, endorsed by, or officially supported by Plex, Plexamp, Logitech, or Slim Devices**.  
+All product names and trademarks are the property of their respective owners.
 
+## License
 This project is licensed under the MIT License.
+
+## Support the Project  
+Squeeze Plex Hub is developed and maintained in my spare time.  
+If you find it useful and want to support further development, please consider sponsoring me on GitHub:  
+
+👉 [GitHub Sponsors](https://github.com/sponsors/onmomo)
