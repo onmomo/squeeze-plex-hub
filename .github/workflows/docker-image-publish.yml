@@ -1,5 +1,4 @@
 name: Build and Publish Docker Image
-# This workflow builds and publishes the Docker image to Docker Hub when changes are pushed to the 'develop' branch.
 
 on:
   push:
@@ -11,9 +10,30 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed to push tags
+      - name: Set up Node.js and Yarn
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+      - name: Install Yarn 4.x
+        run: corepack enable && corepack prepare yarn@4.4.0 --activate
+      - name: Install dependencies
+        run: yarn install --immutable      
+      - name: Bump version and create tag
+        run: |
+          npx standard-version --release-as minor          
+      - name: Create and push tag
+        run: |
+          gh auth setup-git
+          git push --follow-tags origin develop
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag onmomo/squeeze-plex-hub:latest
+        run: |
+          VERSION=$(git describe --tags --abbrev=0)
+          docker build . --file Dockerfile --tag onmomo/squeeze-plex-hub:latest --tag onmomo/squeeze-plex-hub:${VERSION}
       - name: Push the Docker image
-        run: docker push onmomo/squeeze-plex-hub:latest
+        run: |
+          docker push onmomo/squeeze-plex-hub:latest
+          docker push onmomo/squeeze-plex-hub:${VERSION}
