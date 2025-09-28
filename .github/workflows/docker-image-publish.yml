@@ -20,12 +20,15 @@ jobs:
         run: corepack enable && corepack prepare yarn@4.4.0 --activate
       - name: Install dependencies
         run: yarn install --immutable      
-      - name: Bump version and create tag
+      - name: Git config
         run: |                    
-          gh auth setup-git 
-          npx standard-version --release-as minor
+          gh auth setup-git
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}          
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}            
+      - name: Bump version and create tag
+        run: npx standard-version --release-as minor      
       - name: Create and push tag
         run: git push --follow-tags origin develop
       - name: Log in to Docker Hub
