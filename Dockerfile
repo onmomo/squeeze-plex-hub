@@ -1,8 +1,9 @@
 ARG NODE_VERSION=lts
-ARG APP_VERSION=latest
 
 # Create build stage
 FROM node:${NODE_VERSION} AS build
+
+ARG APP_VERSION=latest
 
 # Enable corepack and set Yarn as the package manager
 RUN corepack enable && corepack prepare yarn@stable --activate
@@ -16,6 +17,10 @@ COPY . ./app/
 # Set the working directory inside the container
 WORKDIR /app
 
+# Set environment variable for build
+ENV NODE_ENV=production \
+    APP_VERSION=${APP_VERSION}
+
 # Install dependencies
 RUN yarn install
 
@@ -25,6 +30,8 @@ RUN yarn build
 # Create a new stage for the production image
 FROM node:${NODE_VERSION}-slim
 
+ARG APP_VERSION
+
 # Set the working directory inside the container
 WORKDIR /app
 
@@ -32,8 +39,7 @@ WORKDIR /app
 COPY --from=build /app/.output ./
 
 # Define environment variables
-ENV HOST=0.0.0.0 \
-    NODE_ENV=production \
+ENV NODE_ENV=production \
     APP_VERSION=${APP_VERSION}
 
 # Expose the port the application will run on

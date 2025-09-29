@@ -35,7 +35,7 @@ async function runGdmDiscovery() {
   const storage = useStorage('DISCOVERY')
   const scheduler = useScheduler()
   const { appVersion } = useRuntimeConfig()
-  logger.info(`Squeeze Plex Hub '${appVersion}' initialized. 🔊 ⏯️`)
+  logger.info(`Squeeze Plex Hub version '${appVersion}' initialized. 🔊 ⏯️`)
   logger.info('Starting GDM Plex server discovery ...')
   scheduler
     .run(async () => {
