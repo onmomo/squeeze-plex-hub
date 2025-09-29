@@ -42,11 +42,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Build multi-platform Docker image
-        run: |
-          docker buildx build \
-            --platform linux/amd64,linux/arm64 \
-            --build-arg APP_VERSION=ci \
-            --file Dockerfile \
-            --tag onmomo/squeeze-plex-hub:ci \
-            .
-          
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: onmomo/squeeze-plex-hub:ci
+          platforms: linux/amd64,linux/arm64
+          build-args: APP_VERSION=ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
