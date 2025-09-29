@@ -29,13 +29,16 @@ jobs:
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Extract APP_VERSION from package.json
+        id: app_version
+        run: echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
       - name: Build & Push the multi-platform Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: onmomo/squeeze-plex-hub:latest,onmomo/squeeze-plex-hub:${APP_VERSION}
+          tags: onmomo/squeeze-plex-hub:latest,onmomo/squeeze-plex-hub:${{ steps.app_version.outputs.version }}
           platforms: linux/amd64,linux/arm64
-          build-args: APP_VERSION=ci
+          build-args: APP_VERSION=${{ steps.app_version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
