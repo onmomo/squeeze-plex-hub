@@ -38,4 +38,13 @@ jobs:
         if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}          
+          token: ${{ secrets.CODECOV_TOKEN }}        
+      - name: Build multi-platform Docker image
+        run: |
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --build-arg APP_VERSION=ci \
+            --file Dockerfile \
+            --tag onmomo/squeeze-plex-hub:ci \
+            .
+          
