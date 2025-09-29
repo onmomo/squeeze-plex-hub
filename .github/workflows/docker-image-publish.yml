@@ -41,5 +41,6 @@ jobs:
           docker build . --file Dockerfile --build-arg APP_VERSION=${APP_VERSION} --tag onmomo/squeeze-plex-hub:latest --tag onmomo/squeeze-plex-hub:${APP_VERSION}
       - name: Push the Docker image
         run: |
+          APP_VERSION=$(jq -r .version package.json)
           docker push onmomo/squeeze-plex-hub:latest
-          docker push onmomo/squeeze-plex-hub:${env.APP_VERSION}
+          docker push onmomo/squeeze-plex-hub:${APP_VERSION}
