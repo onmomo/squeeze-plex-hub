@@ -8,7 +8,7 @@ export default defineNitroPlugin(() => {
 })
 
 /**
- * Scans for LMS (Lyron / Logitech Media Server) players on the network and stores them in the DISCOVERY storage.
+ * Scans for LMS (Lyrion / Logitech Media Server) players on the network and stores them in the DISCOVERY storage.
  */
 export function runSqueezePlayersScanner() {
   const logger = useLogger('squeezePlayersScanner')
