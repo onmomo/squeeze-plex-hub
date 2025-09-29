@@ -133,6 +133,8 @@ To run the application in a container using Docker:
 
 The application will be available at `http://localhost:3000`.
 
+The image is available for amd64 and arm64 platforms.
+
 ## Disclaimer  
 
 **Squeeze Plex Hub** is an independent, open source project and is **not affiliated with, endorsed by, or officially supported by Plex, Plexamp, Logitech, or Slim Devices**.  
