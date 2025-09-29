@@ -34,7 +34,7 @@ COPY --from=build /app/.output ./
 # Define environment variables
 ENV HOST=0.0.0.0 \
     NODE_ENV=production \
-    VERSION=${APP_VERSION}
+    APP_VERSION=${APP_VERSION}
 
 # Expose the port the application will run on
 EXPOSE 3000
