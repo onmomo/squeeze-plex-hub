@@ -1,4 +1,4 @@
-name: Build and Publish Docker Image
+name: Git tag and Publish Docker Image
 
 on:
   push:
@@ -13,15 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Needed to push tags
-      - name: Set up Node.js and Yarn
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-      - name: Install Yarn 4.x
-        run: corepack enable && corepack prepare yarn@4.4.0 --activate
-      - name: Install dependencies
-        run: yarn install --immutable
+          fetch-depth: 0
       - name: Git config
         run: |
           gh auth setup-git
@@ -31,16 +23,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Bump version and create tag
         run: npx standard-version --release-as minor
-      - name: Create and push tag
+      - name: Create and push git tag
         run: git push --follow-tags origin develop
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-      - name: Build the Docker image
-        run: |
-          APP_VERSION=$(jq -r .version package.json)
-          docker build . --file Dockerfile --build-arg APP_VERSION=${APP_VERSION} --tag onmomo/squeeze-plex-hub:latest --tag onmomo/squeeze-plex-hub:${APP_VERSION}
-      - name: Push the Docker image
-        run: |
-          APP_VERSION=$(jq -r .version package.json)
-          docker push onmomo/squeeze-plex-hub:latest
-          docker push onmomo/squeeze-plex-hub:${APP_VERSION}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build & Push the multi-platform Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: onmomo/squeeze-plex-hub:latest,onmomo/squeeze-plex-hub:${APP_VERSION}
+          platforms: linux/amd64,linux/arm64
+          build-args: APP_VERSION=ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
