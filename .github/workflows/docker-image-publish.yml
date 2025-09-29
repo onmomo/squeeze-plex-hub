@@ -7,6 +7,8 @@ on:
 jobs:        
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write      
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     steps:
       - uses: actions/checkout@v4
