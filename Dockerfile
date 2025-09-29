@@ -1,4 +1,5 @@
 ARG NODE_VERSION=lts
+ARG APP_VERSION=latest
 
 # Create build stage
 FROM node:${NODE_VERSION} AS build
@@ -31,7 +32,9 @@ WORKDIR /app
 COPY --from=build /app/.output ./
 
 # Define environment variables
-ENV HOST=0.0.0.0 NODE_ENV=production
+ENV HOST=0.0.0.0 \
+    NODE_ENV=production \
+    VERSION=${APP_VERSION}
 
 # Expose the port the application will run on
 EXPOSE 3000

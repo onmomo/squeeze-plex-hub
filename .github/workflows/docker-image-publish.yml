@@ -4,11 +4,11 @@ on:
   push:
     branches: ['develop']
 
-jobs:        
+jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write      
+      contents: write
     if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
     steps:
       - uses: actions/checkout@v4
@@ -21,25 +21,25 @@ jobs:
       - name: Install Yarn 4.x
         run: corepack enable && corepack prepare yarn@4.4.0 --activate
       - name: Install dependencies
-        run: yarn install --immutable      
+        run: yarn install --immutable
       - name: Git config
-        run: |                    
+        run: |
           gh auth setup-git
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git config --global user.name "github-actions[bot]"
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}            
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Bump version and create tag
-        run: npx standard-version --release-as minor      
+        run: npx standard-version --release-as minor
       - name: Create and push tag
         run: git push --follow-tags origin develop
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
       - name: Build the Docker image
         run: |
-          VERSION=$(git describe --tags --abbrev=0)
-          docker build . --file Dockerfile --tag onmomo/squeeze-plex-hub:latest --tag onmomo/squeeze-plex-hub:${VERSION}
+          APP_VERSION=$(jq -r .version package.json)
+          docker build . --file Dockerfile --build-arg APP_VERSION=${APP_VERSION} --tag onmomo/squeeze-plex-hub:latest --tag onmomo/squeeze-plex-hub:${APP_VERSION}
       - name: Push the Docker image
         run: |
           docker push onmomo/squeeze-plex-hub:latest
-          docker push onmomo/squeeze-plex-hub:${VERSION}
+          docker push onmomo/squeeze-plex-hub:${env.APP_VERSION}

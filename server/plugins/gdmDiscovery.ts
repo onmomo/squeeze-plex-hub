@@ -26,13 +26,16 @@ export interface PlexServerResponse {
 }
 
 /**
- * Looks for Plex servers on the network using GDM (Global Discovery and Management).
- * @returns List of Plex servers found on the network
+ * Discovers Plex servers on the local network using GDM (Global Discovery and Management) protocol.
+ * Sends a UDP broadcast and parses responses from Plex servers.
+ * @returns Promise that resolves to a list of discovered PlexServerResponse objects.
  */
 async function runGdmDiscovery() {
   const logger = useLogger('gdmDiscovery')
   const storage = useStorage('DISCOVERY')
   const scheduler = useScheduler()
+  const { appVersion } = useRuntimeConfig()
+  logger.info(`Squeeze Plex Hub '${appVersion}' initialized. 🔊 ⏯️`)
   logger.info('Starting GDM Plex server discovery ...')
   scheduler
     .run(async () => {
