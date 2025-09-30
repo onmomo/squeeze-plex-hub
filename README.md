@@ -44,7 +44,7 @@ Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server
 
 You can:
 
-1. Use the provided Docker image (see command below).
+1. Use the provided Docker image (see command below). The image is published for amd64 and arm64 platforms.
 2. Or build locally (yarn install && yarn dev) for development.
 
 ```
@@ -116,24 +116,26 @@ squeeze-plex-hub
    yarn dev
    ```
 
-## Container Run Instructions
+## Container Build Instructions
 
-To run the application in a container using Docker:
+To build the application in a container using Docker:
 
 1. Build the Docker image:
 
    ```
-   docker build -t squeeze-plex-hub .
+   docker build -t squeeze-plex-hub . --build-arg APP_VERSION=1.2.3
    ```
+
+   Check the `Dockerfile` for all supported build arguments.
 
 2. Run the container:
    ```
-   docker run -p 3000:3000 squeeze-plex-hub
+   docker run --rm -p 3000:3000 squeeze-plex-hub
    ```
 
 The application will be available at `http://localhost:3000`.
 
-The image is available for amd64 and arm64 platforms.
+Alternatively, use the published multi-arch image: `onmomo/squeeze-plex-hub:latest`
 
 ## Disclaimer  
 
