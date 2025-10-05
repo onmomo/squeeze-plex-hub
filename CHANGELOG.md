@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.5.0...v1.6.0) (2025-10-05)
+
+
+### Features
+
+* describe UDP port 32412 for discovery requests from Plex clients ([cfeaa18](https://github.com/onmomo/squeeze-plex-hub/commit/cfeaa18cbe7b4940d2e2a6da67fbdd15d0bd842b))
+* display player ID in the discovered devices list ([f4b25ea](https://github.com/onmomo/squeeze-plex-hub/commit/f4b25ea56dbd5f5c834f36ff0e6520c596e2ed57))
+
 ## [1.5.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.4.0...v1.5.0) (2025-09-30)
 
 ## [1.4.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.3.0...v1.4.0) (2025-09-29)
