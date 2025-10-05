@@ -29,6 +29,7 @@ Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server
 
 - Discovers LMS instances and attached Squeeze players automatically
 - Advertises discovered Squeeze players to Plexamp so they appear as selectable targets with full Plexamp controls
+- Enables multi-room audio playback using Squeezebox players controlled by Plexamp
 - Shows player and server metadata
 - Simple Docker-based deployment
 
@@ -36,20 +37,26 @@ Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server
 
 - Running Lyrion Music Server (formerly Logitech Media Server) with at least one connected player
   - LMS JSON/CLI interfaces enabled (default)
-- Plex Media Server with your audio library to stream from. No further media required on Lyrion Music Server.
+- Plex Media Server with your audio library to stream from. No further media required on Lyrion Music Server
 - Plexamp client (desktop or mobile) signed into the same Plex account
-- Network: Squeeze Plex Hub must reach both LMS and Plexamp client (usually same LAN)
+- Network: Squeeze Plex Hub must reach both LMS and Plexamp clients (usually same LAN)
 
 ## Run Squeeze Plex Hub
 
 You can:
 
-1. Use the provided Docker image (see command below). The image is published for amd64 and arm64 platforms.
-2. Or build locally (yarn install && yarn dev) for development.
+1. Use the provided Docker image on **Linux** (see command below). The image is published for amd64 and arm64 platforms.
 
+```sh
+docker run -d \
+   --network host \
+   --name squeeze-plex-hub \
+   onmomo/squeeze-plex-hub:latest
 ```
-docker run -d -p 3000:3000 --name squeeze-plex-hub onmomo/squeeze-plex-hub:latest
-```
+
+2. Or build and run locally for development or production (MacOS / Windows):
+   - For development: `yarn install && yarn dev`
+   - For pre-production: `yarn build && yarn start`
 
 After start:
 
@@ -61,14 +68,18 @@ No Plex credentials are ever stored. The app discovers LMS and Plex services on 
 
 ## Troubleshooting
 
-- Player not listed:
-  - Verify the player appears and is connected in LMS first.
-  - Check Squeeze Plex Hub (http://localhost:3000) and confirm both LMS and players are shown.
-  - If shown in the Hub but missing in Plexamp, restart Plexamp app to trigger device re-discovery.
-  - If missing in the Hub, check logs: docker logs squeeze-plex-hub (look for discovery or network errors).
-  - Ensure the container can reach LMS and Plex Media Server (same subnet, no firewall blocking UDP ports 32412, 32414) and LMS CLI is enabled.
+Please check the Squeeze Plex Hub logs for any errors, the logging is quite extensive.
+
+### Squeeze players not found in Plexamp:
+  1. Verify any Squeezebox player is connected and available in Lyrion / LMS first.
+  2. Check Squeeze Plex Hub (http://localhost:3000) dashboard and confirm both LMS and Squeezebox players are shown. If nothing is shown, ensure Squeeze Plex Hub can connect to Lyrion / LMS and that the Lyrion CLI is enabled.
+3. Check for port conflicts by reviewing the Squeeze Plex Hub startup logs for any discovery or network errors. This is especially important if both Squeeze Plex Hub and Plex Media Server are running on the same host. Squeeze Plex Hub requires exclusive access to UDP port 32412 to handle GDM network discovery requests from Plex clients. If Plex Media Server is also binding to this port, it may cause conflicts—Plex typically falls back to other ports in the range (32410, 32412, 32413, 32414). To resolve this, remove port 32412 from Plex Media Server if possible. If TCP port 3000 is already in use, you can publish a different host port (e.g., `docker run -p 8080:3000 ...`) and access the app at `http://localhost:8080`. For more details on proper container deployment and networking, refer to the Container Networking section below.
+  - Docker Desktop on **MacOS**: GDM network discovery may not work with Docker Desktop on MacOS due to limitations with containers receiving UDP broadcast requests from the host network even if the container is running in **host network mode**. For full functionality in a container, run Docker on Linux.
+  4. Ensure no local firewall blocking UDP ports 32412
+  4. If still not available, abort Plexamp app to trigger device re-discovery.
+
+### General
 - Resume fails after some time with a 401: the Plex token expired. Reload the playlist in Plexamp for the Squeezebox player to refresh the token.
-- Port conflict: If 3000 is already in use, publish a different host port (e.g. docker run -p 8080:3000 ...) and browse to http://localhost:8080.
 
 ## Known Issues
 
@@ -130,12 +141,20 @@ To build the application in a container using Docker:
 
 2. Run the container:
    ```
-   docker run --rm -p 3000:3000 squeeze-plex-hub
+   docker run --rm --network host squeeze-plex-hub
+
+   > **Note:** For full functionality, Squeeze Plex Hub should be run with Docker's `host` network mode. Host networking allows all Plexamp devices on your local network to discover Squeeze Plex Hub players via UDP broadcasts. If you use Docker's default bridge network, only Plex players or Plex Server running within the same bridge network can discover Squeeze players.
    ```
 
 The application will be available at `http://localhost:3000`.
 
 Alternatively, use the published multi-arch image: `onmomo/squeeze-plex-hub:latest`
+
+### Container Networking
+Squeeze Plex Hub listens for UDP broadcast on port `32412` from Plex clients and responds with the discovered players. Therefore, it is essential that it can receive these UDP requests on that specific port.
+- For best results, run the Plex Server container in either `host` or `bridge` network mode, and **always** run Squeeze Plex Hub in `host` network mode. This ensures Plexamp clients on mobile devices connected to your local network can discover Squeezebox players.
+- **Important:** If Plex Server is in `host` mode, always start Squeeze Plex Hub before Plex Server so it can bind to UDP port `32412`. If Plex Server starts first and binds this port, Squeeze Plex Hub will not work.
+- In `bridge` mode, do **not** bind UDP port `32412` for Plex Server, then the startup order does not matter; it will automatically fallback to other available UDP ports.
 
 ## Disclaimer  
 

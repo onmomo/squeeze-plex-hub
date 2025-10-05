@@ -45,5 +45,8 @@ ENV NODE_ENV=production \
 # Expose the port the application will run on
 EXPOSE 3000
 
+# Expose UDP port for discovery requests from plex clients in the local network
+EXPOSE 32412/udp
+
 # Start the application
 CMD ["node","/app/server/index.mjs"]

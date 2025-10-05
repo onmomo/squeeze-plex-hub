@@ -4,7 +4,7 @@ import useLogger from '../composables/useLogger'
 import { plexOptions } from '~/server/lib/squeezePlexHub'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 
-// Needs to listen on this port for discovery requests from plex clients in the local network
+// Needs to listen on this UDP port for discovery requests from plex clients in the local network
 const gdmAnnouncerPort = 32412
 
 export default defineNitroPlugin(() => {
