@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import * as h3 from 'h3'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
 import handler from './skipTo.get'
+import usePlayerInfo from '../../../composables/usePlayerInfo'
 
 vi.mock('~/server/composables/useLogger', () => ({
   default: () => ({

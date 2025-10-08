@@ -23,7 +23,7 @@ export default async function usePlayers() {
   for (const key of serverKeys) {
     const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
     const serverId = key.split(':')[1]
-    if (playerInfos) {
+    if (playerInfos && serverId) {
       for (const playerInfo of playerInfos) {
         allPlayers.push({ serverId, playerInfo })
       }

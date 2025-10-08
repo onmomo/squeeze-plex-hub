@@ -1,9 +1,9 @@
 import { eventHandler, getRequestHeader, getQuery } from 'h3'
 import useLogger from '../../../composables/useLogger'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
+import usePlayerInfo from '~~/server/composables/usePlayerInfo'
 import { type PlayerPlayQueue, timelineResponse } from '../../../lib/plexPlayerTimeline'
-import { responseHeaders } from '~/server/lib/plexApi'
-import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
+import { responseHeaders } from '~~/server/lib/plexApi'
+import useSqueezePlayer from '~~/server/composables/useSqueezePlayer'
 import useXmlBuilder from '../../../composables/useXmlBuilder'
 
 const logger = useLogger('timeline.poll')

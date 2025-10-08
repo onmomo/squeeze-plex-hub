@@ -1,5 +1,5 @@
 import { describe, it, vi } from 'vitest'
-import eventHandler from '../middleware/catchAll'
+import eventHandler from './catchAll'
 
 vi.mock('~/server/composables/useLogger', () => {
   return {

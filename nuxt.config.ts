@@ -52,5 +52,13 @@ export default {
     strict: true
   },
   buildModules: ['@nuxt/typescript-build'],
-  modules: ['nuxt-scheduler', '@nuxt/ui']
+  modules: ['@nuxt/ui'],
+  nitro: {
+    scheduledTasks: {
+      '* * * * *': ['gdmDiscovery', 'squeezePlayersScanner'], // every minute
+    },
+    experimental: {
+      tasks: true
+    }
+  }
 }

@@ -1,8 +1,8 @@
-import useLogger from '~/server/composables/useLogger'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
+import useLogger from '~~/server/composables/useLogger'
+import usePlayerInfo from '~~/server/composables/usePlayerInfo'
 import { getRequestHeader, eventHandler, setResponseHeaders, sendNoContent  } from 'h3'
-import { responseHeaders } from '~/server/lib/plexApi'
-import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
+import { responseHeaders } from '~~/server/lib/plexApi'
+import useSqueezePlayer from '~~/server/composables/useSqueezePlayer'
 
 const logger = useLogger('playback.play')
 

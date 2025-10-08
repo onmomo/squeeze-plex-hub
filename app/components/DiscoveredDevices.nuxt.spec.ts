@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import DiscoveredDevices from './DiscoveredDevices.vue'
 import axios from 'axios'
+import DiscoveredDevices from './DiscoveredDevices.vue'
 
 vi.mock('axios')
 
