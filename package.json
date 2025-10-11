@@ -4,6 +4,7 @@
   "description": "Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server ecosystem so you can play Plex audio on Squeezebox (and compatible) players.",
   "author": "onmomo",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
@@ -12,16 +13,16 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "format": "prettier --write app/** server/**"
   },
   "dependencies": {
-    "@nuxt/kit": "^3.19.2",
-    "@nuxt/ui": "^3.3.0",
+    "@nuxt/kit": "^4.1.3",
+    "@nuxt/ui": "^4.0.1",
     "axios": "^1.12.0",
     "lms-discovery": "^1.1.0",
     "lms-squeeze-rpc-x": "1.1.0",
-    "nuxt": "^3.19.0",
-    "nuxt-scheduler": "^0.1.9",
+    "nuxt": "^4.0.0",
     "winston": "^3.17.0",
     "xml2js": "^0.6.2"
   },

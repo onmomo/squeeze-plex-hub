@@ -17,7 +17,9 @@
     <!-- Players -->
     <div v-else>
       <div v-for="(group, serverId) in groupedPlayers" :key="serverId" class="server-group">
-        <h2 v-if="group.length > 0">{{ group[0].serverInfo.name }} ({{ group[0].serverInfo.ip }}) - {{ group.length }} player(s) found</h2>
+        <h2 v-if="group.length > 0">
+          {{ group[0]?.serverInfo.name }} ({{ group[0]?.serverInfo.ip }}) - {{ group.length }} player(s) found
+        </h2>
         <p v-else>LMS ID: {{ serverId }} - No players found 😞</p>
         <div class="server-group-cards">
           <div v-for="player in group" :key="player.playerInfo.playerid" class="player-card">
@@ -33,7 +35,7 @@
               <div>
                 <p>🆔 {{ player.playerInfo.playerid }}</p>
                 <p>📶 {{ player.playerInfo.ip }}</p>
-                <p>⚙️ {{ player.playerInfo.firmware }}</p>                
+                <p>⚙️ {{ player.playerInfo.firmware }}</p>
               </div>
             </div>
           </div>
@@ -46,7 +48,7 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
-import type { PlayerServerInfo } from '~/server/routes/api/players.get'
+import type { PlayerServerInfo } from '../../server/routes/api/players.get'
 
 export default defineComponent({
   name: 'DiscoveredDevices',

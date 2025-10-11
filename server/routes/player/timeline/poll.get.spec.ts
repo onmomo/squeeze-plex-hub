@@ -2,8 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vite
 import pollHandler from './poll.get'
 import type { H3Event } from 'h3'
 import { timelineResponse, type PlayerPlayQueue } from '../../../lib/plexPlayerTimeline'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
-import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
+import usePlayerInfo from '../../../composables/usePlayerInfo'
+import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 
 vi.mock('../../../composables/useLogger', () => ({
   default: () => ({
@@ -13,12 +13,12 @@ vi.mock('../../../composables/useLogger', () => ({
   })
 }))
 
-vi.mock('~/server/composables/usePlayerInfo', () => ({
+vi.mock('../../../composables/usePlayerInfo', () => ({
   default: vi.fn()
 }))
-vi.mock('~/server/lib/squeezePlayer')
+vi.mock('../../../lib/squeezePlayer')
 vi.mock('../../../lib/plexPlayerTimeline')
-vi.mock('~/server/lib/plexApi', () => ({
+vi.mock('../../../lib/plexApi', () => ({
   responseHeaders: vi.fn(() => ({ 'Content-Type': 'text/xml' }))
 }))
 
@@ -35,7 +35,7 @@ const mockPlayer = {
   status: vi.fn(() => mockStatus)
 }
 
-vi.mock('~/server/composables/useSqueezePlayer', () => ({
+vi.mock('../../../composables/useSqueezePlayer', () => ({
   default: vi.fn().mockImplementation(() => ({
     player: mockPlayer
   }))
@@ -68,7 +68,7 @@ function createEvent({
     _handled: false,
     respondWith
   } as H3Event
-} 
+}
 
 const mockPlayerInfo = {
   playerid: 'abc123',
@@ -81,11 +81,11 @@ const mockTimelineXml = { Timeline: { state: 'ok' } }
 const mockPlayerQueue: PlayerPlayQueue = {
   playerId: 'abc123',
   playQueue: {
-      MediaContainer: {} as any
+    MediaContainer: {} as any
   },
   plexServer: {
-      server: {} as any,
-      token: ''
+    server: {} as any,
+    token: ''
   }
 }
 
@@ -157,9 +157,9 @@ describe('timeline.poll handler', () => {
       },
       query: { commandID: 'cmd1' },
       respondWith
-    });
+    })
 
-    (timelineResponse as Mock).mockResolvedValue(mockTimelineXml)
+    ;(timelineResponse as Mock).mockResolvedValue(mockTimelineXml)
 
     await pollHandler(event)
     expect(timelineResponse).toHaveBeenCalledWith(
@@ -169,7 +169,7 @@ describe('timeline.poll handler', () => {
         deviceName: 'dev1',
         commandId: 'cmd1',
         poll: true,
-        targetClientIdentifier: 'abc123',
+        targetClientIdentifier: 'abc123'
         // omit subscribedAt so it's ignored in the match
       }),
       undefined,
@@ -178,7 +178,7 @@ describe('timeline.poll handler', () => {
     expect(timelineResponse).toHaveBeenCalledTimes(1)
     expect(respondWith).toHaveBeenCalledWith(
       expect.objectContaining({
-        status: 200,
+        status: 200
       })
     )
   })

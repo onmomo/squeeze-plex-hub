@@ -3,10 +3,10 @@ import type { ServerInfo } from 'lms-discovery'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import type { PlayerServerInfo } from './players.get'
 import playersGetHandler from './players.get'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
-import usePlayers from '~/server/composables/usePlayers'
+import usePlayers from '../../composables/usePlayers'
+import usePlayerInfo from '../../composables/usePlayerInfo'
 
-vi.mock('~/server/composables/useLogger', () => ({
+vi.mock('../../composables/useLogger', () => ({
   default: () => ({
     debug: vi.fn(),
     info: vi.fn(),
@@ -41,11 +41,11 @@ const mockServerInfo: ServerInfo = {
   cliPort: '9091'
 } as ServerInfo
 
-vi.mock('~/server/composables/usePlayers', () => ({
+vi.mock('../../composables/usePlayers', () => ({
   default: vi.fn()
 }))
 
-vi.mock('~/server/composables/usePlayerInfo', () => ({
+vi.mock('../../composables/usePlayerInfo', () => ({
   default: vi.fn()
 }))
 

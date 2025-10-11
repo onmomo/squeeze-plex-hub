@@ -1,8 +1,8 @@
-import useLogger from '~/server/composables/useLogger'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
-import { responseHeaders } from '~/server/lib/plexApi'
+import useLogger from '../../../composables/useLogger'
+import usePlayerInfo from '../../../composables/usePlayerInfo'
+import { responseHeaders } from '../../../lib/plexApi'
 import { eventHandler, getRequestHeader, setResponseHeaders, sendNoContent } from 'h3'
-import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
+import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 
 const logger = useLogger('playback.skipPrevious')
 
@@ -10,7 +10,7 @@ export default eventHandler(async (event) => {
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
-  
+
   if (!targetClientIdentifier || !clientIdentifier || !deviceName) {
     logger.warn(
       `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers), got:`,

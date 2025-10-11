@@ -1,4 +1,4 @@
-import type { PlayerStatus } from '~/server/lib/squeezePlayer'
+import type { PlayerStatus } from './squeezePlayer'
 import useLogger from '../composables/useLogger'
 import type { RemoteSubscriber } from '../routes/player/timeline/poll.get'
 import type { PlexServer } from './plexApi'

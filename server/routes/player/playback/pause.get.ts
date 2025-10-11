@@ -1,12 +1,12 @@
-import useLogger from '~/server/composables/useLogger'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
-import { getRequestHeader, eventHandler, setResponseHeaders, sendNoContent  } from 'h3'
-import { responseHeaders } from '~/server/lib/plexApi'
-import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
+import useLogger from '../../../composables/useLogger'
+import usePlayerInfo from '../../../composables/usePlayerInfo'
+import { getRequestHeader, eventHandler, setResponseHeaders, sendNoContent } from 'h3'
+import { responseHeaders } from '../../../lib/plexApi'
+import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 
 const logger = useLogger('playback.pause')
 
-export default eventHandler(async (event) => {  
+export default eventHandler(async (event) => {
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')

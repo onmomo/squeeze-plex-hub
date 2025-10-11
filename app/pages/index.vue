@@ -1,7 +1,7 @@
 <template>
   <div>
     <header>
-      <img src="/logo_512.png" alt="Squeeze Plex Hub" >      
+      <img src="/logo_512.png" alt="Squeeze Plex Hub" />
     </header>
     <main>
       <DiscoveredDevices />
@@ -18,14 +18,13 @@ import DiscoveredDevices from '@/components/DiscoveredDevices.vue'
 
 export default defineComponent({
   components: {
-    DiscoveredDevices: DiscoveredDevices,
-  },
+    DiscoveredDevices: DiscoveredDevices
+  }
 })
 </script>
 
 <style scoped>
-
-header {  
+header {
   text-align: center;
   margin: 20px 0;
   padding: 20px;
@@ -33,10 +32,11 @@ header {
   color: rgb(130, 200, 190); /* Green */
   border-radius: 8px;
   font-size: 2rem; /* Bigger text */
-  font-weight: bold; /* More bold */ 
+  font-weight: bold; /* More bold */
 
   img {
-    display: block; margin: 0 auto;
+    display: block;
+    margin: 0 auto;
     max-height: 130px;
   }
 }
@@ -46,11 +46,11 @@ footer {
   margin-top: 40px;
   padding: 20px;
   background: #000000; /* Black */
-  color: #D3D3D3; /* Gray */
+  color: #d3d3d3; /* Gray */
   border-radius: 8px;
 }
 
-footer a {  
+footer a {
   color: rgb(130, 200, 190); /* Green */
   text-decoration: none;
 }

@@ -76,32 +76,23 @@ vi.mock('lms-squeeze-rpc-x', () => ({
   SqueezeServerStub: vi.fn().mockImplementation(() => ({}))
 }))
 
-vi.mock('../lib/squeezePlayer', () => {
-  class ExtendedSqueezePlayer {
-    status = vi.fn().mockResolvedValue({
-      playerId: 'abc123',
-      mode: 'play',
-      time: 10,
-      playlist_cur_index: 0,
-      playlist_tracks: 5,
-      duration: 100,
-      volume: 50
-    })
-    addToPlaylist = vi.fn()
-    clearPlaylist = vi.fn()
-    selectTrackInPlaylist = vi.fn()
-    play = vi.fn()
-    stop = vi.fn()
-    pause = vi.fn()
-    skipNext = vi.fn()
-    skipPrevious = vi.fn()
-    seekTo = vi.fn()
-  }
-  return {
-    default: ExtendedSqueezePlayer,
-    ExtendedSqueezePlayer
-  }
-})
+const mockPlayer = {
+  status: vi.fn().mockResolvedValue({
+    playerId: 'abc123',
+    mode: 'play',
+    time: 10,
+    playlist_cur_index: 0,
+    playlist_tracks: 5,
+    duration: 100,
+    volume: 50
+  })
+}
+
+vi.mock('../composables/useSqueezePlayer', () => ({
+  default: vi.fn().mockImplementation(() => ({
+    player: mockPlayer
+  }))
+}))
 
 const mockGetKeys = vi.fn()
 const mockGetItem = vi.fn()
@@ -114,27 +105,7 @@ vi.stubGlobal('useStorage', () => ({
   removeItem: mockRemoveItem
 }))
 
-vi.mock('#scheduler', () => {
-  // We'll keep a reference to the scheduled function for awaiting in tests
-  let scheduledFn: (() => Promise<void>) | null = null
-  return {
-    useScheduler: () => ({
-      run: (fn: () => Promise<void>) => {
-        scheduledFn = fn
-        return {
-          everySeconds: (_: number) => {
-            // Immediately invoke for test and return the promise
-            return fn()
-          }
-        }
-      }
-    }),
-    // Expose for test usage
-    __scheduledFn: () => scheduledFn
-  }
-})
-
-describe('publishTimeline', () => {
+describe('timelinePublisher', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -180,14 +151,7 @@ describe('publishTimeline', () => {
         }
       } as PlayerPlayQueue)
 
-    runPublishTimeline()
-
-    const schedulerModule = await import('#scheduler')
-    const scheduledFn = (schedulerModule as any).__scheduledFn()
-    if (scheduledFn) {
-      // Wait for the scheduled run() function to complete
-      await scheduledFn()
-    }
+    await runPublishTimeline()
 
     expect(mockGetKeys).toHaveBeenCalledWith('players/')
     expect(mockGetKeys).toHaveBeenCalledWith('subscribers/abc123')

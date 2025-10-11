@@ -1,4 +1,4 @@
-import type { SqueezeServerStub } from 'lms-squeeze-rpc-x';
+import type { SqueezeServerStub } from 'lms-squeeze-rpc-x'
 import { SqueezePlayer } from 'lms-squeeze-rpc-x'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 
@@ -49,11 +49,11 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
     return this.stub.requestAsync([this.id, ['pause']])
   }
 
-  async skipNext() {    
+  async skipNext() {
     return this.stub.requestAsync([this.id, ['playlist', 'index', '+1']])
   }
 
-  async skipPrevious() {    
+  async skipPrevious() {
     return this.stub.requestAsync([this.id, ['playlist', 'index', '-1']])
   }
 
@@ -61,13 +61,13 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
    * Seeks to a particular position in a song by specifying a number of seconds to seek to.
    * @param offset track offset in seconds
    */
-  async seekTo(offset: number) {    
+  async seekTo(offset: number) {
     return this.stub.requestAsync([this.id, ['time', offset.toString()]])
   }
 
   async status() {
     const response: any = await this.stub.requestAsync([this.id, ['status', '-', 1, 'tags:uo']])
-    if (response) {      
+    if (response) {
       const status: PlayerStatus = {
         playerId: this.id,
         mode: response.mode,
@@ -75,7 +75,7 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
         playlist_cur_index: Number.parseInt(response.playlist_cur_index) || 0,
         playlist_tracks: Number.parseInt(response.playlist_tracks) || 0,
         duration: Number.parseFloat(response.duration) || 0.0,
-        volume: Number.parseInt(response['mixer volume']) || 0        
+        volume: Number.parseInt(response['mixer volume']) || 0
       }
 
       return status

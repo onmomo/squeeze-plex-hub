@@ -5,7 +5,7 @@ import usePlayers from './usePlayers'
 /**
  * This function retrieves the player information and server information for a given squeeze target client identifier.
  * It searches through the storage for all discovered squeeze players and finds the one that matches the target client identifier.
- * 
+ *
  * @param targetClientIdentifier The target client identifier to find the player info for
  * @returns An object containing the player info, server info, and server stub
  * @throws An error if the player is not found in storage or if the server info is not available

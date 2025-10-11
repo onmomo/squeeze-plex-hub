@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import * as h3 from 'h3'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
 import handler from './skipTo.get'
+import usePlayerInfo from '../../../composables/usePlayerInfo'
 
-vi.mock('~/server/composables/useLogger', () => ({
+vi.mock('../../../composables/useLogger', () => ({
   default: () => ({
     debug: vi.fn(),
     warn: vi.fn(),
@@ -11,12 +11,12 @@ vi.mock('~/server/composables/useLogger', () => ({
   })
 }))
 
-vi.mock('~/server/composables/usePlayerInfo', () => ({
+vi.mock('../../../composables/usePlayerInfo', () => ({
   default: vi.fn()
 }))
 
 const selectTrackInPlaylist = vi.fn()
-vi.mock('~/server/lib/squeezePlayer', () => {
+vi.mock('../../../lib/squeezePlayer', () => {
   return {
     default: vi.fn().mockImplementation(() => ({
       selectTrackInPlaylist
@@ -24,7 +24,7 @@ vi.mock('~/server/lib/squeezePlayer', () => {
   }
 })
 
-vi.mock('~/server/lib/plexApi', () => ({
+vi.mock('../../../lib/plexApi', () => ({
   responseHeaders: vi.fn(() => new Headers({ 'X-Test': '1' }))
 }))
 
@@ -45,7 +45,6 @@ const mockGetItem = vi.fn()
 vi.stubGlobal('useStorage', () => ({
   getItem: mockGetItem
 }))
-
 
 describe('GET /server/routes/player/playback/skipTo.get', () => {
   beforeEach(() => {
@@ -138,10 +137,7 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
     mockGetItem.mockResolvedValue({
       playQueue: {
         MediaContainer: {
-          Track: [
-            { $: { playQueueItemID: 'pq-1' } },
-            { $: { playQueueItemID: 'pq-2' } }
-          ]
+          Track: [{ $: { playQueueItemID: 'pq-1' } }, { $: { playQueueItemID: 'pq-2' } }]
         }
       }
     })
@@ -181,11 +177,7 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
     mockGetItem.mockResolvedValue({
       playQueue: {
         MediaContainer: {
-          Track: [
-            { $: { playQueueItemID: 'pq-1' } },
-            { $: { playQueueItemID: 'pq-2' } },
-            { $: { playQueueItemID: 'pq-3' } }
-          ]
+          Track: [{ $: { playQueueItemID: 'pq-1' } }, { $: { playQueueItemID: 'pq-2' } }, { $: { playQueueItemID: 'pq-3' } }]
         }
       }
     })

@@ -1,9 +1,9 @@
 import { eventHandler, getRequestHeader, getQuery } from 'h3'
 import useLogger from '../../../composables/useLogger'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
+import usePlayerInfo from '../../../composables/usePlayerInfo'
 import { type PlayerPlayQueue, timelineResponse } from '../../../lib/plexPlayerTimeline'
-import { responseHeaders } from '~/server/lib/plexApi'
-import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
+import { responseHeaders } from '../../../lib/plexApi'
+import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 import useXmlBuilder from '../../../composables/useXmlBuilder'
 
 const logger = useLogger('timeline.poll')
@@ -51,10 +51,10 @@ export default eventHandler(async (event) => {
 
   try {
     logger.debug(`Polling player ${targetClientIdentifier} status ..: ${JSON.stringify(event.node.req.headers)}`)
-    
+
     const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
     const { player } = await useSqueezePlayer(targetClientIdentifier)
-    const playerStatus = await player.status()    
+    const playerStatus = await player.status()
     if (!playerStatus) {
       throw new Error(`Player '${targetClientIdentifier}' status not available yet`)
     }
@@ -81,7 +81,7 @@ export default eventHandler(async (event) => {
       await storage.setItem(`subscribers/${targetClientIdentifier}/${clientIdentifier}`, subscriber)
       logger.info(`Client '${clientIdentifier}' subscribed to player '${playerInfo.name}' for polling`)
       // TODO don't really understand the wait === 1 logic, this works as a workaround for now to prevent the client going wild with subscribing
-      await new Promise((resolve) => setTimeout(resolve, 5000))      
+      await new Promise((resolve) => setTimeout(resolve, 5000))
       const status = await player.status()
       if (status) {
         const timelineXml = await timelineResponse(status, subscriber, playerQueue, queryParameters.includeMetadata)

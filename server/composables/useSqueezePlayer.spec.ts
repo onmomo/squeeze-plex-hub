@@ -3,7 +3,7 @@ import ExtendedSqueezePlayer from '../lib/squeezePlayer'
 import usePlayerInfo from './usePlayerInfo'
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 
-vi.mock('~/server/composables/usePlayerInfo', () => ({
+vi.mock('./usePlayerInfo', () => ({
   default: vi.fn(async () => ({
     playerInfo: { playerid: '123', name: 'Living Room' }
   }))

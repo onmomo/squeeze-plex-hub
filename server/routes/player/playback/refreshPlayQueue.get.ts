@@ -1,4 +1,4 @@
-import useLogger from '~/server/composables/useLogger'
+import useLogger from '../../../composables/useLogger'
 import { getRequestHeader, getQuery } from 'h3'
 
 // catchAll route triggered: GET /player/playback/refreshPlayQueue?playQueueID=7868&commandID=4400&type=music

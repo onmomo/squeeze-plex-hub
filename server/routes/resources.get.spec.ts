@@ -2,7 +2,7 @@ import { describe, it, expect, vi, type Mock } from 'vitest'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import resourcesHandler from './resources.get'
 import { sendNoContent } from 'h3'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
+import usePlayerInfo from '../composables/usePlayerInfo'
 
 vi.mock('xml2js', () => ({
   Builder: class {
@@ -19,10 +19,10 @@ vi.mock('../composables/useLogger', () => ({
     error: (msg: string) => console.log(msg)
   })
 }))
-vi.mock('~/server/composables/usePlayerInfo', () => ({
+vi.mock('../composables/usePlayerInfo', () => ({
   default: vi.fn()
 }))
-vi.mock('~/server/lib/squeezePlexHub', () => ({
+vi.mock('../lib/squeezePlexHub', () => ({
   plexOptions: {
     platform: 'MockPlatform',
     platformVersion: '1.0',
@@ -36,7 +36,6 @@ vi.mock('~/server/lib/squeezePlexHub', () => ({
     deviceClass: 'MockClass'
   }
 }))
-
 
 vi.mock('h3', async () => {
   const actual = await vi.importActual<typeof import('h3')>('h3')
@@ -61,7 +60,7 @@ function createEventMock() {
       res: {
         headers: {},
         setHeader: vi.fn()
-      } 
+      }
     },
     response: vi.fn(),
     context: {},
@@ -77,23 +76,23 @@ describe('resources.get', () => {
     event.node.req.headers = {}
 
     await resourcesHandler(event)
-    expect(event.respondWith).toHaveBeenCalledWith(expect.objectContaining({ status: 400 } as Response))    
+    expect(event.respondWith).toHaveBeenCalledWith(expect.objectContaining({ status: 400 } as Response))
   })
 
   it('returns 404 if usePlayerInfo throws', async () => {
     const event = createEventMock()
     event.node.req.headers = { 'x-plex-target-client-identifier': 'abc123' }
     ;(usePlayerInfo as Mock).mockRejectedValue(new Error('not found'))
-    await resourcesHandler(event)    
+    await resourcesHandler(event)
     expect(sendNoContent).toHaveBeenCalledWith(event, 404)
   })
 
   it('returns XML if player found', async () => {
     const event = createEventMock()
-    event.node.req.headers = { 'x-plex-target-client-identifier': 'abc123' };   
+    event.node.req.headers = { 'x-plex-target-client-identifier': 'abc123' }
     ;(usePlayerInfo as Mock).mockResolvedValue({ playerInfo: mockPlayerInfo })
     await resourcesHandler(event)
-  
+
     expect(event.respondWith).toHaveBeenCalledWith(expect.objectContaining({ status: 200 } as Response))
     expect(event.node.res.setHeader).toHaveBeenCalledWith('content-type', 'text/xml')
   })

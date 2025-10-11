@@ -1,23 +1,24 @@
 import dgram from 'dgram'
 import { StringDecoder } from 'string_decoder'
 import useLogger from '../composables/useLogger'
-import { plexOptions } from '~/server/lib/squeezePlexHub'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
+import { plexOptions } from '../lib/squeezePlexHub'
 
 // Needs to listen on this UDP port for discovery requests from plex clients in the local network
 const gdmAnnouncerPort = 32412
+const logger = useLogger('gdmAnnouncer')
 
 export default defineNitroPlugin(() => {
-  // Since other devices may also want to announce on this port, we should not block it? Or how should that work if multiple devices want to announce on the same port? Like having plex client and plexamp running on the same machine?
+  const { appVersion } = useRuntimeConfig()
+  logger.info(`Squeeze Plex Hub version '${appVersion}' initialized. 🔊 ⏯️`)
   runGdmAnnouncer()
 })
 
 /**
  * Announces LMS players to Plex clients using GDM.
  */
-export function runGdmAnnouncer() {  
-  const logger = useLogger('gdmAnnouncer')
-  try {    
+export function runGdmAnnouncer() {
+  try {
     const storage = useStorage('DISCOVERY')
     const decoder = new StringDecoder('utf8')
     // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
@@ -39,8 +40,8 @@ export function runGdmAnnouncer() {
       try {
         const packetContent = decoder.write(msg).trim()
         if (packetContent.match(/M-SEARCH \* HTTP\/1\.[0-1]/)) {
-          logger.debug(`Received GDM discovery request from ${rinfo.address}:${rinfo.port}`)                    
-          await storage.getKeys('players/').then(async (serverKey) => {            
+          logger.debug(`Received GDM discovery request from ${rinfo.address}:${rinfo.port}`)
+          await storage.getKeys('players/').then(async (serverKey) => {
             if (!serverKey) {
               logger.debug('No LMS found in storage, skipping')
               return

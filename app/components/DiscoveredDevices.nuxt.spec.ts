@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import DiscoveredDevices from './DiscoveredDevices.vue'
 import axios from 'axios'
+import DiscoveredDevices from './DiscoveredDevices.vue'
 
 vi.mock('axios')
 
@@ -24,13 +24,12 @@ const mockPlayers = [
 ]
 
 describe('DiscoveredDevices', () => {
-
   afterEach(() => {
     vi.clearAllMocks()
   })
 
   it('shows devices if finished loading', async () => {
-    (axios.get as any).mockResolvedValue({ data: mockPlayers })
+    ;(axios.get as any).mockResolvedValue({ data: mockPlayers })
     const wrapper = mount(DiscoveredDevices)
     expect(axios.get).toHaveBeenCalledWith('/api/players')
     await wrapper.vm.$nextTick()
@@ -43,7 +42,7 @@ describe('DiscoveredDevices', () => {
   })
 
   it('show error if loading devices failed', async () => {
-    (axios.get as any).mockRejectedValue(new Error('Network Error'))
+    ;(axios.get as any).mockRejectedValue(new Error('Network Error'))
     const wrapper = mount(DiscoveredDevices)
     expect(axios.get).toHaveBeenCalledWith('/api/players')
     await wrapper.vm.$nextTick()
@@ -53,7 +52,7 @@ describe('DiscoveredDevices', () => {
   })
 
   it('shows spinner div if loading devices', async () => {
-    (axios.get as any).mockResolvedValue({})
+    ;(axios.get as any).mockResolvedValue({})
     const wrapper = mount(DiscoveredDevices)
     expect(axios.get).toHaveBeenCalledWith('/api/players')
     await wrapper.vm.$nextTick()

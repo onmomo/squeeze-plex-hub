@@ -13,18 +13,6 @@ vi.mock('../composables/useLogger', () => ({
   })
 }))
 
-vi.mock('~/server/lib/squeezePlexHub', () => ({
-  plexOptions: {
-    deviceClass: 'test-class',
-    port: 1234,
-    product: 'TestProduct',
-    version: '1.0.0',
-    protocol: 'test-protocol',
-    protocolVersion: '1',
-    protocolCapabilities: 'cap1,cap2'
-  }
-}))
-
 const mockGetKeys = vi.fn()
 const mockGetItem = vi.fn()
 function useStorage() {
@@ -60,7 +48,7 @@ describe('gdmAnnouncer', () => {
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()    
+    vi.restoreAllMocks()
   })
 
   it('should bind to the correct port and set up listeners', () => {

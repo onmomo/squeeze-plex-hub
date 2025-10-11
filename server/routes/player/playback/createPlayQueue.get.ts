@@ -1,12 +1,12 @@
-import useLogger from '~/server/composables/useLogger'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
-import { getRequestHeader, getQuery, eventHandler, setResponseHeaders, sendNoContent  } from 'h3'
-import { getPlexApi, getPlexApiTrack, metadata, responseHeaders } from '~/server/lib/plexApi'
-import type { AxiosError } from 'axios';
+import useLogger from '../../../composables/useLogger'
+import usePlayerInfo from '../../../composables/usePlayerInfo'
+import { getRequestHeader, getQuery, eventHandler, setResponseHeaders, sendNoContent } from 'h3'
+import { getPlexApi, getPlexApiTrack, metadata, responseHeaders } from '../../../lib/plexApi'
+import type { AxiosError } from 'axios'
 import axios from 'axios'
 import xml2js from 'xml2js'
-import type { PlayerPlayQueue, PlayQueue } from '~/server/lib/plexPlayerTimeline'
-import useSqueezePlayer from '~/server/composables/useSqueezePlayer'
+import type { PlayerPlayQueue, PlayQueue } from '../../../lib/plexPlayerTimeline'
+import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 
 const logger = useLogger('playback.createPlayQueue')
 
@@ -48,10 +48,12 @@ export default eventHandler(async (event) => {
     )
   }
 
-  try {    
-    logger.debug(`Creating play queue for player ${targetClientIdentifier} ..: ${JSON.stringify(event.node.req.headers)} and Query: ${JSON.stringify(queryParameters)}`)
+  try {
+    logger.debug(
+      `Creating play queue for player ${targetClientIdentifier} ..: ${JSON.stringify(event.node.req.headers)} and Query: ${JSON.stringify(queryParameters)}`
+    )
     const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
-    const { player } = await useSqueezePlayer(targetClientIdentifier) 
+    const { player } = await useSqueezePlayer(targetClientIdentifier)
 
     const plexServer = {
       server: {
@@ -105,16 +107,16 @@ export default eventHandler(async (event) => {
     }
 
     const playerQueue: PlayerPlayQueue = {
-        playerId: playerInfo.playerid,
-        playQueue,
-        plexServer
+      playerId: playerInfo.playerid,
+      playQueue,
+      plexServer
     }
-        
+
     const storage = useStorage('DISCOVERY')
     await storage.setItem(`playerQueue/${playerInfo.playerid}`, playerQueue)
     logger.info(`Created playQueue '${playQueue.MediaContainer.$.playQueueID}' for player '${playerInfo.name}', successfully`)
 
-    await player.clearPlaylist()    
+    await player.clearPlaylist()
     logger.info(
       `Adding ${playQueue.MediaContainer.Track?.length} tracks to player '${playerInfo.name}' (id=${playerInfo.playerid}) from Plex playQueue '${playQueue.MediaContainer.$.playQueueID}'`
     )
@@ -128,7 +130,7 @@ export default eventHandler(async (event) => {
     logger.info(
       `Playing playlist index '${playQueue.MediaContainer.$.playQueueSelectedItemOffset}' on player '${playerInfo.name} / ${playerInfo.playerid}'`
     )
-    
+
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
   } catch (error) {

@@ -11,8 +11,7 @@ export default eventHandler(async (event) => {
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
-  
-  
+
   const queryParameters = {
     type: query.type as string,
     commandId: query.commandID as string | undefined,
@@ -26,13 +25,16 @@ export default eventHandler(async (event) => {
   if (
     !targetClientIdentifier ||
     !clientIdentifier ||
-    !deviceName ||    
+    !deviceName ||
     !plexProtocol ||
     !plexPort ||
     !queryParameters.commandId ||
-    !deviceName    
+    !deviceName
   ) {
-    logger.warn(`Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers and 'commandID' query parameter), got:`, event.node.req.headers)
+    logger.warn(
+      `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers and 'commandID' query parameter), got:`,
+      event.node.req.headers
+    )
     return event.respondWith(
       new Response(
         `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name', headers and 'commandID', 'port', 'protocol' query parameter) in subscribe request`,
@@ -43,11 +45,11 @@ export default eventHandler(async (event) => {
 
   const subscriber: RemoteSubscriber = {
     clientIdentifier,
-    deviceName,    
+    deviceName,
     commandId: queryParameters.commandId,
     poll: false,
     targetClientIdentifier,
-    subscribedAt: new Date()   
+    subscribedAt: new Date()
   }
   await storage.setItem(`subscribers/${targetClientIdentifier}/${clientIdentifier}`, subscriber)
   logger.info(`Client ${clientIdentifier} subscribed to player ${targetClientIdentifier}`)
