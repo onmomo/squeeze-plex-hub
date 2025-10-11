@@ -1,8 +1,8 @@
-import useLogger from '~~/server/composables/useLogger'
-import usePlayerInfo from '~~/server/composables/usePlayerInfo'
-import ExtendedSqueezePlayer from '~~/server/lib/squeezePlayer'
-import { responseHeaders } from '~~/server/lib/plexApi'
-import type { PlayerPlayQueue } from '~~/server/lib/plexPlayerTimeline'
+import useLogger from '../../../composables/useLogger'
+import usePlayerInfo from '../../../composables/usePlayerInfo'
+import ExtendedSqueezePlayer from '../../../lib/squeezePlayer'
+import { responseHeaders } from '../../../lib/plexApi'
+import type { PlayerPlayQueue } from '../../../lib/plexPlayerTimeline'
 import { eventHandler, getRequestHeader, setResponseHeaders, getQuery, sendNoContent } from 'h3'
 
 const logger = useLogger('playback.skipTo')

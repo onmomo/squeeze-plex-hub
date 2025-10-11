@@ -6,7 +6,7 @@ import playersGetHandler from './players.get'
 import usePlayers from '../../composables/usePlayers'
 import usePlayerInfo from '../../composables/usePlayerInfo'
 
-vi.mock('~/server/composables/useLogger', () => ({
+vi.mock('../../composables/useLogger', () => ({
   default: () => ({
     debug: vi.fn(),
     info: vi.fn(),

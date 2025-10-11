@@ -2,7 +2,7 @@ import { describe, it, expect, vi, type Mock } from 'vitest'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import resourcesHandler from './resources.get'
 import { sendNoContent } from 'h3'
-import usePlayerInfo from '~/server/composables/usePlayerInfo'
+import usePlayerInfo from '../composables/usePlayerInfo'
 
 vi.mock('xml2js', () => ({
   Builder: class {
@@ -19,10 +19,10 @@ vi.mock('../composables/useLogger', () => ({
     error: (msg: string) => console.log(msg)
   })
 }))
-vi.mock('~/server/composables/usePlayerInfo', () => ({
+vi.mock('../composables/usePlayerInfo', () => ({
   default: vi.fn()
 }))
-vi.mock('~/server/lib/squeezePlexHub', () => ({
+vi.mock('../lib/squeezePlexHub', () => ({
   plexOptions: {
     platform: 'MockPlatform',
     platformVersion: '1.0',

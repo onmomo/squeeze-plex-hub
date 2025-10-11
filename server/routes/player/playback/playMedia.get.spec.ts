@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import * as h3 from 'h3'
 import handler from './playMedia.get'
 
-vi.mock('~/server/composables/useLogger', () => {
+vi.mock('../../../composables/useLogger', () => {
   const wrap = (level: string) =>
     vi.fn((...args: any[]) => {
       console.log(`[logger:${level}]`, ...args)
@@ -18,7 +18,7 @@ vi.mock('~/server/composables/useLogger', () => {
   }
 })
 
-vi.mock('~/server/composables/usePlayerInfo', () => ({
+vi.mock('../../../composables/usePlayerInfo', () => ({
   default: vi.fn(async () => ({
     playerInfo: { playerid: '123', name: 'Living Room' }
   }))
@@ -30,7 +30,7 @@ const mockPlayer = {
   selectTrackInPlaylist: vi.fn()
 }
 
-vi.mock('~/server/composables/useSqueezePlayer', () => ({
+vi.mock('../../../composables/useSqueezePlayer', () => ({
   default: vi.fn().mockImplementation(() => ({
     player: mockPlayer
   }))
@@ -47,7 +47,7 @@ function useStorage() {
 }
 vi.stubGlobal('useStorage', useStorage)
 
-vi.mock('~/server/lib/plexApi', () => ({
+vi.mock('../../../lib/plexApi', () => ({
   responseHeaders: vi.fn().mockImplementation((playerid: string, name: string) => {
     const h = new Headers()
     h.set('X-Plex-Player-Id', playerid)

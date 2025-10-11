@@ -4,6 +4,7 @@
   "description": "Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server ecosystem so you can play Plex audio on Squeezebox (and compatible) players.",
   "author": "onmomo",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",

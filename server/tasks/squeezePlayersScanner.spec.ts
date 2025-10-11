@@ -31,10 +31,6 @@ const mockScheduler = {
 }
 
 // Mock composables
-vi.mock('#scheduler', () => ({
-  useScheduler: () => mockScheduler
-}))
-
 vi.mock('lms-squeeze-rpc-x', async () => {
   const actual = await vi.importActual<any>('lms-squeeze-rpc-x')
   return {
@@ -47,17 +43,6 @@ vi.mock('lms-squeeze-rpc-x', async () => {
 describe('squeezePlayersScanner plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-  })
-
-  it('should schedule the scanner to run every 10 seconds, skip for no results', async () => {
-    mockGetKeys.mockResolvedValueOnce(undefined)
-
-    runSqueezePlayersScanner()
-    // Manually invoke the callback passed to run()
-    await executeRunCallback()
-    expect(mockScheduler.run).toHaveBeenCalled()
-    expect(mockScheduler.everySeconds).toHaveBeenCalledWith(10)
-    expect(mockSetItem).not.toHaveBeenCalled()
   })
 
   it('should scan servers and store player infos', async () => {
@@ -94,23 +79,8 @@ describe('squeezePlayersScanner plugin', () => {
       getPlayerInfosAsync: vi.fn().mockResolvedValue(fakePlayerInfos)
     }))
 
-    runSqueezePlayersScanner()
-
-    // Manually invoke the callback passed to run()
-    await executeRunCallback()
+    await runSqueezePlayersScanner()
 
     expect(mockSetItem).toHaveBeenCalledWith('players/uuid-123', fakePlayerInfos)
   })
 })
-
-/**
- * Executes the run callback of the mock scheduler.
- * This is necessary because the scheduler's run method is mocked and does not automatically execute the callback
- */
-async function executeRunCallback() {
-  // Manually invoke the callback passed to run() and await its completion
-  const runCallback = (mockScheduler.run as Mock).mock.calls[0][0]
-  if (runCallback) {
-    await runCallback()
-  }
-}

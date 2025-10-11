@@ -1,7 +1,7 @@
 import { describe, it, vi } from 'vitest'
 import eventHandler from './catchAll'
 
-vi.mock('~/server/composables/useLogger', () => {
+vi.mock('../composables/useLogger', () => {
   return {
     default: vi.fn().mockImplementation(() => ({
       debug: vi.fn()

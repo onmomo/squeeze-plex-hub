@@ -13,7 +13,7 @@ vi.mock('../composables/useLogger', () => ({
   })
 }))
 
-vi.mock('~/server/lib/squeezePlexHub', () => ({
+vi.mock('../../lib/squeezePlexHub', () => ({
   plexOptions: {
     deviceClass: 'test-class',
     port: 1234,

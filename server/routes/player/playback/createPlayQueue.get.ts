@@ -1,12 +1,12 @@
-import useLogger from '~~/server/composables/useLogger'
-import usePlayerInfo from '~~/server/composables/usePlayerInfo'
+import useLogger from '../../../composables/useLogger'
+import usePlayerInfo from '../../../composables/usePlayerInfo'
 import { getRequestHeader, getQuery, eventHandler, setResponseHeaders, sendNoContent  } from 'h3'
-import { getPlexApi, getPlexApiTrack, metadata, responseHeaders } from '~~/server/lib/plexApi'
+import { getPlexApi, getPlexApiTrack, metadata, responseHeaders } from '../../../lib/plexApi'
 import type { AxiosError } from 'axios';
 import axios from 'axios'
 import xml2js from 'xml2js'
-import type { PlayerPlayQueue, PlayQueue } from '~~/server/lib/plexPlayerTimeline'
-import useSqueezePlayer from '~~/server/composables/useSqueezePlayer'
+import type { PlayerPlayQueue, PlayQueue } from '../../../lib/plexPlayerTimeline'
+import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 
 const logger = useLogger('playback.createPlayQueue')
 

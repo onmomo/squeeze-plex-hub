@@ -6,6 +6,12 @@ const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
 // needs to broadcast on this port to receive a response from plex servers in the local network
 const discoveryPort = 32414
 
+/**
+ * Task to discover Plex servers on the local network using GDM (Global Discovery and Management) protocol.
+ * This code is actually not required to allow Plex clients to discover the squeeze players bridge by Squeeze Plex Hub.
+ * But I leave it here as documentation source on how to implement Plex server discovery via GDM.
+ * It might be useful in future to leverage the Plex API from Squeeze Plex Hub independently.
+ */
 export default defineTask({
   meta: {
     name: 'gdmDiscovery',

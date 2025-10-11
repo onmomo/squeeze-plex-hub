@@ -5,14 +5,13 @@ import type { ServerInfo } from 'lms-discovery'
 export default defineTask({
   meta: {
     name: 'squeezePlayersScanner',
-    description: 'Discovers Squeeze players on the local network',
+    description: 'Discovers Squeeze players on the local network'
   },
   async run(_event) {
     await runSqueezePlayersScanner()
     return { result: 'ok' }
   }
 })
-
 
 /**
  * Scans for LMS (Lyrion / Logitech Media Server) players on the network and stores them in the DISCOVERY storage.

@@ -3,7 +3,7 @@ import * as h3 from 'h3'
 import handler from './skipTo.get'
 import usePlayerInfo from '../../../composables/usePlayerInfo'
 
-vi.mock('~/server/composables/useLogger', () => ({
+vi.mock('../../../composables/useLogger', () => ({
   default: () => ({
     debug: vi.fn(),
     warn: vi.fn(),
@@ -11,12 +11,12 @@ vi.mock('~/server/composables/useLogger', () => ({
   })
 }))
 
-vi.mock('~/server/composables/usePlayerInfo', () => ({
+vi.mock('../../../composables/usePlayerInfo', () => ({
   default: vi.fn()
 }))
 
 const selectTrackInPlaylist = vi.fn()
-vi.mock('~/server/lib/squeezePlayer', () => {
+vi.mock('../../../lib/squeezePlayer', () => {
   return {
     default: vi.fn().mockImplementation(() => ({
       selectTrackInPlaylist
@@ -24,7 +24,7 @@ vi.mock('~/server/lib/squeezePlayer', () => {
   }
 })
 
-vi.mock('~/server/lib/plexApi', () => ({
+vi.mock('../../../lib/plexApi', () => ({
   responseHeaders: vi.fn(() => new Headers({ 'X-Test': '1' }))
 }))
 

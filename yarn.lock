@@ -7433,7 +7433,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^17.2.2":
+"dotenv@npm:^17.2.2, dotenv@npm:^17.2.3":
   version: 17.2.3
   resolution: "dotenv@npm:17.2.3"
   checksum: 10c0/c884403209f713214a1b64d4d1defa4934c2aa5b0002f5a670ae298a51e3c3ad3ba79dfee2f8df49f01ae74290fcd9acdb1ab1d09c7bfb42b539036108bb2ba0
@@ -11312,6 +11312,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nitro-test-utils@npm:^0.9.4":
+  version: 0.9.4
+  resolution: "nitro-test-utils@npm:0.9.4"
+  dependencies:
+    dotenv: "npm:^17.2.3"
+    listhen: "npm:^1.9.0"
+    ofetch: "npm:^1.4.1"
+    pathe: "npm:^2.0.3"
+    ufo: "npm:^1.6.1"
+  peerDependencies:
+    nitropack: ^2
+    vitest: ^2 || ^3
+  checksum: 10c0/dd1df244102457b90bf8fe6cec175a180335f329c8312b7380d2b58e1a35ec92d92b55fe7285f9651df6cc6f8712107b105d5f013c2bace2662ffdbe0fedcb7d
+  languageName: node
+  linkType: hard
+
 "nitropack@npm:^2.12.6":
   version: 2.12.7
   resolution: "nitropack@npm:2.12.7"
@@ -13893,6 +13909,7 @@ __metadata:
     happy-dom: "npm:^20.0.0"
     lms-discovery: "npm:^1.1.0"
     lms-squeeze-rpc-x: "npm:1.1.0"
+    nitro-test-utils: "npm:^0.9.4"
     nuxt: "npm:^4.0.0"
     prettier: "npm:^3.5.3"
     typescript: "npm:^5.9.2"
