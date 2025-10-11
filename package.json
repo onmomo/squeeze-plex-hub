@@ -39,7 +39,7 @@
     "eslint": "^9.33.0",
     "eslint-plugin-nuxt": "^4.0.0",
     "eslint-plugin-vue": "^10.4.0",
-    "happy-dom": "^18.0.1",
+    "happy-dom": "^20.0.0",
     "prettier": "^3.5.3",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4",
