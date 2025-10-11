@@ -114,27 +114,7 @@ vi.stubGlobal('useStorage', () => ({
   removeItem: mockRemoveItem
 }))
 
-vi.mock('#scheduler', () => {
-  // We'll keep a reference to the scheduled function for awaiting in tests
-  let scheduledFn: (() => Promise<void>) | null = null
-  return {
-    useScheduler: () => ({
-      run: (fn: () => Promise<void>) => {
-        scheduledFn = fn
-        return {
-          everySeconds: (_: number) => {
-            // Immediately invoke for test and return the promise
-            return fn()
-          }
-        }
-      }
-    }),
-    // Expose for test usage
-    __scheduledFn: () => scheduledFn
-  }
-})
-
-describe('publishTimeline', () => {
+describe('timelinePublisher', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -180,14 +160,7 @@ describe('publishTimeline', () => {
         }
       } as PlayerPlayQueue)
 
-    runPublishTimeline()
-
-    const schedulerModule = await import('#scheduler')
-    const scheduledFn = (schedulerModule as any).__scheduledFn()
-    if (scheduledFn) {
-      // Wait for the scheduled run() function to complete
-      await scheduledFn()
-    }
+    await runPublishTimeline()
 
     expect(mockGetKeys).toHaveBeenCalledWith('players/')
     expect(mockGetKeys).toHaveBeenCalledWith('subscribers/abc123')
