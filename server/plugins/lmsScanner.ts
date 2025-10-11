@@ -2,13 +2,13 @@ import useLogger from '../composables/useLogger'
 import discovery from 'lms-discovery'
 
 export default defineNitroPlugin(() => {
-  runSqueezeScanner()
+  lmsScanner()
 })
 
 /**
  * Scans for LMS Lyrion Music Server (former Logitech Media Server) devices on the network and stores them in the DISCOVERY storage.
  */
-export function runSqueezeScanner() {
+export function lmsScanner() {
   const logger = useLogger('lmsScanner')
   const storage = useStorage('DISCOVERY')
   try {
@@ -18,7 +18,7 @@ export function runSqueezeScanner() {
       if (server) {
         logger.info(`LMS '${server.name}'@'${server.ip}:${server.jsonPort}' discovered`)
         await storage.setItem('servers/' + server.uuid, server)
-        // force a scan for players when a new LMS is discovered
+        logger.info(`Forcing squeeze players discovery ..`)
         await runTask('squeezePlayersScanner', {})
       }
     })

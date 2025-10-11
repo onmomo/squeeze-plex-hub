@@ -5,3 +5,5 @@ import { defineNitroPlugin as _defineNitroPlugin } from 'nitropack/runtime/inter
 
 // Define a dummy defineTask to avoid ReferenceError in tests
 ;(globalThis as any).defineTask = (task: any) => task
+
+

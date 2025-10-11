@@ -1,5 +1,5 @@
 import { describe, it, vi, expect, afterEach, type Mock } from 'vitest'
-import { runSqueezeScanner } from './lmsScanner'
+import { lmsScanner } from './lmsScanner'
 import discovery from 'lms-discovery'
 
 vi.mock('../composables/useLogger', () => ({
@@ -28,46 +28,51 @@ vi.stubGlobal('useStorage', () => ({
   remove: mockRemoveItem
 }))
 
-describe('squeezeScanner', () => {
+const mockRunTask = vi.fn()
+vi.stubGlobal('runTask', mockRunTask)
+
+describe('lmsScanner', () => {
   afterEach(() => {
     vi.clearAllMocks()
   })
 
   it('should handle discovered event', async () => {
-    runSqueezeScanner()
+    lmsScanner()
 
     expect(discovery.start).toHaveBeenCalled()
     // Simulate discovered event
     const server = { name: 'Test', ip: '1.2.3.4', jsonPort: 9000, uuid: 'abc' }
     const discoveredCallback = (discovery.on as Mock).mock.calls.find(([event]) => event === 'discovered')?.[1]
-    
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    discoveredCallback && discoveredCallback(server)
+
+    await discoveredCallback(server)
 
     expect(mockSetItem).toHaveBeenCalledWith('servers/abc', server)
+    // Wait for any microtasks to complete if the callback is async
+    await Promise.resolve()
+    expect(mockRunTask).toHaveBeenCalledWith('squeezePlayersScanner', {})
   })
 
   it('should handle lost event', async () => {
-    runSqueezeScanner()
+    lmsScanner()
 
     expect(discovery.start).toHaveBeenCalled()
     // Simulate lost event
     const server = { name: 'Test', ip: '1.2.3.4', jsonPort: 9000, uuid: 'byebye' }
     const discoveredCallback = (discovery.on as Mock).mock.calls.find(([event]) => event === 'lost')?.[1]
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    discoveredCallback && discoveredCallback(server)
+
+    await discoveredCallback(server)
 
     expect(mockRemoveItem).toHaveBeenCalledWith('servers/byebye', server)
   })
-  
+
   it('should handle error event', async () => {
-    runSqueezeScanner()
+    lmsScanner()
 
     expect(discovery.start).toHaveBeenCalled()
-    // Simulate error event    
+    // Simulate error event
     const discoveredCallback = (discovery.on as Mock).mock.calls.find(([event]) => event === 'error')?.[1]
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    discoveredCallback && discoveredCallback(new Error('Test error'))
+
+    await discoveredCallback(new Error('Test error'))
 
     expect(mockSetItem).not.toHaveBeenCalled()
     expect(mockRemoveItem).not.toHaveBeenCalled()
