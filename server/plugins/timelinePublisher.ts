@@ -77,7 +77,7 @@ export async function runPublishTimeline() {
         if (!serverInfo || !serverInfo.ip) {
           throw new Error(`SqueezeServerStub not found in storage for player '${playerInfo.playerid}'`)
         }
-        const player = await useSqueezePlayer(serverInfo, playerInfo)
+        const { player } = await useSqueezePlayer(playerInfo.playerid)
         const playerStatus = await player.status()
         if (!playerStatus) {
           throw new Error(`Player ${playerInfo.playerid} status available yet`)
