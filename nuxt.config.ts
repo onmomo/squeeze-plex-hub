@@ -55,7 +55,7 @@ export default {
   modules: ['@nuxt/ui'],
   nitro: {
     scheduledTasks: {
-      '* * * * *': ['gdmDiscovery', 'squeezePlayersScanner'], // every minute
+      '* * * * *': ['gdmDiscovery', 'squeezePlayersScanner'], // run every minute
     },
     experimental: {
       tasks: true

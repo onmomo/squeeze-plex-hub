@@ -8,16 +8,18 @@ export default defineNitroPlugin(() => {
 /**
  * Scans for LMS Lyrion Music Server (former Logitech Media Server) devices on the network and stores them in the DISCOVERY storage.
  */
-export function runSqueezeScanner() {  
+export function runSqueezeScanner() {
   const logger = useLogger('lmsScanner')
   const storage = useStorage('DISCOVERY')
-  try {     
-    discovery.start()    
+  try {
+    discovery.start()
     logger.info('Scanning for LMS ..')
-    discovery.on('discovered', async (server) => {      
+    discovery.on('discovered', async (server) => {
       if (server) {
         logger.info(`LMS '${server.name}'@'${server.ip}:${server.jsonPort}' discovered`)
         await storage.setItem('servers/' + server.uuid, server)
+        // force a scan for players when a new LMS is discovered
+        await runTask('squeezePlayersScanner', {})
       }
     })
     discovery.on('lost', async (server) => {
@@ -29,7 +31,7 @@ export function runSqueezeScanner() {
     discovery.on('error', async (error) => {
       logger.warn('Error while scanning for LMS:', error)
     })
-  } catch (error) {    
+  } catch (error) {
     logger.error('Error scanning for LMS, restart Squeeze Plex Hub to resolve:', error)
   }
 }
