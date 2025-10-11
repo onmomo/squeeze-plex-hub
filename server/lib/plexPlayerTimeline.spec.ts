@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import type { PlayerStatus } from '~/server/lib/squeezePlayer'
+import type { PlayerStatus } from './squeezePlayer'
 import type { RemoteSubscriber } from '../routes/player/timeline/poll.get'
 import type { PlexServer } from './plexApi'
 import type { PlayerPlayQueue, PlayQueue, Track } from './plexPlayerTimeline'

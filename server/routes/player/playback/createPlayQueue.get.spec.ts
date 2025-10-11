@@ -14,7 +14,7 @@ vi.mock('axios', () => {
   }
 })
 
-vi.mock('../../..//composables/useLogger', () => {
+vi.mock('../../../composables/useLogger', () => {
   const wrap = (level: string) =>
     vi.fn((...args: any[]) => {
       console.log(`[logger:${level}]`, ...args)

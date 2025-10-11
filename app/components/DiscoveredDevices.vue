@@ -31,7 +31,7 @@
                 :src="`http://${player.serverInfo.ip}:${player.serverInfo.jsonPort}/html/images/Players/${player.playerInfo.model}_250x250.png`"
                 :alt="`Player Model: ${player.playerInfo.model}`"
                 class="player-image"
-              />
+              >
               <div>
                 <p>🆔 {{ player.playerInfo.playerid }}</p>
                 <p>📶 {{ player.playerInfo.ip }}</p>
@@ -48,7 +48,7 @@
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
-import type { PlayerServerInfo } from '~~/server/routes/api/players.get'
+import type { PlayerServerInfo } from '../../server/routes/api/players.get'
 
 export default defineComponent({
   name: 'DiscoveredDevices',
