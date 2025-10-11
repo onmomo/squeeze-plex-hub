@@ -6,9 +6,11 @@ import { plexOptions } from '../lib/squeezePlexHub'
 
 // Needs to listen on this UDP port for discovery requests from plex clients in the local network
 const gdmAnnouncerPort = 32412
+const logger = useLogger('gdmAnnouncer')
 
 export default defineNitroPlugin(() => {
-  // Since other devices may also want to announce on this port, we should not block it? Or how should that work if multiple devices want to announce on the same port? Like having plex client and plexamp running on the same machine?
+  const { appVersion } = useRuntimeConfig()
+  logger.info(`Squeeze Plex Hub version '${appVersion}' initialized. 🔊 ⏯️`)
   runGdmAnnouncer()
 })
 
@@ -16,7 +18,6 @@ export default defineNitroPlugin(() => {
  * Announces LMS players to Plex clients using GDM.
  */
 export function runGdmAnnouncer() {
-  const logger = useLogger('gdmAnnouncer')
   try {
     const storage = useStorage('DISCOVERY')
     const decoder = new StringDecoder('utf8')

@@ -45,8 +45,6 @@ export interface PlexServerResponse {
 async function runGdmDiscovery() {
   const logger = useLogger('gdmDiscovery')
   const storage = useStorage('DISCOVERY')
-  const { appVersion } = useRuntimeConfig()
-  logger.info(`Squeeze Plex Hub version '${appVersion}' initialized. 🔊 ⏯️`)
   logger.info('Starting GDM Plex server discovery ...')
   try {
     // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
