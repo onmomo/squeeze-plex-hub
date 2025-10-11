@@ -76,9 +76,16 @@ vi.mock('lms-squeeze-rpc-x', () => ({
   SqueezeServerStub: vi.fn().mockImplementation(() => ({}))
 }))
 
-vi.mock('../lib/squeezePlayer', () => {
-  class ExtendedSqueezePlayer {
-    status = vi.fn().mockResolvedValue({
+vi.mock('../../../composables/useSqueezePlayer', () => ({
+  default: vi.fn().mockImplementation(() => ({
+    player: mockPlayer
+  }))
+}))
+
+
+vi.mock('../composables/useSqueezePlayer', () => ({
+  default: vi.fn().mockImplementation(() => ({
+    status: vi.fn().mockResolvedValue({
       playerId: 'abc123',
       mode: 'play',
       time: 10,
@@ -86,22 +93,18 @@ vi.mock('../lib/squeezePlayer', () => {
       playlist_tracks: 5,
       duration: 100,
       volume: 50
-    })
-    addToPlaylist = vi.fn()
-    clearPlaylist = vi.fn()
-    selectTrackInPlaylist = vi.fn()
-    play = vi.fn()
-    stop = vi.fn()
-    pause = vi.fn()
-    skipNext = vi.fn()
-    skipPrevious = vi.fn()
-    seekTo = vi.fn()
-  }
-  return {
-    default: ExtendedSqueezePlayer,
-    ExtendedSqueezePlayer
-  }
-})
+    }),
+    addToPlaylist: vi.fn(),
+    clearPlaylist: vi.fn(),
+    selectTrackInPlaylist: vi.fn(),
+    play: vi.fn(),
+    stop: vi.fn(),
+    pause: vi.fn(),
+    skipNext: vi.fn(),
+    skipPrevious: vi.fn(),
+    seekTo: vi.fn()
+  }))
+}))
 
 const mockGetKeys = vi.fn()
 const mockGetItem = vi.fn()

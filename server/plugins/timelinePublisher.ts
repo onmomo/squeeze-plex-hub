@@ -1,6 +1,5 @@
 import useLogger from '../composables/useLogger'
-import { SqueezeServerStub } from 'lms-squeeze-rpc-x'
-import ExtendedSqueezePlayer from '../lib/squeezePlayer'
+import useSqueezePlayer from '../composables/useSqueezePlayer'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import type { ServerInfo } from 'lms-discovery'
 import type { RemoteSubscriber } from '../routes/player/timeline/poll.get'
@@ -78,8 +77,7 @@ export async function runPublishTimeline() {
         if (!serverInfo || !serverInfo.ip) {
           throw new Error(`SqueezeServerStub not found in storage for player '${playerInfo.playerid}'`)
         }
-        const serverStub = new SqueezeServerStub(`http://${serverInfo.ip}:${serverInfo.jsonPort || '9000'}`)
-        const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+        const player = await useSqueezePlayer(serverInfo, playerInfo)
         const playerStatus = await player.status()
         if (!playerStatus) {
           throw new Error(`Player ${playerInfo.playerid} status available yet`)
