@@ -1,6 +1,6 @@
 import useLogger from '../../../composables/useLogger'
 import usePlayerInfo from '../../../composables/usePlayerInfo'
-import { getRequestHeader, eventHandler, setResponseHeaders, sendNoContent  } from 'h3'
+import { getRequestHeader, eventHandler, setResponseHeaders, sendNoContent } from 'h3'
 import { responseHeaders } from '../../../lib/plexApi'
 import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 

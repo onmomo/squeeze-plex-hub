@@ -48,7 +48,7 @@ describe('gdmAnnouncer', () => {
   })
 
   afterEach(() => {
-    vi.restoreAllMocks()    
+    vi.restoreAllMocks()
   })
 
   it('should bind to the correct port and set up listeners', () => {

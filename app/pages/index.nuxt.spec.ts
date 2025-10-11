@@ -7,7 +7,7 @@ describe('IndexPage', () => {
     const wrapper = mount(IndexPage)
     const img = wrapper.find('header img')
     expect(img.exists()).toBeTruthy()
-    expect(img.attributes('src')).toBe('/logo_512.png')    
+    expect(img.attributes('src')).toBe('/logo_512.png')
   })
 
   it('renders DiscoveredDevices component', () => {
@@ -21,6 +21,6 @@ describe('IndexPage', () => {
     expect(footer.exists()).toBe(true)
     const link = footer.find('a')
     expect(link.exists()).toBeTruthy()
-    expect(link.attributes('href')).toBe('https://github.com/onmomo/squeeze-plex-hub')    
+    expect(link.attributes('href')).toBe('https://github.com/onmomo/squeeze-plex-hub')
   })
 })

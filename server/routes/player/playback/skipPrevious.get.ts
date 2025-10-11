@@ -10,7 +10,7 @@ export default eventHandler(async (event) => {
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
-  
+
   if (!targetClientIdentifier || !clientIdentifier || !deviceName) {
     logger.warn(
       `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers), got:`,

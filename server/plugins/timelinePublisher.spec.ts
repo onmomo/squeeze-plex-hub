@@ -82,7 +82,6 @@ vi.mock('../../../composables/useSqueezePlayer', () => ({
   }))
 }))
 
-
 vi.mock('../composables/useSqueezePlayer', () => ({
   default: vi.fn().mockImplementation(() => ({
     status: vi.fn().mockResolvedValue({

@@ -11,16 +11,8 @@ export default defineEventHandler(async (event) => {
   const targetClientIdentifier = getRequestHeader(event, 'X-Plex-Target-Client-Identifier')
 
   if (!targetClientIdentifier) {
-    logger.warn(
-      `Missing required parameters ('X-Plex-Target-Client-Identifier' header), got:`,
-      event.node.req.headers
-    )
-    return event.respondWith(
-      new Response(
-        `Missing required parameters ('X-Plex-Target-Client-Identifier' header)`,
-        { status: 400 }
-      )
-    )
+    logger.warn(`Missing required parameters ('X-Plex-Target-Client-Identifier' header), got:`, event.node.req.headers)
+    return event.respondWith(new Response(`Missing required parameters ('X-Plex-Target-Client-Identifier' header)`, { status: 400 }))
   }
 
   /**
@@ -29,7 +21,7 @@ export default defineEventHandler(async (event) => {
    * @returns The XML string
    */
   function resourcesXml(player: IPlayerInfo): string {
-    const mediaContainer = {      
+    const mediaContainer = {
       MediaContainer: {
         $: {
           size: '1'
@@ -57,19 +49,19 @@ export default defineEventHandler(async (event) => {
     return builder.buildObject(mediaContainer)
   }
 
-  try {    
-    const xmlResponse = await usePlayerInfo(targetClientIdentifier).then(async ({ playerInfo }) => {      
+  try {
+    const xmlResponse = await usePlayerInfo(targetClientIdentifier).then(async ({ playerInfo }) => {
       setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name, 'text/xml').entries()))
-      logger.info(`Responding with player '${playerInfo.name}' to /resources consumer ..`)      
+      logger.info(`Responding with player '${playerInfo.name}' to /resources consumer ..`)
       return resourcesXml(playerInfo)
     })
 
     if (!xmlResponse) {
       return sendNoContent(event, 404)
     }
-    
+
     event.respondWith(new Response(xmlResponse, { status: 200, headers: { 'Content-Type': 'text/xml' } }))
-  } catch (error) {    
+  } catch (error) {
     logger.error(`Error generating resources XML for player '${targetClientIdentifier}':`, error)
     return sendNoContent(event, 404)
   }

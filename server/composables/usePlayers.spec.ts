@@ -5,20 +5,20 @@ import type { PlayerInfoWithServerId } from './usePlayers'
 import usePlayers from './usePlayers'
 
 function useStorage() {
-  return { 
-    getItem: vi.fn(() =>  Promise.resolve([mockPlayerInfo, mockPlayerInfo2])),
-    getKeys: vi.fn(() => Promise.resolve([`players:${mockServerInfo.uuid}`])), // returned keys are namespaces by ':' 
+  return {
+    getItem: vi.fn(() => Promise.resolve([mockPlayerInfo, mockPlayerInfo2])),
+    getKeys: vi.fn(() => Promise.resolve([`players:${mockServerInfo.uuid}`])) // returned keys are namespaces by ':'
   }
 }
 vi.stubGlobal('useStorage', useStorage)
 
 const mockPlayerInfo: IPlayerInfo = {
   playerid: 'abc123',
-  name: 'Test Player',  
+  name: 'Test Player',
   model: 'Test Model',
   modelname: 'Test Model Name',
   firmware: '1.0',
-  ip: '1.0.0.127',
+  ip: '1.0.0.127'
 }
 
 const mockServerInfo: ServerInfo = {
@@ -41,7 +41,7 @@ const mockPlayerInfo2: IPlayerInfo = {
   model: 'Second Model',
   modelname: 'Second Model Name',
   firmware: '2.0',
-  ip: '1.0.0.128',
+  ip: '1.0.0.128'
 }
 
 const playerInfoWithServerId2: PlayerInfoWithServerId = {
@@ -54,10 +54,9 @@ describe('usePlayers', () => {
     vi.clearAllMocks()
   })
 
-  it('returns players', async () => {    
+  it('returns players', async () => {
     const result = await usePlayers()
     expect(result).toHaveLength(2)
     expect(result).toEqual([playerInfoWithServerId, playerInfoWithServerId2])
   })
-
 })

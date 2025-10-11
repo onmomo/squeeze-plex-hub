@@ -11,6 +11,6 @@ import ExtendedSqueezePlayer from '../lib/squeezePlayer'
 export default async function useSqueezePlayer(targetClientIdentifier: string) {
   const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
   const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
-  
+
   return { player }
 }

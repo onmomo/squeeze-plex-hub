@@ -68,7 +68,7 @@ function createEvent({
     _handled: false,
     respondWith
   } as H3Event
-} 
+}
 
 const mockPlayerInfo = {
   playerid: 'abc123',
@@ -81,11 +81,11 @@ const mockTimelineXml = { Timeline: { state: 'ok' } }
 const mockPlayerQueue: PlayerPlayQueue = {
   playerId: 'abc123',
   playQueue: {
-      MediaContainer: {} as any
+    MediaContainer: {} as any
   },
   plexServer: {
-      server: {} as any,
-      token: ''
+    server: {} as any,
+    token: ''
   }
 }
 
@@ -157,9 +157,9 @@ describe('timeline.poll handler', () => {
       },
       query: { commandID: 'cmd1' },
       respondWith
-    });
+    })
 
-    (timelineResponse as Mock).mockResolvedValue(mockTimelineXml)
+    ;(timelineResponse as Mock).mockResolvedValue(mockTimelineXml)
 
     await pollHandler(event)
     expect(timelineResponse).toHaveBeenCalledWith(
@@ -169,7 +169,7 @@ describe('timeline.poll handler', () => {
         deviceName: 'dev1',
         commandId: 'cmd1',
         poll: true,
-        targetClientIdentifier: 'abc123',
+        targetClientIdentifier: 'abc123'
         // omit subscribedAt so it's ignored in the match
       }),
       undefined,
@@ -178,7 +178,7 @@ describe('timeline.poll handler', () => {
     expect(timelineResponse).toHaveBeenCalledTimes(1)
     expect(respondWith).toHaveBeenCalledWith(
       expect.objectContaining({
-        status: 200,
+        status: 200
       })
     )
   })

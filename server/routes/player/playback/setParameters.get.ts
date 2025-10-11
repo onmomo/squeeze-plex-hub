@@ -1,6 +1,6 @@
 import useLogger from '../../../composables/useLogger'
 import usePlayerInfo from '../../../composables/usePlayerInfo'
-import { getRequestHeader, getQuery, eventHandler, setResponseHeaders, sendNoContent  } from 'h3'
+import { getRequestHeader, getQuery, eventHandler, setResponseHeaders, sendNoContent } from 'h3'
 import { responseHeaders } from '../../../lib/plexApi'
 import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 
@@ -18,7 +18,7 @@ export default eventHandler(async (event) => {
     commandID: query.commandID as string,
     volume: query.volume as string | undefined,
     shuffle: query.shuffle as string | undefined, // TODO implement
-    repeat: query.repeat as string | undefined, // TODO implement
+    repeat: query.repeat as string | undefined // TODO implement
   }
 
   if (!targetClientIdentifier || !clientIdentifier || !deviceName) {
@@ -42,7 +42,7 @@ export default eventHandler(async (event) => {
       await player.setVolumeAsync(parseInt(queryParameters.volume))
       logger.info(`Player '${targetClientIdentifier}' set volume to ${queryParameters.volume}.`)
     }
-    
+
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
   } catch (error) {

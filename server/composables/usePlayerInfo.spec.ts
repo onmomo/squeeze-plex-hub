@@ -6,7 +6,7 @@ import usePlayers from './usePlayers'
 
 vi.mock('./usePlayers', () => ({
   default: vi.fn()
-})) 
+}))
 
 const mockPlayerInfo: IPlayerInfo = {
   playerid: 'abc123',
@@ -14,7 +14,7 @@ const mockPlayerInfo: IPlayerInfo = {
   model: 'Test Model',
   modelname: 'Test Model Name',
   firmware: '1.0',
-  ip: '1.0.0.127',
+  ip: '1.0.0.127'
 }
 
 const mockServerInfo: ServerInfo = {
@@ -37,7 +37,7 @@ const mockPlayerInfo2: IPlayerInfo = {
   model: 'Second Model',
   modelname: 'Second Model Name',
   firmware: '2.0',
-  ip: '1.0.0.128',
+  ip: '1.0.0.128'
 }
 
 const playerInfoWithServerId2 = {
@@ -58,20 +58,17 @@ describe('usePlayerInfo', () => {
   })
 
   it('returns playerInfo, serverInfo, and serverStub for a valid player', async () => {
-    (usePlayers as Mock).mockResolvedValue([playerInfoWithServerId, playerInfoWithServerId2])
+    ;(usePlayers as Mock).mockResolvedValue([playerInfoWithServerId, playerInfoWithServerId2])
     getItemMock.mockResolvedValue(mockServerInfo)
 
     const result = await usePlayerInfo('abc123')
     expect(result.playerInfo).toEqual(mockPlayerInfo)
     expect(result.serverInfo).toEqual(mockServerInfo)
-    expect(result.serverStub).toBeDefined()    
+    expect(result.serverStub).toBeDefined()
   })
 
   it('throws if player is not found', async () => {
-    (usePlayers as Mock).mockResolvedValue([playerInfoWithServerId2])
-    await expect(usePlayerInfo('abc123')).rejects.toThrow(
-      "Player not found in storage for targetClientIdentifier 'abc123'"
-    )
+    ;(usePlayers as Mock).mockResolvedValue([playerInfoWithServerId2])
+    await expect(usePlayerInfo('abc123')).rejects.toThrow("Player not found in storage for targetClientIdentifier 'abc123'")
   })
-
 })

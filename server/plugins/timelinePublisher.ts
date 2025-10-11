@@ -8,7 +8,6 @@ import { type PlayerPlayQueue, timelineResponse } from '../lib/plexPlayerTimelin
 import { Builder } from 'xml2js'
 import { responseHeaders } from '../lib/plexApi'
 
-
 const logger = useLogger('timelinePublisher')
 
 export default defineNitroPlugin(() => {

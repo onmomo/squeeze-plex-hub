@@ -29,7 +29,7 @@ export const responseHeaders = (playerId: string, playerName: string, contentTyp
     'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, DELETE, PUT, HEAD',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Private-Network': 'true',
-    'Access-Control-Max-Age': '1209600'    
+    'Access-Control-Max-Age': '1209600'
   })
 
 export function getPlexApi(plexServer: PlexServer, path: string): string {
@@ -39,7 +39,7 @@ export function getPlexApi(plexServer: PlexServer, path: string): string {
 /**
  * Generates the Plex API URL for a specific track.
  * This URL can be used to stream the track directly from the Plex server until the token expires.
- * 
+ *
  * @param plexServer Plex server to generate the API URL for
  * @param meta Track metadata to generate the API URL for
  * @returns Plex API URL for the given track to stream it
@@ -61,8 +61,8 @@ export function metadata(meta: Track): string {
 }
 
 /**
- * Returns Plex playQueue for the given container key. 
- * 
+ * Returns Plex playQueue for the given container key.
+ *
  * @param plexServer
  * @param containerKey e.g. /playQueues/1234
  * @returns parsed PlayQueue object

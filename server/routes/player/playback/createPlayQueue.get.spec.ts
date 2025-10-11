@@ -6,13 +6,13 @@ import axios from 'axios'
 vi.mock('axios', () => {
   const axiosPostMock = vi.fn().mockResolvedValue({
     data: `<MediaContainer playQueueID="99999" playQueueSelectedItemOffset="4"><Track title="Track 1"/><Track title="Track 2"/></MediaContainer>`
-  });
+  })
   return {
     default: {
       post: axiosPostMock
     }
-  };
-});
+  }
+})
 
 vi.mock('../../..//composables/useLogger', () => {
   const wrap = (level: string) =>
@@ -189,7 +189,6 @@ describe('playback.createPlayQueue route', () => {
       }
       return headers[name]
     })
-
     ;(axios.post as Mock).mockResolvedValue({
       data: `<MediaContainer playQueueID="99999" playQueueSelectedItemOffset="4"></MediaContainer>`
     })
@@ -211,7 +210,6 @@ describe('playback.createPlayQueue route', () => {
       }
       return headers[name]
     })
-
     ;(axios.post as Mock).mockResolvedValue({
       data: `<MediaContainers ID="11"></MediaContainers>`
     })

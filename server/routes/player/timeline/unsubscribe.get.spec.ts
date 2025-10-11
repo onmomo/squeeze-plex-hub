@@ -26,15 +26,13 @@ vi.stubGlobal('useStorage', () => ({
 
 describe('GET /server/routes/player/timeline/subscribe.get', () => {
   beforeEach(() => {
-    vi.clearAllMocks()    
+    vi.clearAllMocks()
   })
 
   it('returns 400 when required headers are missing', async () => {
-    const headers: Record<string, string> = {
-    }
+    const headers: Record<string, string> = {}
 
     ;(h3.getRequestHeader as Mock).mockImplementation((_event, name: string) => headers[name] ?? undefined)
-
 
     const event: any = {
       node: { req: { headers } },
@@ -73,5 +71,4 @@ describe('GET /server/routes/player/timeline/subscribe.get', () => {
     expect(h3.sendNoContent as Mock).toHaveBeenCalledWith(event, 200)
     expect(event.respondWith).not.toHaveBeenCalled()
   })
-  
 })

@@ -44,15 +44,15 @@ export default eventHandler(async (event) => {
       return
     }
 
-    function getTrackIndexByPlayQueueItemID(queue: PlayerPlayQueue, playQueueItemID: string): number {            
+    function getTrackIndexByPlayQueueItemID(queue: PlayerPlayQueue, playQueueItemID: string): number {
       const tracks = queue.playQueue?.MediaContainer?.Track ?? []
-      return tracks.findIndex(t => t.$.playQueueItemID === playQueueItemID)
+      return tracks.findIndex((t) => t.$.playQueueItemID === playQueueItemID)
     }
 
     const trackIndex = getTrackIndexByPlayQueueItemID(playerQueue, queryParameters.playQueueItemID)
     logger.debug(`Resolved playQueueItemID ${queryParameters.playQueueItemID} to playQueue index ${trackIndex}`)
     if (trackIndex < 0) {
-      throw new Error(`Could not find track with playQueueItemID ${queryParameters.playQueueItemID} in playerQueue, cannot skipTo`)      
+      throw new Error(`Could not find track with playQueueItemID ${queryParameters.playQueueItemID} in playerQueue, cannot skipTo`)
     }
 
     await player.selectTrackInPlaylist(trackIndex.toString()) // LMS wants a 0-based index here

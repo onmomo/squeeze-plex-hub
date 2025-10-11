@@ -20,7 +20,7 @@ vi.mock('../../../composables/useLogger', () => {
 
 vi.mock('../../../composables/usePlayerInfo', () => ({
   default: vi.fn(async () => ({
-    playerInfo: { playerid: '123', name: 'Living Room' }    
+    playerInfo: { playerid: '123', name: 'Living Room' }
   }))
 }))
 
@@ -44,9 +44,9 @@ vi.mock('../../../lib/plexApi', () => ({
 }))
 
 const event: any = {
-      node: { req: { headers: {} } },
-      respondWith: vi.fn()
-    }
+  node: { req: { headers: {} } },
+  respondWith: vi.fn()
+}
 
 vi.mock('h3', async (orig) => {
   const actual = await (orig() as any)
@@ -67,13 +67,13 @@ vi.mock('h3', async (orig) => {
 
 describe('playback.seekTo route', () => {
   beforeEach(async () => {
-    vi.clearAllMocks()    
-  })  
+    vi.clearAllMocks()
+  })
 
-  it('returns 400 when required headers are missing', async () => {        
+  it('returns 400 when required headers are missing', async () => {
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       const headers: Record<string, string> = {
-        'X-Plex-Target-Client-Identifier': 'player-1',        
+        'X-Plex-Target-Client-Identifier': 'player-1'
       }
       return headers[name]
     })
@@ -91,7 +91,7 @@ describe('playback.seekTo route', () => {
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       const headers: Record<string, string> = {
         'X-Plex-Target-Client-Identifier': 'player-1',
-        'X-Plex-Client-Identifier': 'client-1',        
+        'X-Plex-Client-Identifier': 'client-1',
         'X-Plex-Device-Name': 'Device'
       }
       return headers[name]
@@ -101,11 +101,14 @@ describe('playback.seekTo route', () => {
 
     expect(mockPlayer.seekTo).toHaveBeenCalledTimes(1)
     expect(mockPlayer.seekTo).toHaveBeenCalledWith(3) // offset is in seconds
-    expect(h3.setResponseHeaders).toHaveBeenCalledWith(event,expect.objectContaining({
-    'x-plex-player-id': '123',
-    'x-plex-player-name': 'Living Room'
-  }))
-    expect(h3.sendNoContent).toHaveBeenCalledWith(event, 200)    
+    expect(h3.setResponseHeaders).toHaveBeenCalledWith(
+      event,
+      expect.objectContaining({
+        'x-plex-player-id': '123',
+        'x-plex-player-name': 'Living Room'
+      })
+    )
+    expect(h3.sendNoContent).toHaveBeenCalledWith(event, 200)
     expect(event.respondWith).not.toHaveBeenCalled()
   })
 
@@ -121,7 +124,7 @@ describe('playback.seekTo route', () => {
     })
 
     await handler(event)
-    
+
     expect(event.respondWith).toHaveBeenCalledTimes(1)
     const resp: Response = event.respondWith.mock.calls[0][0]
     expect(resp.status).toBe(404)

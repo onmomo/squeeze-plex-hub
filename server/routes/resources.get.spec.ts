@@ -37,7 +37,6 @@ vi.mock('../lib/squeezePlexHub', () => ({
   }
 }))
 
-
 vi.mock('h3', async () => {
   const actual = await vi.importActual<typeof import('h3')>('h3')
   return {
@@ -61,7 +60,7 @@ function createEventMock() {
       res: {
         headers: {},
         setHeader: vi.fn()
-      } 
+      }
     },
     response: vi.fn(),
     context: {},
@@ -77,23 +76,23 @@ describe('resources.get', () => {
     event.node.req.headers = {}
 
     await resourcesHandler(event)
-    expect(event.respondWith).toHaveBeenCalledWith(expect.objectContaining({ status: 400 } as Response))    
+    expect(event.respondWith).toHaveBeenCalledWith(expect.objectContaining({ status: 400 } as Response))
   })
 
   it('returns 404 if usePlayerInfo throws', async () => {
     const event = createEventMock()
     event.node.req.headers = { 'x-plex-target-client-identifier': 'abc123' }
     ;(usePlayerInfo as Mock).mockRejectedValue(new Error('not found'))
-    await resourcesHandler(event)    
+    await resourcesHandler(event)
     expect(sendNoContent).toHaveBeenCalledWith(event, 404)
   })
 
   it('returns XML if player found', async () => {
     const event = createEventMock()
-    event.node.req.headers = { 'x-plex-target-client-identifier': 'abc123' };   
+    event.node.req.headers = { 'x-plex-target-client-identifier': 'abc123' }
     ;(usePlayerInfo as Mock).mockResolvedValue({ playerInfo: mockPlayerInfo })
     await resourcesHandler(event)
-  
+
     expect(event.respondWith).toHaveBeenCalledWith(expect.objectContaining({ status: 200 } as Response))
     expect(event.node.res.setHeader).toHaveBeenCalledWith('content-type', 'text/xml')
   })

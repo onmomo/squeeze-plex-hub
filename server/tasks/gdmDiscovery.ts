@@ -15,7 +15,7 @@ const discoveryPort = 32414
 export default defineTask({
   meta: {
     name: 'gdmDiscovery',
-    description: 'Discovers Plex servers on the local network using GDM',
+    description: 'Discovers Plex servers on the local network using GDM'
   },
   async run(_event) {
     await runGdmDiscovery()

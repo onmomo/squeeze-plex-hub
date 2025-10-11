@@ -46,7 +46,6 @@ vi.stubGlobal('useStorage', () => ({
   getItem: mockGetItem
 }))
 
-
 describe('GET /server/routes/player/playback/skipTo.get', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -138,10 +137,7 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
     mockGetItem.mockResolvedValue({
       playQueue: {
         MediaContainer: {
-          Track: [
-            { $: { playQueueItemID: 'pq-1' } },
-            { $: { playQueueItemID: 'pq-2' } }
-          ]
+          Track: [{ $: { playQueueItemID: 'pq-1' } }, { $: { playQueueItemID: 'pq-2' } }]
         }
       }
     })
@@ -181,11 +177,7 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
     mockGetItem.mockResolvedValue({
       playQueue: {
         MediaContainer: {
-          Track: [
-            { $: { playQueueItemID: 'pq-1' } },
-            { $: { playQueueItemID: 'pq-2' } },
-            { $: { playQueueItemID: 'pq-3' } }
-          ]
+          Track: [{ $: { playQueueItemID: 'pq-1' } }, { $: { playQueueItemID: 'pq-2' } }, { $: { playQueueItemID: 'pq-3' } }]
         }
       }
     })
