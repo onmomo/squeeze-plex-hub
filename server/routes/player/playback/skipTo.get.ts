@@ -55,7 +55,7 @@ export default eventHandler(async (event) => {
       throw new Error(`Could not find track with playQueueItemID ${queryParameters.playQueueItemID} in playerQueue, cannot skipTo`)
     }
 
-    await player.selectTrackInPlaylist(trackIndex.toString()) // LMS wants a 0-based index here
+    await player.selectTrackInPlaylist(trackIndex) // LMS wants a 0-based index here
     logger.info(`Player '${targetClientIdentifier}' skipped to playlist item ${trackIndex}`)
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)

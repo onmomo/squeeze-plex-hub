@@ -130,7 +130,7 @@ describe('playback.playMedia route', () => {
 
     expect(mockPlayer.clearPlaylist).toHaveBeenCalledTimes(1)
     expect(mockPlayer.addToPlaylist).toHaveBeenCalledWith('http://10.10.1.1/track1', 'metadata-string')
-    expect(mockPlayer.selectTrackInPlaylist).toHaveBeenCalledWith('4')
+    expect(mockPlayer.selectTrackInPlaylist).toHaveBeenCalledWith(4)
     expect(setItemMock).toHaveBeenCalledWith('playerQueue/123', expect.anything())
 
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(event, expect.anything())

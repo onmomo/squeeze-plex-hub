@@ -47,17 +47,19 @@ export default eventHandler(async (event) => {
       playQueue: refreshedPlayQueue,
       plexServer: playerQueue.plexServer
     }
- 
+
     const playerStatus = await player.status()
     if (!playerStatus) {
       throw new Error(`Could not get status from player '${playerInfo.name}', cannot refresh play queue`)
     }
     const currentPlaylistIndex = playerStatus?.playlist_cur_index
     const playlistTrackCount = playerStatus?.playlist_tracks
-    
-    logger.info(`Cleaning up existing playQueue in player '${playerInfo.name}' from index ${currentPlaylistIndex + 1} to ${playlistTrackCount} to prepare for playQueue refresh ..`)
+
+    logger.info(
+      `Cleaning up existing playQueue in player '${playerInfo.name}' from index ${currentPlaylistIndex + 1} to ${playlistTrackCount} to prepare for playQueue refresh ..`
+    )
     for (let trackIndex = playlistTrackCount - 1; trackIndex > currentPlaylistIndex; trackIndex--) {
-      await player.deleteByIndexPlaylist(trackIndex)
+      await player.deleteTrackFromPlaylist(trackIndex)
     }
 
     const selectedOffset = Number(refreshedPlayQueue.MediaContainer.$.playQueueSelectedItemOffset)
