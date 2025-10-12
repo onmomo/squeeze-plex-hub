@@ -16,10 +16,12 @@ vi.mock('../../../composables/usePlayerInfo', () => ({
 }))
 
 const selectTrackInPlaylist = vi.fn()
-vi.mock('../../../lib/squeezePlayer', () => {
+vi.mock('../../../composables/useSqueezePlayer', () => {
   return {
     default: vi.fn().mockImplementation(() => ({
-      selectTrackInPlaylist
+      player: {
+        selectTrackInPlaylist
+      }
     }))
   }
 })

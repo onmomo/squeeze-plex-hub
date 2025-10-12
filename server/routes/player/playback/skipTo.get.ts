@@ -1,9 +1,9 @@
 import useLogger from '../../../composables/useLogger'
 import usePlayerInfo from '../../../composables/usePlayerInfo'
-import ExtendedSqueezePlayer from '../../../lib/squeezePlayer'
 import { responseHeaders } from '../../../lib/plexApi'
 import type { PlayerPlayQueue } from '../../../lib/plexPlayerTimeline'
 import { eventHandler, getRequestHeader, setResponseHeaders, getQuery, sendNoContent } from 'h3'
+import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 
 const logger = useLogger('playback.skipTo')
 
@@ -35,8 +35,8 @@ export default eventHandler(async (event) => {
   }
 
   try {
-    const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
-    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
+    const { player } = await useSqueezePlayer(targetClientIdentifier)
 
     const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
     if (!playerQueue) {
