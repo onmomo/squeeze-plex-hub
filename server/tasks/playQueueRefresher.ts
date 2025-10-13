@@ -1,6 +1,6 @@
 import useLogger from '../composables/useLogger'
-import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc-x'
-import type { ServerInfo } from 'lms-discovery'
+import useSqueezePlayer from '../composables/useSqueezePlayer'
+import { getPlayQueue, metadata, getPlexApiTrack } from '../lib/plexApi'
 
 export default defineTask({
   meta: {
@@ -20,7 +20,7 @@ export async function runPlayQueueRefresher() {
   const logger = useLogger('playQueueRefresher')
   const storage = useStorage('DISCOVERY')
   try {
-    logger.debug('Refreshing Plex play queues for all Squeeze players ..')
+    logger.info('Refreshing Plex play queues for all Squeeze players ..')
 
     const serverKeys = await storage.getKeys('players/')
     if (!serverKeys || serverKeys.length === 0) {
@@ -42,28 +42,67 @@ export async function runPlayQueueRefresher() {
     }
 
     await Promise.all(
-      allPlayers.map(async ([serverId, playerInfo]) => {
-        // resolve player status and send timeline to all subscribers
-        logger.debug(`Publishing timeline to ${playerSubscribers.length} subscribers for player ${playerInfo.playerid} ..`)
-        const serverInfo = await storage.getItem<ServerInfo>(`servers/${serverId}`)
-        if (!serverInfo || !serverInfo.ip) {
-          throw new Error(`SqueezeServerStub not found in storage for player '${playerInfo.playerid}'`)
-        }
+      allPlayers.map(async ([_serverId, playerInfo]) => {
         const { player } = await useSqueezePlayer(playerInfo.playerid)
-
-        const playerStatus = await player.status()
-        if (!playerStatus) {
-          throw new Error(`Player ${playerInfo.playerid} status available yet`)
-        }
 
         const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
         if (!playerQueue) {
-          logger.debug(`No playerQueue available for player ${playerInfo.playerid}, skipping play queue update`)
+          logger.info(`No playQueue available for player ${playerInfo.playerid}, skipping refresh`)
           return
         }
+
+        const playQueueId = playerQueue.playQueue.MediaContainer.$.playQueueID
+
+        logger.info(`Refreshing playQueue '${playQueueId}' of player ${playerInfo.playerid} ..`)
+        const refreshedPlayQueue = await getPlayQueue(playerQueue.plexServer, `/playQueues/${playQueueId}`)
+        const refreshedPlayerQueue: PlayerPlayQueue = {
+          playerId: playerInfo.playerid,
+          playQueue: refreshedPlayQueue,
+          plexServer: playerQueue.plexServer
+        }
+
+        // check if the playQueue has changed in size
+        if (refreshedPlayQueue.MediaContainer.$.size === playerQueue.playQueue.MediaContainer.$.size) {
+          logger.info(
+            `PlayQueue '${playQueueId}' of player ${playerInfo.playerid} has not changed in size (${refreshedPlayQueue.MediaContainer.$.size} items), skipping`
+          )
+          return
+        }
+
+        //logger.info(JSON.stringify(refreshedPlayQueue))
+
+        const playerStatus = await player.status()
+        if (!playerStatus) {
+          throw new Error(`Could not get status from player '${playerInfo.name}', cannot refresh play queue`)
+        }
+        const currentPlaylistIndex = playerStatus?.playlist_cur_index
+        const playlistTrackCount = playerStatus?.playlist_tracks
+
+        logger.info(
+          `Cleaning up existing playQueue in player '${playerInfo.name}' from index ${currentPlaylistIndex + 1} to ${playlistTrackCount} to prepare for playQueue refresh ..`
+        )
+
+        // TODO is this necessary in this case or can we just add the missing tracks to the end of the queue?
+        for (let trackIndex = playlistTrackCount - 1; trackIndex > currentPlaylistIndex; trackIndex--) {
+          await player.deleteTrackFromPlaylist(trackIndex)
+        }
+
+        const selectedOffset = Number(refreshedPlayQueue.MediaContainer.$.playQueueSelectedItemOffset)
+        const tracks = refreshedPlayQueue.MediaContainer.Track.slice(selectedOffset + 1)
+        for (const track of tracks) {
+          logger.info(`Adding track '${track.$.title}' to refreshed playQueue for player '${playerInfo.name}' ..`)
+          const trackUrl = getPlexApiTrack(playerQueue.plexServer, track)
+          await player.addToPlaylist(trackUrl, metadata(track))
+        }
+
+        await storage.setItem(`playerQueue/${playerInfo.playerid}`, refreshedPlayerQueue)
+
+        logger.info(
+          `Refreshed playQueue '${playQueueId}' of player ${playerInfo.playerid}, now has ${refreshedPlayQueue.MediaContainer.$.size} items`
+        )
       })
     )
   } catch (error) {
-    logger.error(`Error when updating player play queues`, error)
+    logger.error(`Error when refreshing player play queues`, error)
   }
 }

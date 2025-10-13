@@ -90,7 +90,7 @@ export async function runPublishTimeline() {
           const timelineString = builder.buildObject(timeline)
           await Promise.all(
             timeline.MediaContainer.Timeline.map(async (timelineItem) => {
-              logger.info(`Sending timeline '${timelineItem.$.itemType}' to subscriber '${subscriber.deviceName}' ..`)
+              logger.debug(`Sending timeline '${timelineItem.$.itemType}' to subscriber '${subscriber.deviceName}' ..`)
 
               if (
                 !timelineItem.$.state ||
