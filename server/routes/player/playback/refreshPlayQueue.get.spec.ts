@@ -121,7 +121,7 @@ describe('playback.refreshPlayQueue route', () => {
     expect(h3.setResponseHeaders).not.toHaveBeenCalled()
   })
 
-  it.only('refreshes play queue and updates playlist', async () => {
+  it('refreshes play queue and updates playlist', async () => {
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       return mockHeaders[name]
     })
