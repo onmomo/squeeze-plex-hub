@@ -76,7 +76,7 @@ export default eventHandler(async (event) => {
     }
 
     logger.info(`Playing playlist item '${playQueue.MediaContainer.$.playQueueSelectedItemOffset}' on player '${playerInfo.name}'`)
-    await player.selectTrackInPlaylist(playQueue.MediaContainer.$.playQueueSelectedItemOffset)
+    await player.selectTrackInPlaylist(Number(playQueue.MediaContainer.$.playQueueSelectedItemOffset))
     await storage.setItem(`playerQueue/${playerInfo.playerid}`, playerQueue)
 
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))

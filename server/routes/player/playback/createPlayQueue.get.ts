@@ -125,7 +125,7 @@ export default eventHandler(async (event) => {
       const trackUrl = getPlexApiTrack(plexServer, meta)
       await player.addToPlaylist(trackUrl, metadata(meta))
     }
-    await player.selectTrackInPlaylist(playQueue.MediaContainer.$.playQueueSelectedItemOffset)
+    await player.selectTrackInPlaylist(Number(playQueue.MediaContainer.$.playQueueSelectedItemOffset))
     await player.play()
     logger.info(
       `Playing playlist index '${playQueue.MediaContainer.$.playQueueSelectedItemOffset}' on player '${playerInfo.name} / ${playerInfo.playerid}'`

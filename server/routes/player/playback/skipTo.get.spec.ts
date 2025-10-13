@@ -16,10 +16,12 @@ vi.mock('../../../composables/usePlayerInfo', () => ({
 }))
 
 const selectTrackInPlaylist = vi.fn()
-vi.mock('../../../lib/squeezePlayer', () => {
+vi.mock('../../../composables/useSqueezePlayer', () => {
   return {
     default: vi.fn().mockImplementation(() => ({
-      selectTrackInPlaylist
+      player: {
+        selectTrackInPlaylist
+      }
     }))
   }
 })
@@ -190,7 +192,7 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
 
     await handler(event)
 
-    expect(selectTrackInPlaylist).toHaveBeenCalledWith('1')
+    expect(selectTrackInPlaylist).toHaveBeenCalledWith(1)
     expect(h3.setResponseHeaders as Mock).toHaveBeenCalledTimes(1)
     expect(h3.sendNoContent as Mock).toHaveBeenCalledWith(event, 200)
     expect(event.respondWith).not.toHaveBeenCalled()

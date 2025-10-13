@@ -1,7 +1,7 @@
 <template>
   <div>
     <header>
-      <img src="/logo_512.png" alt="Squeeze Plex Hub" />
+      <img src="/logo_512.png" alt="Squeeze Plex Hub" >
     </header>
     <main>
       <DiscoveredDevices />

@@ -1,9 +1,9 @@
 import useLogger from '../../../composables/useLogger'
 import usePlayerInfo from '../../../composables/usePlayerInfo'
-import ExtendedSqueezePlayer from '../../../lib/squeezePlayer'
 import { responseHeaders } from '../../../lib/plexApi'
 import type { PlayerPlayQueue } from '../../../lib/plexPlayerTimeline'
 import { eventHandler, getRequestHeader, setResponseHeaders, getQuery, sendNoContent } from 'h3'
+import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 
 const logger = useLogger('playback.skipTo')
 
@@ -35,8 +35,8 @@ export default eventHandler(async (event) => {
   }
 
   try {
-    const { playerInfo, serverStub } = await usePlayerInfo(targetClientIdentifier)
-    const player = new ExtendedSqueezePlayer(serverStub, playerInfo)
+    const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
+    const { player } = await useSqueezePlayer(targetClientIdentifier)
 
     const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
     if (!playerQueue) {
@@ -55,7 +55,7 @@ export default eventHandler(async (event) => {
       throw new Error(`Could not find track with playQueueItemID ${queryParameters.playQueueItemID} in playerQueue, cannot skipTo`)
     }
 
-    await player.selectTrackInPlaylist(trackIndex.toString()) // LMS wants a 0-based index here
+    await player.selectTrackInPlaylist(trackIndex) // LMS wants a 0-based index here
     logger.info(`Player '${targetClientIdentifier}' skipped to playlist item ${trackIndex}`)
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
