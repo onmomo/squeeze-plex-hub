@@ -1,6 +1,6 @@
 import type { PlayerPlayQueue } from '../../../lib/plexPlayerTimeline'
 import useLogger from '../../../composables/useLogger'
-import { getRequestHeader, getQuery } from 'h3'
+import { getRequestHeader, getQuery, eventHandler, setResponseHeaders, sendNoContent } from 'h3'
 import usePlayerInfo from '../../../composables/usePlayerInfo'
 import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 import { getPlayQueue, getPlexApiTrack, metadata, responseHeaders } from '../../../lib/plexApi'
@@ -37,8 +37,7 @@ export default eventHandler(async (event) => {
     logger.info(`Refreshing playQueue '${playQueueID}' for player '${playerInfo.name}' ..`)
     const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
     if (!playerQueue) {
-      logger.warn(`No playerQueue available for player ${playerInfo.name} (${playerInfo.playerid}), skipping playQueue refresh ..`)
-      return
+      throw new Error(`No playerQueue available for player ${playerInfo.name} (${playerInfo.playerid}), skipping playQueue refresh ..`)
     }
 
     const refreshedPlayQueue = await getPlayQueue(playerQueue.plexServer, `/playQueues/${playQueueID}`)
@@ -76,7 +75,7 @@ export default eventHandler(async (event) => {
   } catch (error) {
     logger.warn(`Error when refreshing play queue for player '${targetClientIdentifier}'`, error)
     return event.respondWith(
-      new Response(`Player '${targetClientIdentifier}' not available for refreshing play queue, try again later`, { status: 404 })
+      new Response(`Player '${targetClientIdentifier}' play queue not available for refreshing, try again later`, { status: 404 })
     )
   }
 })
