@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.8.0...v1.9.0) (2025-10-13)
+
+
+### Features
+
+* support refresh playQueue functionality ([f2b40ea](https://github.com/onmomo/squeeze-plex-hub/commit/f2b40ea4f29f3cccfd0b287b3f1036fb60a61819))
+
 ## [1.8.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.7.0...v1.8.0) (2025-10-11)
 
 ## [1.7.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.6.0...v1.7.0) (2025-10-11)
