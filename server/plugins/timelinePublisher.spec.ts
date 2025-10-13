@@ -135,13 +135,6 @@ describe('timelinePublisher', () => {
         subscribedAt: new Date(0).toISOString() // stale subscriber
       })
       .mockResolvedValueOnce({
-        cliPort: '9090',
-        ip: '99.99.99.99',
-        jsonPort: '9000',
-        name: 'Test Server',
-        ver: '1.0'
-      } as ServerInfo)
-      .mockResolvedValueOnce({
         plexServer: {
           server: {
             localAddress: '127.0.0.99',
@@ -159,7 +152,6 @@ describe('timelinePublisher', () => {
     expect(mockGetItem).toHaveBeenCalledWith('players:server1')
     expect(mockGetItem).toHaveBeenCalledWith('players:server2')
     expect(mockGetItem).toHaveBeenCalledWith('subscriber1')
-    expect(mockGetItem).toHaveBeenCalledWith('servers/server1')
     expect(mockGetItem).toHaveBeenCalledWith('playerQueue/abc123')
 
     expect(mockRemoveItem).toHaveBeenCalledWith('subscriber2') // Old subscriber removed
