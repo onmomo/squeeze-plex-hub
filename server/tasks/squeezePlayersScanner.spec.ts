@@ -23,13 +23,6 @@ vi.stubGlobal('useStorage', () => ({
   getItem: mockGetItem
 }))
 
-const mockScheduler = {
-  run: vi.fn(function () {
-    return mockScheduler
-  }),
-  everySeconds: vi.fn()
-}
-
 // Mock composables
 vi.mock('lms-squeeze-rpc-x', async () => {
   const actual = await vi.importActual<any>('lms-squeeze-rpc-x')

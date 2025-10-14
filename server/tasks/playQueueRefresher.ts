@@ -94,11 +94,11 @@ export async function runPlayQueueRefresher() {
         await storage.setItem(`playerQueue/${playerInfo.playerid}`, refreshedPlayerQueue)
 
         logger.info(
-          `Player '${playerInfo.name}' (${playerInfo.playerid}): playQueue '${playQueueId}' size changed from ${playerQueue.playQueue.MediaContainer.$.size} to ${refreshedPlayQueue.MediaContainer.$.size} tracks.`
+          `Player '${playerInfo.name}' (${playerInfo.playerid}): playQueue '${playQueueId}' size changed from '${playerQueue.playQueue.MediaContainer.$.size}' to '${refreshedPlayQueue.MediaContainer.$.size}' tracks.`
         )
       })
     )
   } catch (error) {
-    logger.error(`Error when refreshing play queues`, error)
+    logger.error(`Error when refreshing play queues ${error}`, error)
   }
 }
