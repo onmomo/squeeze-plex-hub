@@ -1,6 +1,8 @@
+import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import useLogger from '../composables/useLogger'
 import useSqueezePlayer from '../composables/useSqueezePlayer'
 import { getPlayQueue, metadata, getPlexApiTrack } from '../lib/plexApi'
+import type { PlayerPlayQueue } from '../lib/plexPlayerTimeline'
 
 export default defineTask({
   meta: {

@@ -14,7 +14,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import DiscoveredDevices from '@/components/DiscoveredDevices.vue'
+import DiscoveredDevices from '../components/DiscoveredDevices.vue'
 
 export default defineComponent({
   components: {
