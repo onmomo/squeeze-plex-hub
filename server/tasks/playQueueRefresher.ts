@@ -1,9 +1,23 @@
+/**
+ * Nitro task that refreshes the Plex play queue for all Squeeze players.
+ *
+ * This task iterates through all discovered Squeeze players stored in the DISCOVERY storage,
+ * checks for updates to their associated Plex play queues, and updates the queues if changes are detected.
+ * If new tracks are found in the refreshed play queue, they are added to the player's playlist.
+ *
+ * Can be manually triggered in dev mode via: http://localhost:3000/_nitro/tasks/playQueueRefresher
+ *
+ * @returns An object indicating the result of the refresh operation.
+ */
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import useLogger from '../composables/useLogger'
 import useSqueezePlayer from '../composables/useSqueezePlayer'
 import { getPlayQueue, metadata, getPlexApiTrack } from '../lib/plexApi'
 import type { PlayerPlayQueue } from '../lib/plexPlayerTimeline'
 
+/**
+ * Manually trigger the refresh: http://localhost:3000/_nitro/tasks/playQueueRefresher
+ */
 export default defineTask({
   meta: {
     name: 'playQueueRefresher',
@@ -63,7 +77,6 @@ export async function runPlayQueueRefresher() {
           plexServer: playerQueue.plexServer
         }
 
-        // check if the playQueue has changed in size
         if (refreshedPlayQueue.MediaContainer.$.size === playerQueue.playQueue.MediaContainer.$.size) {
           logger.info(
             `PlayQueue '${playQueueId}' of player ${playerInfo.playerid} has not changed in size (${refreshedPlayQueue.MediaContainer.$.size} items), skipping`
@@ -71,28 +84,9 @@ export async function runPlayQueueRefresher() {
           return
         }
 
-        //logger.info(JSON.stringify(refreshedPlayQueue))
-
-        const playerStatus = await player.status()
-        if (!playerStatus) {
-          throw new Error(`Could not get status from player '${playerInfo.name}', cannot refresh play queue`)
-        }
-        const currentPlaylistIndex = playerStatus?.playlist_cur_index
-        const playlistTrackCount = playerStatus?.playlist_tracks
-
-        logger.info(
-          `Cleaning up existing playQueue in player '${playerInfo.name}' from index ${currentPlaylistIndex + 1} to ${playlistTrackCount} to prepare for playQueue refresh ..`
-        )
-
-        // TODO is this necessary in this case or can we just add the missing tracks to the end of the queue?
-        for (let trackIndex = playlistTrackCount - 1; trackIndex > currentPlaylistIndex; trackIndex--) {
-          await player.deleteTrackFromPlaylist(trackIndex)
-        }
-
-        const selectedOffset = Number(refreshedPlayQueue.MediaContainer.$.playQueueSelectedItemOffset)
-        const tracks = refreshedPlayQueue.MediaContainer.Track.slice(selectedOffset + 1)
-        for (const track of tracks) {
-          logger.info(`Adding track '${track.$.title}' to refreshed playQueue for player '${playerInfo.name}' ..`)
+        const updatedTrackQueue = refreshedPlayQueue.MediaContainer.Track.slice(Number(playerQueue.playQueue.MediaContainer.$.size))
+        for (const track of updatedTrackQueue) {
+          logger.info(`Adding track '${track.$.title}' / '${track.$.key}' to refreshed playQueue for player '${playerInfo.name}' ..`)
           const trackUrl = getPlexApiTrack(playerQueue.plexServer, track)
           await player.addToPlaylist(trackUrl, metadata(track))
         }
@@ -100,11 +94,11 @@ export async function runPlayQueueRefresher() {
         await storage.setItem(`playerQueue/${playerInfo.playerid}`, refreshedPlayerQueue)
 
         logger.info(
-          `Refreshed playQueue '${playQueueId}' of player ${playerInfo.playerid}, now has ${refreshedPlayQueue.MediaContainer.$.size} items`
+          `Player '${playerInfo.name}' (${playerInfo.playerid}): playQueue '${playQueueId}' size changed from ${playerQueue.playQueue.MediaContainer.$.size} to ${refreshedPlayQueue.MediaContainer.$.size} tracks.`
         )
       })
     )
   } catch (error) {
-    logger.error(`Error when refreshing player play queues`, error)
+    logger.error(`Error when refreshing play queues`, error)
   }
 }
