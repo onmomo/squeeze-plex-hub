@@ -51,7 +51,7 @@ export default eventHandler(async (event) => {
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
   } catch (error) {
-    logger.warn(`Error when skipping to next track player '${targetClientIdentifier}' ${error}`, error)
+    logger.warn(`Error when skipping to next track player '${targetClientIdentifier}'`, error)
     return event.respondWith(
       new Response(`Player '${targetClientIdentifier}' not available to set parameters, try again later`, { status: 404 })
     )
