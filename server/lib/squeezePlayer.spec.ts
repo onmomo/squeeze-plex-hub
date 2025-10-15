@@ -91,6 +91,20 @@ describe('ExtendedSqueezePlayer', () => {
     expect(result).toBe('seeked')
   })
 
+  it('calls playlistRepeatMode with correct args', async () => {
+    ;(stub.requestAsync as Mock).mockResolvedValue('repeat set')
+    const result = await player.playlistRepeatMode(2)
+    expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['playlist', 'repeat', '2']])
+    expect(result).toBe('repeat set')
+  })
+
+  it('calls deleteTrackFromPlaylist with correct args', async () => {
+    ;(stub.requestAsync as Mock).mockResolvedValue('deleted')
+    const result = await player.deleteTrackFromPlaylist(3)
+    expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['playlist', 'delete', '3']])
+    expect(result).toBe('deleted')
+  })
+
   it('returns status with correct mapping', async () => {
     ;(stub.requestAsync as Mock).mockResolvedValue({
       mode: 'play',
