@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.9.0...v1.10.0) (2025-10-15)
+
+
+### Features
+
+* add playQueue refresh logic before skipping tracks in playback routes ([b9bf600](https://github.com/onmomo/squeeze-plex-hub/commit/b9bf6006289da479bf722bd145765f86a6b5095e))
+* add playQueueRefresher task for automatic playQueue refresh ([9c6b33b](https://github.com/onmomo/squeeze-plex-hub/commit/9c6b33bdf1318c5526abb98ebffb32f0045003f0))
+
 ## [1.9.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.8.0...v1.9.0) (2025-10-13)
 
 
