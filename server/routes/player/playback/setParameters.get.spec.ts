@@ -25,7 +25,8 @@ vi.mock('../../../composables/usePlayerInfo', () => ({
 }))
 
 const mockPlayer = {
-  setVolumeAsync: vi.fn()
+  setVolumeAsync: vi.fn(),
+  playlistRepeatMode: vi.fn()
 }
 
 vi.mock('../../../composables/useSqueezePlayer', () => ({
@@ -56,9 +57,9 @@ vi.mock('h3', async (orig) => {
     getQuery: vi.fn().mockImplementation((_event) => ({
       type: 'track',
       commandID: '99',
-      shuffle: 'false',
+      shuffle: '0',
       volume: '999',
-      repeat: 'off'
+      repeat: '2'
     })),
     getRequestHeader: vi.fn(),
     sendNoContent: vi.fn(),
@@ -89,7 +90,7 @@ describe('playback.setParameters route', () => {
     expect(h3.sendNoContent).not.toHaveBeenCalled()
   })
 
-  it('setParameters track successfully', async () => {
+  it('setParameters successfully', async () => {
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       const headers: Record<string, string> = {
         'X-Plex-Target-Client-Identifier': 'player-1',
@@ -103,6 +104,7 @@ describe('playback.setParameters route', () => {
 
     expect(mockPlayer.setVolumeAsync).toHaveBeenCalledTimes(1)
     expect(mockPlayer.setVolumeAsync).toHaveBeenCalledWith(999)
+    expect(mockPlayer.playlistRepeatMode).toHaveBeenCalledWith(2)
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(
       event,
       expect.objectContaining({

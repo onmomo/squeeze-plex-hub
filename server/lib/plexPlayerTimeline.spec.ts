@@ -105,8 +105,10 @@ describe('timelineContainer', () => {
       time: 12.345,
       duration: 123.456,
       volume: 80,
-      playlist_cur_index: 0
-    } as any
+      playlist_cur_index: 0,
+      repeat: 2,
+      shuffle: 1
+    } as PlayerStatus
   })
 
   it('generates timeline with metadata when includeMetadata is true', async () => {
@@ -125,7 +127,7 @@ describe('timelineContainer', () => {
     expect(result.MediaContainer.Timeline[0].$.volume).toBe('80')
     expect(result.MediaContainer.Timeline[0].$.mute).toBe('0')
     expect(result.MediaContainer.Timeline[0].$.shuffle).toBe('1')
-    expect(result.MediaContainer.Timeline[0].$.repeat).toBe('0')
+    expect(result.MediaContainer.Timeline[0].$.repeat).toBe('2')
     expect(result.MediaContainer.Timeline[0].$.controllable).toBe(plexOptions.controllable)
     expect(result.MediaContainer.Timeline[0].$.machineIdentifier).toBe('server-uuid')
     expect(result.MediaContainer.Timeline[0].$.protocol).toBe('https')
