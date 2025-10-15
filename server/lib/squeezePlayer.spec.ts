@@ -44,7 +44,7 @@ describe('ExtendedSqueezePlayer', () => {
 
   it('calls selectTrackInPlaylist', async () => {
     ;(stub.requestAsync as Mock).mockResolvedValue('selected')
-    const result = await player.selectTrackInPlaylist('2')
+    const result = await player.selectTrackInPlaylist(2)
     expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['playlist', 'index', '2']])
     expect(result).toBe('selected')
   })

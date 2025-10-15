@@ -14,21 +14,20 @@ export default eventHandler(async (event) => {
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
 
-  logger.info(`SkipTo request received for player '${targetClientIdentifier}' with query: ${JSON.stringify(query)}`)
   const queryParameters = {
     key: query.key as string,
     commandID: query.commandID as string,
     playQueueItemID: query.playQueueItemID as string
   }
 
-  if (!targetClientIdentifier || !clientIdentifier || !deviceName) {
+  if (!targetClientIdentifier || !clientIdentifier || !deviceName || !queryParameters.playQueueItemID) {
     logger.warn(
-      `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers), got:`,
+      `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers) or query parameter playQueueItemID got:`,
       event.node.req.headers
     )
     return event.respondWith(
       new Response(
-        `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers)`,
+        `Missing required parameters ('X-Plex-Target-Client-Identifier', 'X-Plex-Client-Identifier', 'X-Plex-Device-Name' headers) or query parameter playQueueItemID`,
         { status: 400 }
       )
     )
@@ -44,17 +43,43 @@ export default eventHandler(async (event) => {
       return
     }
 
+    /**
+     * Get the index of a track in the play queue by its playQueueItemID
+     * @param queue current player queue
+     * @param playQueueItemID the playQueueItemID of the track
+     * @returns -1 if not found, otherwise the 0-based index of the item in the play queue
+     */
     function getTrackIndexByPlayQueueItemID(queue: PlayerPlayQueue, playQueueItemID: string): number {
       const tracks = queue.playQueue?.MediaContainer?.Track ?? []
       return tracks.findIndex((t) => t.$.playQueueItemID === playQueueItemID)
     }
 
-    const trackIndex = getTrackIndexByPlayQueueItemID(playerQueue, queryParameters.playQueueItemID)
-    logger.debug(`Resolved playQueueItemID ${queryParameters.playQueueItemID} to playQueue index ${trackIndex}`)
-    if (trackIndex < 0) {
-      throw new Error(`Could not find track with playQueueItemID ${queryParameters.playQueueItemID} in playerQueue, cannot skipTo`)
+    async function resolveTrackIndexOrThrow(queue: PlayerPlayQueue): Promise<number> {
+      
+      function isTrackIndexValid(index: number | undefined) {
+        return index !== undefined && index >= 0
+      }
+
+      const maybeTrackIndex = getTrackIndexByPlayQueueItemID(queue, queryParameters.playQueueItemID)
+      if (isTrackIndexValid(maybeTrackIndex)) {
+        logger.debug(`Resolved playQueueItemID '${queryParameters.playQueueItemID}' to playQueue index '${maybeTrackIndex}'`)
+        return maybeTrackIndex
+      }
+
+      logger.info(
+        `Could not find track with playQueueItemID '${queryParameters.playQueueItemID}' in loaded playerQueue, trying to refresh the playQueue from server ..`
+      )
+      // Plexamp does not always provide the full play queue in the beginning. (e.g track radio playQueue, is later populated on PMS), so we force refresh it here
+      await runTask('playQueueRefresher')
+      const refreshedPlayerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? queue
+      const maybeRefreshedTrackIndex = getTrackIndexByPlayQueueItemID(refreshedPlayerQueue, queryParameters.playQueueItemID)
+      if (isTrackIndexValid(maybeRefreshedTrackIndex)) {
+        return maybeRefreshedTrackIndex
+      }
+      throw new Error(`Could not find track with playQueueItemID '${queryParameters.playQueueItemID}' in playerQueue, cannot skipTo`)
     }
 
+    const trackIndex = await resolveTrackIndexOrThrow(playerQueue)
     await player.selectTrackInPlaylist(trackIndex) // LMS wants a 0-based index here
     logger.info(`Player '${targetClientIdentifier}' skipped to playlist item ${trackIndex}`)
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))

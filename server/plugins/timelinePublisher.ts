@@ -1,7 +1,6 @@
 import useLogger from '../composables/useLogger'
 import useSqueezePlayer from '../composables/useSqueezePlayer'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
-import type { ServerInfo } from 'lms-discovery'
 import type { RemoteSubscriber } from '../routes/player/timeline/poll.get'
 import axios from 'axios'
 import { type PlayerPlayQueue, timelineResponse } from '../lib/plexPlayerTimeline'
@@ -20,7 +19,7 @@ export default defineNitroPlugin(() => {
  * This is required for all other clients that subscribe to the timeline via /timeline/subscribe or /timeline/poll with wait=1.
  * The timeline is published every second to all subscribers of the players.
  *
- * This is probably LEGACY functionality for Plex web player and other clients that subscribe to the timeline.
+ * This is probably LEGACY functionality for Plex web player and other clients that subscribe to the timeline instead of pulling directly from the timeline endpoint.
  *
  */
 export async function runPublishTimeline() {
@@ -49,7 +48,7 @@ export async function runPublishTimeline() {
     }
 
     await Promise.all(
-      allPlayers.map(async ([serverId, playerInfo]) => {
+      allPlayers.map(async ([_serverId, playerInfo]) => {
         const subscriberKeys = await storage.getKeys(`subscribers/${playerInfo.playerid}`)
         if (!subscriberKeys || subscriberKeys.length === 0) {
           logger.debug(`No subscribers found for player ${playerInfo.playerid}, skipping`)
@@ -73,12 +72,7 @@ export async function runPublishTimeline() {
 
         // resolve player status and send timeline to all subscribers
         logger.debug(`Publishing timeline to ${playerSubscribers.length} subscribers for player ${playerInfo.playerid} ..`)
-        const serverInfo = await storage.getItem<ServerInfo>(`servers/${serverId}`)
-        if (!serverInfo || !serverInfo.ip) {
-          throw new Error(`SqueezeServerStub not found in storage for player '${playerInfo.playerid}'`)
-        }
         const { player } = await useSqueezePlayer(playerInfo.playerid)
-
         const playerStatus = await player.status()
         if (!playerStatus) {
           throw new Error(`Player ${playerInfo.playerid} status available yet`)

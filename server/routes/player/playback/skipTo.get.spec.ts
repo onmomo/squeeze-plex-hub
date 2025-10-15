@@ -5,9 +5,10 @@ import usePlayerInfo from '../../../composables/usePlayerInfo'
 
 vi.mock('../../../composables/useLogger', () => ({
   default: () => ({
-    debug: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn()
+    debug: (msg: string) => console.log(msg),
+    info: (msg: string) => console.log(msg),
+    warn: (msg: string) => console.log(msg),
+    error: (msg: string) => console.log(msg)
   })
 }))
 
@@ -47,6 +48,9 @@ const mockGetItem = vi.fn()
 vi.stubGlobal('useStorage', () => ({
   getItem: mockGetItem
 }))
+
+const mockRunTask = vi.fn()
+vi.stubGlobal('runTask', mockRunTask)
 
 describe('GET /server/routes/player/playback/skipTo.get', () => {
   beforeEach(() => {
@@ -183,7 +187,6 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
         }
       }
     })
-    selectTrackInPlaylist.mockResolvedValue(undefined)
 
     const event: any = {
       node: { req: { headers: {} } },
@@ -192,7 +195,61 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
 
     await handler(event)
 
-    expect(selectTrackInPlaylist).toHaveBeenCalledWith(1)
+    expect(selectTrackInPlaylist).toHaveBeenCalledWith(1) // pq-2 is at index 1
+    expect(h3.setResponseHeaders as Mock).toHaveBeenCalledTimes(1)
+    expect(h3.sendNoContent as Mock).toHaveBeenCalledWith(event, 200)
+    expect(event.respondWith).not.toHaveBeenCalled()
+  })
+
+  it('refresh playQueue and skips to track', async () => {
+    // Mock headers and query
+    ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
+      const headers: Record<string, string> = {
+        'X-Plex-Target-Client-Identifier': 'player-1',
+        'X-Plex-Client-Identifier': 'client-1',
+        'X-Plex-Device-Name': 'Device'
+      }
+      return headers[name]
+    })
+    ;(h3.getQuery as Mock).mockReturnValue({
+      key: '/library/metadata/1',
+      commandID: 'cmd-99',
+      playQueueItemID: 'pq-4'
+    })
+    ;(usePlayerInfo as Mock).mockResolvedValue({
+      playerInfo: { playerid: 'player-1', name: 'Player One' },
+      serverStub: {}
+    })
+    // First call returns queue without pq-4, second call returns queue with pq-4 to simulate refresh
+    mockGetItem.mockResolvedValueOnce({
+      playQueue: {
+        MediaContainer: {
+          Track: [{ $: { playQueueItemID: 'pq-1' } }, { $: { playQueueItemID: 'pq-2' } }, { $: { playQueueItemID: 'pq-3' } }]
+        }
+      }
+    })
+    mockGetItem.mockResolvedValueOnce({
+      playQueue: {
+        MediaContainer: {
+          Track: [
+            { $: { playQueueItemID: 'pq-1' } },
+            { $: { playQueueItemID: 'pq-2' } },
+            { $: { playQueueItemID: 'pq-3' } },
+            { $: { playQueueItemID: 'pq-4' } }
+          ]
+        }
+      }
+    })
+
+    const event: any = {
+      node: { req: { headers: {} } },
+      respondWith: vi.fn()
+    }
+
+    await handler(event)
+
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher')
+    expect(selectTrackInPlaylist).toHaveBeenCalledWith(3) // pq-4 is at index 3 (0-based)
     expect(h3.setResponseHeaders as Mock).toHaveBeenCalledTimes(1)
     expect(h3.sendNoContent as Mock).toHaveBeenCalledWith(event, 200)
     expect(event.respondWith).not.toHaveBeenCalled()

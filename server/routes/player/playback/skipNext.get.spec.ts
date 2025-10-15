@@ -61,6 +61,9 @@ vi.mock('h3', async (orig) => {
   }
 })
 
+const mockRunTask = vi.fn()
+vi.stubGlobal('runTask', mockRunTask)
+
 describe('playback.skipNext route', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
@@ -97,6 +100,7 @@ describe('playback.skipNext route', () => {
 
     await handler(event)
 
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher')
     expect(mockPlayer.skipNext).toHaveBeenCalledTimes(1)
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(
       event,
