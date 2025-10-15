@@ -5,6 +5,7 @@ import usePlayerInfo from '../../../composables/usePlayerInfo'
 
 vi.mock('../../../composables/useLogger', () => ({
   default: () => ({
+    debug: (msg: string) => console.log(msg),
     info: (msg: string) => console.log(msg),
     warn: (msg: string) => console.log(msg),
     error: (msg: string) => console.log(msg)
@@ -200,7 +201,7 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
     expect(event.respondWith).not.toHaveBeenCalled()
   })
 
-  it.only('refresh playQueue and skips to track', async () => {
+  it('refresh playQueue and skips to track', async () => {
     // Mock headers and query
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       const headers: Record<string, string> = {

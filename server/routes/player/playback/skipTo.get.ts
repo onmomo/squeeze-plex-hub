@@ -55,26 +55,28 @@ export default eventHandler(async (event) => {
     }
 
     async function resolveTrackIndexOrThrow(queue: PlayerPlayQueue): Promise<number> {
-      function isTrackIndexInvalid(index: number | undefined = maybeTrackIndex) {
-        return !index || index <= 0
+      
+      function isTrackIndexValid(index: number | undefined) {
+        return index !== undefined && index >= 0
       }
 
       const maybeTrackIndex = getTrackIndexByPlayQueueItemID(queue, queryParameters.playQueueItemID)
-      if (isTrackIndexInvalid(maybeTrackIndex)) {
-        logger.info(
-          `Could not find track with playQueueItemID '${queryParameters.playQueueItemID}' in loaded playerQueue, trying to refresh the playQueue from server ..`
-        )
-        // Plexamp does not always provide the full play queue in the beginning. (e.g track radio playQueue, is later populated on PMS), so we force refresh it here
-        await runTask('playQueueRefresher')
-        const refreshedPlayerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) || queue
-        const maybeRefreshedTrackIndex = getTrackIndexByPlayQueueItemID(refreshedPlayerQueue, queryParameters.playQueueItemID)
-        if (isTrackIndexInvalid(maybeRefreshedTrackIndex)) {
-          throw new Error(`Could not find track with playQueueItemID '${queryParameters.playQueueItemID}' in playerQueue, cannot skipTo`)
-        }
+      if (isTrackIndexValid(maybeTrackIndex)) {
+        logger.debug(`Resolved playQueueItemID '${queryParameters.playQueueItemID}' to playQueue index '${maybeTrackIndex}'`)
+        return maybeTrackIndex
+      }
+
+      logger.info(
+        `Could not find track with playQueueItemID '${queryParameters.playQueueItemID} in loaded playerQueue, trying to refresh the playQueue from server ..`
+      )
+      // Plexamp does not always provide the full play queue in the beginning. (e.g track radio playQueue, is later populated on PMS), so we force refresh it here
+      await runTask('playQueueRefresher')
+      const refreshedPlayerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? queue
+      const maybeRefreshedTrackIndex = getTrackIndexByPlayQueueItemID(refreshedPlayerQueue, queryParameters.playQueueItemID)
+      if (isTrackIndexValid(maybeRefreshedTrackIndex)) {
         return maybeRefreshedTrackIndex
       }
-      logger.debug(`Resolved playQueueItemID ${queryParameters.playQueueItemID} to playQueue index ${maybeTrackIndex}`)
-      return maybeTrackIndex
+      throw new Error(`Could not find track with playQueueItemID '${queryParameters.playQueueItemID}' in playerQueue, cannot skipTo`)
     }
 
     const trackIndex = await resolveTrackIndexOrThrow(playerQueue)
