@@ -31,7 +31,7 @@
                 :src="`http://${player.serverInfo.ip}:${player.serverInfo.jsonPort}/html/images/Players/${player.playerInfo.model}_250x250.png`"
                 :alt="`Player Model: ${player.playerInfo.model}`"
                 class="player-image"
-                @error="event => event.target.src = '/logo_512.png'"
+                @error="onImageError"
                 >
               <div>
                 <p>🆔 {{ player.playerInfo.playerid }}</p>
@@ -115,11 +115,18 @@ export default defineComponent({
     })
     onUnmounted(stopPolling)
 
+    // Handle image loading error
+    const onImageError = (event: Event) => {
+      const target = event.target as HTMLImageElement
+      target.src = '/logo_512.png'
+    }
+
     return {
       players,
       groupedPlayers,
       loading,
-      error
+      error,
+      onImageError
     }
   }
 })
