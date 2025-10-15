@@ -67,7 +67,7 @@ export default eventHandler(async (event) => {
       }
 
       logger.info(
-        `Could not find track with playQueueItemID '${queryParameters.playQueueItemID} in loaded playerQueue, trying to refresh the playQueue from server ..`
+        `Could not find track with playQueueItemID '${queryParameters.playQueueItemID}' in loaded playerQueue, trying to refresh the playQueue from server ..`
       )
       // Plexamp does not always provide the full play queue in the beginning. (e.g track radio playQueue, is later populated on PMS), so we force refresh it here
       await runTask('playQueueRefresher')
