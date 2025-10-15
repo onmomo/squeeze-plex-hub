@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.11.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.10.0...v1.11.0) (2025-10-15)
+
+
+### Features
+
+* add repeat and shuffle parameters to player status and implement repeat functionality ([3e70e9f](https://github.com/onmomo/squeeze-plex-hub/commit/3e70e9f97017061c56f1f6c213a2c4f305da8108))
+
 ## [1.10.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.9.0...v1.10.0) (2025-10-15)
 
 
