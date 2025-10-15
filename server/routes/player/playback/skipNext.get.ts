@@ -28,6 +28,9 @@ export default eventHandler(async (event) => {
     const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
     const { player } = await useSqueezePlayer(targetClientIdentifier)
 
+    // Plexamp does not always provide the full play queue in the beginning. (e.g track radio playQueue, is later populated on PMS), so we force refresh it here
+    // before skipping to next track to avoid skipping to "no track" on LMS and stopping playback
+    await runTask('playQueueRefresher')
     await player.skipNext()
     logger.info(`Player '${targetClientIdentifier}' skipped to next track`)
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
