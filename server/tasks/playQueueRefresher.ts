@@ -49,7 +49,7 @@ export async function runPlayQueueRefresher() {
     for (const key of serverKeys) {
       const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
       logger.debug(`Found ${playerInfos?.length || 0} players for server '${key}'`)
-      const serverId = key.split(':')[1] // e.g. players:de443cee-943b-421a-8db3-575e5b4cddc6 where the later is the serverId
+      const serverId = key.split(':')[1]
       if (playerInfos) {
         for (const player of playerInfos) {
           allPlayers.push([serverId, player])
@@ -63,13 +63,13 @@ export async function runPlayQueueRefresher() {
 
         const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
         if (!playerQueue) {
-          logger.info(`No playQueue available for player ${playerInfo.playerid}, skipping refresh`)
+          logger.info(`No playQueue available for player '${playerInfo.name}' (${playerInfo.playerid}), skipping refresh`)
           return
         }
 
         const playQueueId = playerQueue.playQueue.MediaContainer.$.playQueueID
 
-        logger.info(`Refreshing playQueue '${playQueueId}' of player ${playerInfo.playerid} ..`)
+        logger.info(`Refreshing playQueue '${playQueueId}' of player '${playerInfo.name}' (${playerInfo.playerid}) ..`)
         const refreshedPlayQueue = await getPlayQueue(playerQueue.plexServer, `/playQueues/${playQueueId}`)
         const refreshedPlayerQueue: PlayerPlayQueue = {
           playerId: playerInfo.playerid,
@@ -79,14 +79,14 @@ export async function runPlayQueueRefresher() {
 
         if (refreshedPlayQueue.MediaContainer.$.size === playerQueue.playQueue.MediaContainer.$.size) {
           logger.info(
-            `PlayQueue '${playQueueId}' of player ${playerInfo.playerid} has not changed in size (${refreshedPlayQueue.MediaContainer.$.size} items), skipping`
+            `PlayQueue '${playQueueId}' of player '${playerInfo.name}' (${playerInfo.playerid}) has not changed in size (${refreshedPlayQueue.MediaContainer.$.size} items), skipping`
           )
           return
         }
 
         const updatedTrackQueue = refreshedPlayQueue.MediaContainer.Track.slice(Number(playerQueue.playQueue.MediaContainer.$.size))
         for (const track of updatedTrackQueue) {
-          logger.info(`Adding track '${track.$.title}' / '${track.$.key}' to refreshed playQueue for player '${playerInfo.name}' ..`)
+          logger.info(`Adding track '${track.$.title}' / '${track.$.key}' to refreshed playQueue for player '${playerInfo.name}' (${playerInfo.playerid}) ..`)
           const trackUrl = getPlexApiTrack(playerQueue.plexServer, track)
           await player.addToPlaylist(trackUrl, metadata(track))
         }
