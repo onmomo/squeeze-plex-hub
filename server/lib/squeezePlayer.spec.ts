@@ -98,7 +98,9 @@ describe('ExtendedSqueezePlayer', () => {
       playlist_cur_index: '1',
       playlist_tracks: '10',
       duration: '180.0',
-      'mixer volume': '55'
+      'mixer volume': '55',
+      'playlist repeat': '2',
+      'playlist shuffle': '1'
     })
     const status = await player.status()
     expect(status).toEqual({
@@ -108,7 +110,9 @@ describe('ExtendedSqueezePlayer', () => {
       playlist_cur_index: 1,
       playlist_tracks: 10,
       duration: 180.0,
-      volume: 55
+      volume: 55,
+      repeat: 2,
+      shuffle: 1
     })
   })
 
@@ -125,7 +129,9 @@ describe('ExtendedSqueezePlayer', () => {
       playlist_cur_index: undefined,
       playlist_tracks: undefined,
       duration: undefined,
-      'mixer volume': undefined
+      'mixer volume': undefined,
+      'playlist repeat': undefined,
+      'playlist shuffle': undefined
     })
     const status = await player.status()
     expect(status).toEqual({
@@ -135,7 +141,9 @@ describe('ExtendedSqueezePlayer', () => {
       playlist_cur_index: 0,
       playlist_tracks: 0,
       duration: 0,
-      volume: 0
+      volume: 0,
+      repeat: 0,
+      shuffle: 0
     })
   })
 })

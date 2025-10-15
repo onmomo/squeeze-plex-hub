@@ -12,13 +12,12 @@ export default eventHandler(async (event) => {
   const clientIdentifier = getRequestHeader(event, 'X-Plex-Client-Identifier')
   const deviceName = getRequestHeader(event, 'X-Plex-Device-Name')
 
-  logger.info(`queries: ${JSON.stringify(query)}`)
   const queryParameters = {
     type: query.type as string,
     commandID: query.commandID as string,
     volume: query.volume as string | undefined,
     shuffle: query.shuffle as string | undefined, // TODO implement
-    repeat: query.repeat as string | undefined // TODO implement
+    repeat: query.repeat as string | undefined
   }
 
   if (!targetClientIdentifier || !clientIdentifier || !deviceName) {
@@ -40,13 +39,19 @@ export default eventHandler(async (event) => {
 
     if (queryParameters.volume) {
       await player.setVolumeAsync(parseInt(queryParameters.volume))
-      logger.info(`Player '${targetClientIdentifier}' set volume to ${queryParameters.volume}.`)
+      logger.info(`Player '${targetClientIdentifier}' set volume to '${queryParameters.volume}'.`)
+    }
+
+    if (queryParameters.repeat) {
+      // Plex sends repeat as: 0=off, 1=current track, 2=entire playlist
+      await player.playlistRepeatMode(parseInt(queryParameters.repeat))
+      logger.info(`Player '${targetClientIdentifier}' set repeat mode to '${queryParameters.repeat}'.`)
     }
 
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
   } catch (error) {
-    logger.warn(`Error when skipping to next track player '${targetClientIdentifier}'`, error)
+    logger.warn(`Error when skipping to next track player '${targetClientIdentifier}' ${error}`, error)
     return event.respondWith(
       new Response(`Player '${targetClientIdentifier}' not available to set parameters, try again later`, { status: 404 })
     )

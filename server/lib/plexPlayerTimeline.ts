@@ -233,8 +233,8 @@ const timelineContainer = (
             itemType: 'music',
             volume: volume(),
             mute: mute(),
-            shuffle: playerQueue?.playQueue?.MediaContainer.$.playQueueShuffled,
-            repeat: '0',
+            shuffle: playerQueue?.playQueue?.MediaContainer.$.playQueueShuffled, // TODO implement shuffle mode properly
+            repeat: playerStatus.repeat.toString(), 
             controllable: plexOptions.controllable,
             machineIdentifier: playerQueue?.plexServer?.server.resourceIdentifier, // THIS IS ESSENTIAL TO GET THE TIMELINE TO WORK, needs to reflect the serverId of the server that hosts the playQueue. All the server information must match with what was received in createPlayeQueue request
             protocol: playerQueue?.plexServer?.server.protocol,
