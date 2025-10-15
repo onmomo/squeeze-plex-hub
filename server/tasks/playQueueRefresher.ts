@@ -77,15 +77,28 @@ export async function runPlayQueueRefresher() {
           plexServer: playerQueue.plexServer
         }
 
-        if (refreshedPlayQueue.MediaContainer.$.size === playerQueue.playQueue.MediaContainer.$.size) {
+        // Build a set of existing track IDs from the current queue
+        const existingTrackIds = new Set(
+          playerQueue.playQueue.MediaContainer.Track.map((track) => track.$.playQueueItemID)
+        )
+
+        // Find new tracks in the refreshed queue that aren't in the current queue
+        const newTracks = refreshedPlayQueue.MediaContainer.Track.filter(
+          (track) => !existingTrackIds.has(track.$.playQueueItemID)
+        )
+
+        if (newTracks.length === 0) {
           logger.info(
-            `PlayQueue '${playQueueId}' of player '${playerInfo.name}' (${playerInfo.playerid}) has not changed in size (${refreshedPlayQueue.MediaContainer.$.size} items), skipping`
+            `PlayQueue '${playQueueId}' of player '${playerInfo.name}' (${playerInfo.playerid}) has no new tracks, skipping`
           )
           return
         }
 
-        const updatedTrackQueue = refreshedPlayQueue.MediaContainer.Track.slice(Number(playerQueue.playQueue.MediaContainer.$.size))
-        for (const track of updatedTrackQueue) {
+        logger.info(
+          `PlayQueue '${playQueueId}' of player '${playerInfo.name}' (${playerInfo.playerid}): found ${newTracks.length} new track(s) to add (old size: ${playerQueue.playQueue.MediaContainer.$.size}, new size: ${refreshedPlayQueue.MediaContainer.$.size})`
+        )
+
+        for (const track of newTracks) {
           logger.info(`Adding track '${track.$.title}' / '${track.$.key}' to refreshed playQueue for player '${playerInfo.name}' (${playerInfo.playerid}) ..`)
           const trackUrl = getPlexApiTrack(playerQueue.plexServer, track)
           await player.addToPlaylist(trackUrl, metadata(track))
@@ -94,7 +107,7 @@ export async function runPlayQueueRefresher() {
         await storage.setItem(`playerQueue/${playerInfo.playerid}`, refreshedPlayerQueue)
 
         logger.info(
-          `Player '${playerInfo.name}' (${playerInfo.playerid}): playQueue '${playQueueId}' size changed from '${playerQueue.playQueue.MediaContainer.$.size}' to '${refreshedPlayQueue.MediaContainer.$.size}' tracks.`
+          `Player '${playerInfo.name}' (${playerInfo.playerid}): playQueue '${playQueueId}' refreshed (old size: ${playerQueue.playQueue.MediaContainer.$.size}, new size: ${refreshedPlayQueue.MediaContainer.$.size}, added: ${newTracks.length} tracks).`
         )
       })
     )

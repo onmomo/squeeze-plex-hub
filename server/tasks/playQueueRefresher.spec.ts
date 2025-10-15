@@ -84,7 +84,7 @@ describe('runPlayQueueRefresher', () => {
       playQueue: {
         MediaContainer: {
           $: { playQueueID: 'pqid', size: '1' },
-          Track: [{ $: { title: 'Old Track', key: 'old' } }]
+          Track: [{ $: { title: 'Old Track', key: 'old', playQueueItemID: '100' } }]
         }
       },
       plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
@@ -92,7 +92,10 @@ describe('runPlayQueueRefresher', () => {
     ;(getPlayQueue as Mock).mockResolvedValue({
       MediaContainer: {
         $: { playQueueID: 'pqid', size: '2' },
-        Track: [{ $: { title: 'Old Track', key: 'old' } }, { $: { title: 'New Track', key: 'new' } }]
+        Track: [
+          { $: { title: 'Old Track', key: 'old', playQueueItemID: '100' } },
+          { $: { title: 'New Track', key: 'new', playQueueItemID: '101' } }
+        ]
       }
     })
     await runPlayQueueRefresher()
@@ -108,7 +111,7 @@ describe('runPlayQueueRefresher', () => {
       playQueue: {
         MediaContainer: {
           $: { playQueueID: 'pqid', size: '1' },
-          Track: [{ $: { title: 'Old Track', key: 'old' } }]
+          Track: [{ $: { title: 'Old Track', key: 'old', playQueueItemID: '100' } }]
         }
       },
       plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
@@ -116,12 +119,48 @@ describe('runPlayQueueRefresher', () => {
     ;(getPlayQueue as Mock).mockResolvedValue({
       MediaContainer: {
         $: { playQueueID: 'pqid', size: '1' },
-        Track: [{ $: { title: 'Old Track', key: 'old' } }]
+        Track: [{ $: { title: 'Old Track', key: 'old', playQueueItemID: '100' } }]
       }
     })
     await runPlayQueueRefresher()
     expect(mockAddToPlaylist).not.toHaveBeenCalled()
     expect(storageMock.setItem).not.toHaveBeenCalled()
+  })
+
+  it('handles PMS trimming: adds new tracks when old tracks are removed and new ones added', async () => {
+    storageMock.getKeys.mockResolvedValue(['players/server1'])
+    storageMock.getItem.mockResolvedValueOnce([{ playerid: 'p1', name: 'Player 1' }])
+    // Initial queue has 3 tracks (IDs: 100, 101, 102)
+    storageMock.getItem.mockResolvedValueOnce({
+      playerid: 'p1',
+      playQueue: {
+        MediaContainer: {
+          $: { playQueueID: 'pqid', size: '3' },
+          Track: [
+            { $: { title: 'Track 1', key: 'track1', playQueueItemID: '100' } },
+            { $: { title: 'Track 2', key: 'track2', playQueueItemID: '101' } },
+            { $: { title: 'Track 3', key: 'track3', playQueueItemID: '102' } }
+          ]
+        }
+      },
+      plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
+    })
+    // PMS trimmed the queue: removed track 100, kept 101 and 102, added 103 and 104
+    ;(getPlayQueue as Mock).mockResolvedValue({
+      MediaContainer: {
+        $: { playQueueID: 'pqid', size: '4' },
+        Track: [
+          { $: { title: 'Track 2', key: 'track2', playQueueItemID: '101' } },
+          { $: { title: 'Track 3', key: 'track3', playQueueItemID: '102' } },
+          { $: { title: 'Track 4', key: 'track4', playQueueItemID: '103' } },
+          { $: { title: 'Track 5', key: 'track5', playQueueItemID: '104' } }
+        ]
+      }
+    })
+    await runPlayQueueRefresher()
+    // Should add only the 2 new tracks (103 and 104)
+    expect(mockAddToPlaylist).toHaveBeenCalledTimes(2)
+    expect(storageMock.setItem).toHaveBeenCalledWith('playerQueue/p1', expect.anything())
   })
 
   it('handles errors gracefully', async () => {
