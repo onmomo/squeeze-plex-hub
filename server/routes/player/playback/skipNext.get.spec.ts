@@ -100,7 +100,7 @@ describe('playback.skipNext route', () => {
 
     await handler(event)
 
-    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher')
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher', { payload: { forceRefresh: true } })
     expect(mockPlayer.skipNext).toHaveBeenCalledTimes(1)
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(
       event,

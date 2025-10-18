@@ -21,10 +21,11 @@ vi.mock('../composables/useLogger', () => {
 
 // Mock useSqueezePlayer
 const mockAddToPlaylist = vi.fn()
+const mockDeleteFromPlaylist = vi.fn()
 
 vi.mock('../composables/useSqueezePlayer', () => ({
   default: vi.fn().mockImplementation(() => ({
-    player: { addToPlaylist: mockAddToPlaylist }
+    player: { addToPlaylist: mockAddToPlaylist, deleteFromPlaylist: mockDeleteFromPlaylist }
   }))
 }))
 
@@ -160,6 +161,7 @@ describe('runPlayQueueRefresher', () => {
     await runPlayQueueRefresher()
     // Should add only the 2 new tracks (103 and 104)
     expect(mockAddToPlaylist).toHaveBeenCalledTimes(2)
+    expect(mockDeleteFromPlaylist).toHaveBeenCalledTimes(1)
     expect(storageMock.setItem).toHaveBeenCalledWith('playerQueue/p1', expect.anything())
   })
 

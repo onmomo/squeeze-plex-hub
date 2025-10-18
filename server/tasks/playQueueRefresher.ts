@@ -14,6 +14,11 @@ import useLogger from '../composables/useLogger'
 import useSqueezePlayer from '../composables/useSqueezePlayer'
 import { getPlayQueue, metadata, getPlexApiTrack } from '../lib/plexApi'
 import type { PlayerPlayQueue } from '../lib/plexPlayerTimeline'
+import type { TaskPayload } from 'nitropack'
+
+export interface PlayQueueRefresherPayload extends TaskPayload {
+  forceRefresh?: boolean
+}
 
 /**
  * Manually trigger the refresh: http://localhost:3000/_nitro/tasks/playQueueRefresher
@@ -23,20 +28,28 @@ export default defineTask({
     name: 'playQueueRefresher',
     description: 'Refreshes the Plex play queue for all Squeeze players'
   },
-  async run(_event) {
-    await runPlayQueueRefresher()
+  async run(event) {
+    const payload = event?.payload as PlayQueueRefresherPayload
+    const forceRefresh = payload?.forceRefresh === true
+    await runPlayQueueRefresher(forceRefresh)
     return { result: 'ok' }
   }
 })
 
-/**
- * Checks for Plex (PMS) play queue updates and stores them in the DISCOVERY storage.
- */
-export async function runPlayQueueRefresher() {
+// Simple in-memory lock to prevent concurrent execution
+let isRunning = false
+
+export async function runPlayQueueRefresher(forceRefresh = false) {
+  if (isRunning) {
+    // Optionally log or throw if you want to notify about concurrent attempts
+    // TODO return some status about skipping due to already running
+    return
+  }
+  isRunning = true
   const logger = useLogger('playQueueRefresher')
   const storage = useStorage('DISCOVERY')
   try {
-    logger.info('Refreshing Plex play queues for all Squeeze players ..')
+    logger.info(`Refreshing Plex play queues for all Squeeze players .. [forceRefresh: ${forceRefresh}]`)
 
     const serverKeys = await storage.getKeys('players/')
     if (!serverKeys || serverKeys.length === 0) {
@@ -44,7 +57,7 @@ export async function runPlayQueueRefresher() {
       return
     }
 
-    const allPlayers: [string, IPlayerInfo][] = [] // Array of tuples (serverId, IPlayerInfo)
+    const allPlayers: [string, IPlayerInfo][] = []
 
     for (const key of serverKeys) {
       const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
@@ -76,10 +89,29 @@ export async function runPlayQueueRefresher() {
           plexServer: playerQueue.plexServer
         }
 
-        // Build a set of existing track IDs from the current queue
-        const existingTrackIds = new Set(playerQueue.playQueue.MediaContainer.Track.map((track) => track.$.playQueueItemID))
+        if (forceRefresh) {
+          logger.info(`Force refreshing playQueue '${playQueueId}' for player '${playerInfo.name}' (${playerInfo.playerid})`)
+          await player.clearPlaylist()
+          for (const track of refreshedPlayQueue.MediaContainer.Track) {
+            const trackUrl = getPlexApiTrack(playerQueue.plexServer, track)
+            logger.info(
+              `Adding track '${track.$.title}' / '${track.$.key}' (${track.$.playQueueItemID}) to force refreshed playQueue for player '${playerInfo.name}' (${playerInfo.playerid}) ..`
+            )
+            await player.addToPlaylist(trackUrl, metadata(track))
+          }
+          await storage.setItem(`playerQueue/${playerInfo.playerid}`, refreshedPlayerQueue)
+          logger.info(
+            `Player '${playerInfo.name}' (${playerInfo.playerid}): playQueue '${playQueueId}' force refreshed (size: ${refreshedPlayQueue.MediaContainer.$.size}).`
+          )
+          return
+        }
 
-        // Find new tracks in the refreshed queue that aren't in the current queue
+        // TODO when jumping back and forth in the play queue, the automatic update causes the queue to go out of sync.
+        // This is due to the fact than when jumping back, PMS prepends tracks again to the play queue
+        // LMS playlist CLI does not support prepending tracks, only appending.
+        // One workaround would be to always clear and re-add the whole playlist on background refresh, if the beginning of the queue changed.
+        // But this would cause playback interruptions on the player side, even if we seek to the same track and timeline after re-adding the playlist
+        const existingTrackIds = new Set(playerQueue.playQueue.MediaContainer.Track.map((track) => track.$.playQueueItemID))
         const newTracks = refreshedPlayQueue.MediaContainer.Track.filter((track) => !existingTrackIds.has(track.$.playQueueItemID))
 
         if (newTracks.length === 0) {
@@ -90,9 +122,7 @@ export async function runPlayQueueRefresher() {
         logger.info(
           `PlayQueue '${playQueueId}' of player '${playerInfo.name}' (${playerInfo.playerid}): found ${newTracks.length} new track(s) to add (old size: ${playerQueue.playQueue.MediaContainer.$.size}, new size: ${refreshedPlayQueue.MediaContainer.$.size})`
         )
-        // Remove tracks that are no longer in the refreshed queue from the player's playlist
         const refreshedTrackIds = new Set(refreshedPlayQueue.MediaContainer.Track.map((track) => track.$.playQueueItemID))
-
         const removedTracks = playerQueue.playQueue.MediaContainer.Track.filter((track) => !refreshedTrackIds.has(track.$.playQueueItemID))
 
         for (const track of removedTracks) {
@@ -105,7 +135,7 @@ export async function runPlayQueueRefresher() {
 
         for (const track of newTracks) {
           logger.info(
-            `Adding track '${track.$.title}' / '${track.$.key}' to refreshed playQueue for player '${playerInfo.name}' (${playerInfo.playerid}) ..`
+            `Adding track '${track.$.title}' / '${track.$.key}' (${track.$.playQueueItemID}) to refreshed playQueue for player '${playerInfo.name}' (${playerInfo.playerid}) ..`
           )
           const trackUrl = getPlexApiTrack(playerQueue.plexServer, track)
           await player.addToPlaylist(trackUrl, metadata(track))
@@ -125,6 +155,8 @@ export async function runPlayQueueRefresher() {
       })
     )
   } catch (error) {
-    logger.error(`Error when refreshing play queues ${error}`, error)
+    logger.error(`Error when refreshing play queues: ${error}`, error)
+  } finally {
+    isRunning = false
   }
 }
