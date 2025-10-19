@@ -1,10 +1,9 @@
 import useLogger from '../../../composables/useLogger'
 import usePlayerInfo from '../../../composables/usePlayerInfo'
 import { responseHeaders } from '../../../lib/plexApi'
-import type { PlayerPlayQueue } from '../../../lib/plexPlayerTimeline'
+import { getTrackIndexByPlayQueueItemID, type PlayerPlayQueue } from '../../../lib/plexPlayerTimeline'
 import { eventHandler, getRequestHeader, setResponseHeaders, getQuery, sendNoContent } from 'h3'
 import useSqueezePlayer from '../../../composables/useSqueezePlayer'
-import type { PlayQueueRefresherPayload } from '~~/server/tasks/playQueueRefresher'
 
 const logger = useLogger('playback.skipTo')
 
@@ -44,19 +43,7 @@ export default eventHandler(async (event) => {
       return
     }
 
-    /**
-     * Get the index of a track in the play queue by its playQueueItemID
-     * @param queue current player queue
-     * @param playQueueItemID the playQueueItemID of the track
-     * @returns -1 if not found, otherwise the 0-based index of the item in the play queue
-     */
-    function getTrackIndexByPlayQueueItemID(queue: PlayerPlayQueue, playQueueItemID: string): number {
-      const tracks = queue.playQueue?.MediaContainer?.Track ?? []
-      return tracks.findIndex((t) => t.$.playQueueItemID === playQueueItemID)
-    }
-
     async function resolveTrackIndexOrThrow(queue: PlayerPlayQueue): Promise<number> {
-      
       function isTrackIndexValid(index: number | undefined) {
         return index !== undefined && index >= 0
       }
@@ -71,7 +58,7 @@ export default eventHandler(async (event) => {
         `Could not find track with playQueueItemID '${queryParameters.playQueueItemID}' in loaded playerQueue, trying to refresh the playQueue from server ..`
       )
       // Plexamp does not always provide the full play queue in the beginning. (e.g track radio playQueue, is later populated on PMS), so we force refresh it here
-      await runTask('playQueueRefresher', { payload: { forceRefresh: true } as PlayQueueRefresherPayload })
+      await runTask('playQueueRefresher')
       const refreshedPlayerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? queue
       const maybeRefreshedTrackIndex = getTrackIndexByPlayQueueItemID(refreshedPlayerQueue, queryParameters.playQueueItemID)
       if (isTrackIndexValid(maybeRefreshedTrackIndex)) {

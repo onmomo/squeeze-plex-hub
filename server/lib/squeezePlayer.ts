@@ -9,11 +9,11 @@ export interface PlayerStatus {
   duration?: number
   playlist_cur_index: number
   playlist_tracks: number
-  volume: number,
+  volume: number
   /**
    * 0 = off, 1 = repeat current song, 2 = repeat entire playlist
    */
-  repeat: number,
+  repeat: number
   /**
    * 0 = off, 1 = shuffle by song, 2 = shuffle by album
    */
@@ -52,7 +52,6 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
   async selectTrackInPlaylist(index: number) {
     return this.stub.requestAsync([this.id, ['playlist', 'index', index.toString()]])
   }
-
   /**
    * Sets the playlist repeat mode.
    * @param mode 0 = off, 1 = repeat current song, 2 = repeat entire playlist

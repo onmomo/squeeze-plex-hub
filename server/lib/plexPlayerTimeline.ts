@@ -312,3 +312,14 @@ export async function timelineResponse(
   )
   return timelineContainer(playerStatus, subscriber, playerQueue, includeMetadata)
 }
+
+/**
+ * Get the index of a track in the play queue by its playQueueItemID
+ * @param queue current player queue
+ * @param playQueueItemID the playQueueItemID of the track
+ * @returns -1 if not found, otherwise the 0-based index of the item in the play queue
+ */
+export function getTrackIndexByPlayQueueItemID(queue: PlayerPlayQueue, playQueueItemID: string): number {
+  const tracks = queue.playQueue?.MediaContainer?.Track ?? []
+  return tracks.findIndex((t) => t.$.playQueueItemID === playQueueItemID)
+}
