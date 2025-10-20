@@ -70,7 +70,6 @@ export function metadata(meta: Track): string {
 export async function getPlayQueue(plexServer: PlexServer, containerKey: string): Promise<PlayQueue> {
   try {
     const url = getPlexApi(plexServer, containerKey)
-    logger.info(`Fetching playQueue from Plex server with URL: ${url}..`)
     const response = await axios.get<string>(url, {
       headers: {
         'X-Plex-Token': plexServer.token,

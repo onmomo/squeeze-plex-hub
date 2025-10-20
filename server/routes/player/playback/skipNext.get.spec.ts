@@ -25,7 +25,10 @@ vi.mock('../../../composables/usePlayerInfo', () => ({
 }))
 
 const mockPlayer = {
-  skipNext: vi.fn()
+  selectTrackInPlaylist: vi.fn(),
+  status: vi.fn().mockResolvedValue({
+    playlist_cur_index: 2,
+  })
 }
 
 vi.mock('../../../composables/useSqueezePlayer', () => ({
@@ -100,8 +103,8 @@ describe('playback.skipNext route', () => {
 
     await handler(event)
 
-    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher', { payload: { forceRefresh: true } })
-    expect(mockPlayer.skipNext).toHaveBeenCalledTimes(1)
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher')
+    expect(mockPlayer.selectTrackInPlaylist).toHaveBeenCalledWith(3) // was index two, so next is three
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(
       event,
       expect.objectContaining({
@@ -113,8 +116,8 @@ describe('playback.skipNext route', () => {
     expect(event.respondWith).not.toHaveBeenCalled()
   })
 
-  it('returns 404 when player skipNext fails', async () => {
-    mockPlayer.skipNext.mockRejectedValueOnce(new Error('failure'))
+  it('returns 404 when player selectTrackInPlaylist fails', async () => {
+    mockPlayer.selectTrackInPlaylist.mockRejectedValueOnce(new Error('failure'))
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       const headers: Record<string, string> = {
         'X-Plex-Target-Client-Identifier': 'player-1',

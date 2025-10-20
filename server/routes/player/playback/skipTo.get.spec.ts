@@ -248,7 +248,7 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
 
     await handler(event)
 
-    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher', { payload: { forceRefresh: true } })
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher')
     expect(selectTrackInPlaylist).toHaveBeenCalledWith(3) // pq-4 is at index 3 (0-based)
     expect(h3.setResponseHeaders as Mock).toHaveBeenCalledTimes(1)
     expect(h3.sendNoContent as Mock).toHaveBeenCalledWith(event, 200)

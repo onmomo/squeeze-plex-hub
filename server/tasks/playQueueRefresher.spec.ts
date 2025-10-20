@@ -20,12 +20,12 @@ vi.mock('../composables/useLogger', () => {
 })
 
 // Mock useSqueezePlayer
+const mockClearPlaylist = vi.fn()
 const mockAddToPlaylist = vi.fn()
-const mockDeleteFromPlaylist = vi.fn()
 
 vi.mock('../composables/useSqueezePlayer', () => ({
   default: vi.fn().mockImplementation(() => ({
-    player: { addToPlaylist: mockAddToPlaylist, deleteFromPlaylist: mockDeleteFromPlaylist }
+    player: { addToPlaylist: mockAddToPlaylist, clearPlaylist: mockClearPlaylist }
   }))
 }))
 
@@ -56,7 +56,7 @@ describe('runPlayQueueRefresher', () => {
     storageMock.getKeys.mockReset()
     storageMock.getItem.mockReset()
     storageMock.setItem.mockReset()
-    mockAddToPlaylist.mockReset()
+    mockClearPlaylist.mockReset()
     ;(getPlayQueue as Mock).mockReset()
   })
 
@@ -65,7 +65,7 @@ describe('runPlayQueueRefresher', () => {
     await runPlayQueueRefresher()
     expect(storageMock.getKeys).toHaveBeenCalledWith('players/')
     expect(storageMock.getItem).not.toHaveBeenCalled()
-    expect(mockAddToPlaylist).not.toHaveBeenCalled()
+    expect(mockClearPlaylist).not.toHaveBeenCalled()
   })
 
   it('skips if no playerQueue found', async () => {
@@ -74,10 +74,10 @@ describe('runPlayQueueRefresher', () => {
     storageMock.getItem.mockResolvedValueOnce(undefined) // playerQueue
     await runPlayQueueRefresher()
     expect(storageMock.getItem).toHaveBeenCalledWith('players/server1')
-    expect(mockAddToPlaylist).not.toHaveBeenCalled()
+    expect(mockClearPlaylist).not.toHaveBeenCalled()
   })
 
-  it('adds new tracks if playQueue size increased', async () => {
+  it('clears and reloads playQueue', async () => {
     storageMock.getKeys.mockResolvedValue(['players/server1'])
     storageMock.getItem.mockResolvedValueOnce([{ playerid: 'p1', name: 'Player 1' }])
     storageMock.getItem.mockResolvedValueOnce({
@@ -100,68 +100,8 @@ describe('runPlayQueueRefresher', () => {
       }
     })
     await runPlayQueueRefresher()
-    expect(mockAddToPlaylist).toHaveBeenCalledWith('http://track.url', 'meta')
-    expect(storageMock.setItem).toHaveBeenCalledWith('playerQueue/p1', expect.anything())
-  })
-
-  it('skips if playQueue size unchanged', async () => {
-    storageMock.getKeys.mockResolvedValue(['players/server1'])
-    storageMock.getItem.mockResolvedValueOnce([{ playerid: 'p1', name: 'Player 1' }])
-    storageMock.getItem.mockResolvedValueOnce({
-      playerid: 'p1',
-      playQueue: {
-        MediaContainer: {
-          $: { playQueueID: 'pqid', size: '1' },
-          Track: [{ $: { title: 'Old Track', key: 'old', playQueueItemID: '100' } }]
-        }
-      },
-      plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
-    })
-    ;(getPlayQueue as Mock).mockResolvedValue({
-      MediaContainer: {
-        $: { playQueueID: 'pqid', size: '1' },
-        Track: [{ $: { title: 'Old Track', key: 'old', playQueueItemID: '100' } }]
-      }
-    })
-    await runPlayQueueRefresher()
-    expect(mockAddToPlaylist).not.toHaveBeenCalled()
-    expect(storageMock.setItem).not.toHaveBeenCalled()
-  })
-
-  it('handles PMS trimming: adds new tracks when old tracks are removed and new ones added', async () => {
-    storageMock.getKeys.mockResolvedValue(['players/server1'])
-    storageMock.getItem.mockResolvedValueOnce([{ playerid: 'p1', name: 'Player 1' }])
-    // Initial queue has 3 tracks (IDs: 100, 101, 102)
-    storageMock.getItem.mockResolvedValueOnce({
-      playerid: 'p1',
-      playQueue: {
-        MediaContainer: {
-          $: { playQueueID: 'pqid', size: '3' },
-          Track: [
-            { $: { title: 'Track 1', key: 'track1', playQueueItemID: '100' } },
-            { $: { title: 'Track 2', key: 'track2', playQueueItemID: '101' } },
-            { $: { title: 'Track 3', key: 'track3', playQueueItemID: '102' } }
-          ]
-        }
-      },
-      plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
-    })
-    // PMS trimmed the queue: removed track 100, kept 101 and 102, added 103 and 104
-    ;(getPlayQueue as Mock).mockResolvedValue({
-      MediaContainer: {
-        $: { playQueueID: 'pqid', size: '4' },
-        Track: [
-          { $: { title: 'Track 2', key: 'track2', playQueueItemID: '101' } },
-          { $: { title: 'Track 3', key: 'track3', playQueueItemID: '102' } },
-          { $: { title: 'Track 4', key: 'track4', playQueueItemID: '103' } },
-          { $: { title: 'Track 5', key: 'track5', playQueueItemID: '104' } }
-        ]
-      }
-    })
-    await runPlayQueueRefresher()
-    // Should add only the 2 new tracks (103 and 104)
+    expect(mockClearPlaylist).toHaveBeenCalled()
     expect(mockAddToPlaylist).toHaveBeenCalledTimes(2)
-    expect(mockDeleteFromPlaylist).toHaveBeenCalledTimes(1)
     expect(storageMock.setItem).toHaveBeenCalledWith('playerQueue/p1', expect.anything())
   })
 
