@@ -2,6 +2,11 @@ import type { SqueezeServerStub } from 'lms-squeeze-rpc-x'
 import { SqueezePlayer } from 'lms-squeeze-rpc-x'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 
+export interface RemoteMeta {
+  id: string
+  title: string
+  url: string
+}
 export interface PlayerStatus {
   playerId: string
   mode: string
@@ -17,7 +22,8 @@ export interface PlayerStatus {
   /**
    * 0 = off, 1 = shuffle by song, 2 = shuffle by album
    */
-  shuffle: number
+  shuffle: number,
+  remoteMeta?: RemoteMeta
 }
 
 /**
@@ -100,7 +106,8 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
         duration: Number.parseFloat(response.duration) || 0.0,
         volume: Number.parseInt(response['mixer volume']) || 0,
         repeat: Number.parseInt(response['playlist repeat']) || 0,
-        shuffle: Number.parseInt(response['playlist shuffle']) || 0
+        shuffle: Number.parseInt(response['playlist shuffle']) || 0,
+        remoteMeta: response['remoteMeta'] // optional, only if a remote stream is playing
       }
 
       return status

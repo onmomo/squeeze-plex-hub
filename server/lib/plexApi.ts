@@ -41,11 +41,11 @@ export function getPlexApi(plexServer: PlexServer, path: string): string {
  * This URL can be used to stream the track directly from the Plex server until the token expires.
  *
  * @param plexServer Plex server to generate the API URL for
- * @param meta Track metadata to generate the API URL for
+ * @param track Track to generate the API URL for
  * @returns Plex API URL for the given track to stream it
  */
-export function getPlexApiTrack(plexServer: PlexServer, meta: Track): string {
-  return `${plexServer.server.protocol}://${plexServer.server.localAddress}:${plexServer.server.port}${meta?.Media[0]?.Part[0]?.$.key}?X-Plex-Token=${plexServer.token}`
+export function getPlexApiTrack(plexServer: PlexServer, track: Track): string {
+  return `${plexServer.server.protocol}://${plexServer.server.localAddress}:${plexServer.server.port}${track?.Media[0]?.Part[0]?.$.key}?X-Plex-Token=${plexServer.token}`
   //TODO return `${protocol}://${address}:${port}${track.file}?X-Plex-Token=${token}&artist=mytitle&title=blubber&cover=https%3A%2F%2Fwww.rockarchive.com%2Fmedia%2F1890%2Fdavid-bowie-db001duffy.jpg%3Fcrop%3D0.19186424300418511%2C0.18786141133986681%2C0.20427102269629802%2C0.20827385436061632%26cropmode%3Dpercentage%26width%3D800%26height%3D800%26rnd%3D132951122240000000%26overlay%3Dwatermark.png%26overlay.size%3D230%2C20%26overlay.position%3D0%2C780`
 }
 

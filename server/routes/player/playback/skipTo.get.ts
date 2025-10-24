@@ -4,6 +4,7 @@ import { responseHeaders } from '../../../lib/plexApi'
 import { getTrackIndexByPlayQueueItemID, type PlayerPlayQueue } from '../../../lib/plexPlayerTimeline'
 import { eventHandler, getRequestHeader, setResponseHeaders, getQuery, sendNoContent } from 'h3'
 import useSqueezePlayer from '../../../composables/useSqueezePlayer'
+import type { PlayQueueRefresherPayload } from '../../../tasks/playQueueRefresher'
 
 const logger = useLogger('playback.skipTo')
 
@@ -58,8 +59,9 @@ export default eventHandler(async (event) => {
         `Could not find track with playQueueItemID '${queryParameters.playQueueItemID}' in loaded playerQueue, trying to refresh the playQueue from server ..`
       )
       // Plexamp does not always provide the full play queue in the beginning. (e.g track radio playQueue, is later populated on PMS), so we force refresh it here
-      await runTask('playQueueRefresher')
-      const refreshedPlayerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? queue
+      const payload = { playerIdentifier: targetClientIdentifier } as PlayQueueRefresherPayload
+      const playQueueResult = await runTask('playQueueRefresher', { payload })
+      const refreshedPlayerQueue = playQueueResult?.result as PlayerPlayQueue ?? queue
       const maybeRefreshedTrackIndex = getTrackIndexByPlayQueueItemID(refreshedPlayerQueue, queryParameters.playQueueItemID)
       if (isTrackIndexValid(maybeRefreshedTrackIndex)) {
         return maybeRefreshedTrackIndex

@@ -62,7 +62,7 @@ describe('runPlayQueueRefresher', () => {
 
   it('skips if no players found', async () => {
     storageMock.getKeys.mockResolvedValue([])
-    await runPlayQueueRefresher()
+    await runPlayQueueRefresher({ playerIdentifier: 'p1' })
     expect(storageMock.getKeys).toHaveBeenCalledWith('players/')
     expect(storageMock.getItem).not.toHaveBeenCalled()
     expect(mockClearPlaylist).not.toHaveBeenCalled()
@@ -72,7 +72,7 @@ describe('runPlayQueueRefresher', () => {
     storageMock.getKeys.mockResolvedValue(['players/server1'])
     storageMock.getItem.mockResolvedValueOnce([{ playerid: 'p1', name: 'Player 1' }])
     storageMock.getItem.mockResolvedValueOnce(undefined) // playerQueue
-    await runPlayQueueRefresher()
+    await runPlayQueueRefresher({ playerIdentifier: 'p1' })
     expect(storageMock.getItem).toHaveBeenCalledWith('players/server1')
     expect(mockClearPlaylist).not.toHaveBeenCalled()
   })
@@ -99,7 +99,7 @@ describe('runPlayQueueRefresher', () => {
         ]
       }
     })
-    await runPlayQueueRefresher()
+    await runPlayQueueRefresher({ playerIdentifier: 'p1' })
     expect(mockClearPlaylist).toHaveBeenCalled()
     expect(mockAddToPlaylist).toHaveBeenCalledTimes(2)
     expect(storageMock.setItem).toHaveBeenCalledWith('playerQueue/p1', expect.anything())
@@ -107,6 +107,6 @@ describe('runPlayQueueRefresher', () => {
 
   it('handles errors gracefully', async () => {
     storageMock.getKeys.mockRejectedValue(new Error('fail'))
-    await expect(runPlayQueueRefresher()).resolves.toBeUndefined()
+    await expect(runPlayQueueRefresher({ playerIdentifier: 'p1' })).resolves.toBeUndefined()
   })
 })

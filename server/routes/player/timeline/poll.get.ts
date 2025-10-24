@@ -1,10 +1,12 @@
 import { eventHandler, getRequestHeader, getQuery } from 'h3'
 import useLogger from '../../../composables/useLogger'
 import usePlayerInfo from '../../../composables/usePlayerInfo'
-import { getTrackIndexByPlayQueueItemID, type PlayerPlayQueue, timelineResponse } from '../../../lib/plexPlayerTimeline'
+import { type PlayerPlayQueue, timelineResponse } from '../../../lib/plexPlayerTimeline'
 import { responseHeaders } from '../../../lib/plexApi'
 import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 import useXmlBuilder from '../../../composables/useXmlBuilder'
+import type { PlayQueueRefresherPayload } from '~~/server/tasks/playQueueRefresher'
+import { log } from 'winston'
 
 const logger = useLogger('timeline.poll')
 
@@ -60,36 +62,48 @@ export default eventHandler(async (event) => {
     }
 
     // check if the player is at the end of the track and refresh the playQueue
-    if (playerStatus.mode === 'play' && playerStatus.time > 0 && playerStatus.time == playerStatus.duration) {
-      logger.info(`Player '${playerInfo.name}' reached end of track, triggering playQueue refresher ..`)
-
-      // This seems unnecessary complex but is needed to ensure that after a playQueue refresh the player continues playback with the correct next track.
-      // Due to the async nature of the playQueue refresher task and PMS updating in the background, we can't be sure that the set playQueueSelectedItemOffset is already pointing to the next track
-      // or if the fetch of the refreshed playQueue just happened right before the $.playQueueSelectedItem* fields were updated and therefore still pointing to the track that just ended on LMS.
-
-      const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
-      // Get the next track from the former playerQueue and try to find its index in the refreshed playQueue to continue playback with the correct track. Must happen before running the playQueue refresher task or index will be index 0
-      const nextTrackIndex = playerStatus.playlist_cur_index + 1
-      const tracks = playerQueue?.playQueue.MediaContainer.Track ?? []
-      const nextTrack = nextTrackIndex >= 0 && nextTrackIndex < tracks.length ? tracks[nextTrackIndex] : undefined
-
-      await runTask('playQueueRefresher')
-      const refreshedPlayerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
-      if (refreshedPlayerQueue) {
-        const maybeTrackIndex = getTrackIndexByPlayQueueItemID(refreshedPlayerQueue, nextTrack?.$.playQueueItemID || '')
-        if (maybeTrackIndex !== undefined && maybeTrackIndex >= 0) {
+    if (playerStatus.mode === 'stop' && playerStatus.time > 0 && playerStatus.playlist_cur_index === playerStatus.playlist_tracks - 1) {
+      // Use a simple in-memory lock per player to prevent concurrent execution
+      const lockKey = `playQueueRefreshLock/${targetClientIdentifier}`
+      const lockAcquired = await storage.getItem(lockKey)
+      if (lockAcquired) {
+        logger.info(`PlayQueue refresher already running for player '${playerInfo.name}', skipping duplicate execution.`)
+      } else {
+        try {
+          await storage.setItem(lockKey, true)
           logger.info(
-            `Continuing playlist with track at index '${maybeTrackIndex}' in player '${playerInfo.name}' after playQueue refresh on track end ..`
+            `Last track of playlist playing on player '${playerInfo.name}' reached end of track, triggering playQueue refresher ..`
           )
-          await player.selectTrackInPlaylist(maybeTrackIndex)
-        } else {
-          // insecure fallback to continue playback in case there was no valid next track on the former playQueue
-          // this can happen if the track was the last track of the playQueue or the next track could not be found in the refreshed playQueue for some reason
-          const playQueueSelectedItemOffset = Number(refreshedPlayerQueue.playQueue.MediaContainer.$.playQueueSelectedItemOffset) + 1
+          const payload = { playerIdentifier: targetClientIdentifier } as PlayQueueRefresherPayload
+          const playQueueResult = await runTask('playQueueRefresher', { payload })
+          const refreshedPlayerQueue = playQueueResult?.result as PlayerPlayQueue
+          if (!refreshedPlayerQueue) {
+            throw new Error(
+              `Could not refresh play queue for player '${targetClientIdentifier}' (${playerInfo.name}) after last track ended`
+            )
+          }
+
+          const tracks = refreshedPlayerQueue.playQueue.MediaContainer.Track ?? []
           logger.info(
-            `Could not resolve next track after playQueue refresh with ${nextTrack?.$.playQueueItemID}, continuing playback with playQueueSelectedItemOffset '${playQueueSelectedItemOffset}' in player '${playerInfo.name}' ..`
+            `Refreshed playQueue for player '${playerInfo.name}' has ${tracks.length} tracks, selected item offset: ${refreshedPlayerQueue.playQueue.MediaContainer.$.playQueueSelectedItemOffset}`
           )
-          await player.selectTrackInPlaylist(playQueueSelectedItemOffset)
+          // found that the PMS provided playQueueSelectedItemOffset and playQueueSelectedItemId can be out of sync with the already updated tracks in the playQueue on PMS
+          // therefore we try to find the currently ended track by URL matching and select the next one
+          const endedTrackIndex = tracks.findIndex((t) => playerStatus.remoteMeta?.url.includes(t?.Media[0]?.Part[0]?.$.key))
+          let nextTrackIndex = endedTrackIndex + 1
+          if (nextTrackIndex >= tracks.length) {
+            // it can happen, that the refreshed playQueue already moved to the next track before we refreshed, so we need to handle that here
+            logger.warn(
+              `Refreshed playQueueSelectedItemOffset ${nextTrackIndex} exceeds track count ${tracks.length}, setting to last track index`
+            )
+            nextTrackIndex = tracks.length - 1
+          }
+          logger.info(
+            `Selecting next track at index ${nextTrackIndex} on player '${playerInfo.name}' after playQueue refresh on track end ..`
+          )
+          await player.selectTrackInPlaylist(nextTrackIndex)
+        } finally {
+          await storage.removeItem(lockKey)
         }
       }
     }
