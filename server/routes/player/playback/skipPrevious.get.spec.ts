@@ -138,4 +138,7 @@ describe('playback.skipPrevious route', () => {
     expect(resp.status).toBe(404)
     expect(h3.sendNoContent).not.toHaveBeenCalled()
   })
+
+  // TODO add refresh test
+  
 })

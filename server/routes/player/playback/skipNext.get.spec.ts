@@ -25,9 +25,10 @@ vi.mock('../../../composables/usePlayerInfo', () => ({
 }))
 
 const mockPlayer = {
+  skipNext: vi.fn(),
   selectTrackInPlaylist: vi.fn(),
   status: vi.fn().mockResolvedValue({
-    playlist_cur_index: 2,
+    playlist_cur_index: 2
   })
 }
 
@@ -91,7 +92,8 @@ describe('playback.skipNext route', () => {
     expect(h3.sendNoContent).not.toHaveBeenCalled()
   })
 
-  it('skips track successfully', async () => {
+  it('skips track successfully if playing last track of playlist', async () => {
+    // Simulate required headers
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       const headers: Record<string, string> = {
         'X-Plex-Target-Client-Identifier': 'player-1',
@@ -101,10 +103,44 @@ describe('playback.skipNext route', () => {
       return headers[name]
     })
 
+    // Simulate current track is last in playlist (index 2, next is 3)
+    mockPlayer.status.mockResolvedValueOnce({
+      playlist_cur_index: 2,
+      playlist_tracks: 3,
+      remoteMeta: { url: 'http://pms.local/track4url.flac' }
+    })
+
+    mockRunTask.mockResolvedValue({
+      result: {
+        playQueue: {
+          MediaContainer: {
+            Track: [
+              {
+                $: { playQueueItemID: 'pq-1' },
+                Media: [{ Part: [{ $: { key: 'track1url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-2' },
+                Media: [{ Part: [{ $: { key: 'track2url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-3' },
+                Media: [{ Part: [{ $: { key: 'track3url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-4' },
+                Media: [{ Part: [{ $: { key: 'track4url.flac' } }] }]
+              }
+            ]
+          }
+        }
+      }
+    })
+
     await handler(event)
 
-    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher')
-    expect(mockPlayer.selectTrackInPlaylist).toHaveBeenCalledWith(3) // was index two, so next is three
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher', { payload: { playerIdentifier: 'player-1' } })
+    expect(mockPlayer.selectTrackInPlaylist).toHaveBeenCalledWith(3) // pq-4 is at index 3
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(
       event,
       expect.objectContaining({
@@ -116,15 +152,15 @@ describe('playback.skipNext route', () => {
     expect(event.respondWith).not.toHaveBeenCalled()
   })
 
-  it('returns 404 when player selectTrackInPlaylist fails', async () => {
-    mockPlayer.selectTrackInPlaylist.mockRejectedValueOnce(new Error('failure'))
+  it('returns 404 when player skipNext fails', async () => {
+    mockPlayer.skipNext.mockRejectedValueOnce(new Error('failure'))
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       const headers: Record<string, string> = {
         'X-Plex-Target-Client-Identifier': 'player-1',
         'X-Plex-Client-Identifier': 'client-1',
         'X-Plex-Device-Name': 'Device'
       }
-      return headers[name]
+      return headers[name]  
     })
 
     await handler(event)

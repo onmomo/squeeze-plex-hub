@@ -29,10 +29,11 @@ export async function runPlayQueueRefresher(payload: PlayQueueRefresherPayload) 
   const logger = useLogger('playQueueRefresher')
   const storage = useStorage('DISCOVERY')
   try {
-    logger.debug(`Refreshing Plex play queue for player '${playerIdentifier}' ..`)
+    logger.debug(`Refreshing Plex play queue task for player '${playerIdentifier}' ..`)
 
     const { playerInfo } = await usePlayerInfo(playerIdentifier)
     const { player } = await useSqueezePlayer(playerIdentifier)
+    
     const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
     if (!playerQueue) {
       logger.info(`No playQueue available for player '${playerInfo.name}' (${playerInfo.playerid}), skipping refresh`)
