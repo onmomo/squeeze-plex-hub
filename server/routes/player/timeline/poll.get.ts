@@ -5,8 +5,7 @@ import { type PlayerPlayQueue, timelineResponse } from '../../../lib/plexPlayerT
 import { responseHeaders } from '../../../lib/plexApi'
 import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 import useXmlBuilder from '../../../composables/useXmlBuilder'
-import type { PlayQueueRefresherPayload } from '~~/server/tasks/playQueueRefresher'
-import { log } from 'winston'
+import type { PlayQueueRefresherPayload } from '../../../../server/tasks/playQueueRefresher'
 
 const logger = useLogger('timeline.poll')
 

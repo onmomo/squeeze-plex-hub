@@ -55,7 +55,7 @@ export default eventHandler(async (event) => {
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
   } catch (error) {
-    logger.warn(`Error when skipping to previous track with player '${targetClientIdentifier}'`, error)
+    logger.warn(`Error when skipping to previous track with player '${targetClientIdentifier}' + ${error}`, error)
     return event.respondWith(
       new Response(`Player '${targetClientIdentifier}' not available to start playing, try again later`, { status: 404 })
     )

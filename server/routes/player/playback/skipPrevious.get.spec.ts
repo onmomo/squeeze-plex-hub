@@ -20,23 +20,14 @@ vi.mock('../../../composables/useLogger', () => {
 
 vi.mock('../../../composables/usePlayerInfo', () => ({
   default: vi.fn(async () => ({
-    playerInfo: { playerid: '123', name: 'Living Room' },
-    serverStub: { id: 'stub' }
+    playerInfo: { playerid: 'player-1', name: 'Living Room' }
   }))
 }))
 
-const mockStatus = vi.fn().mockResolvedValue({
-  playerId: 'abc123',
-  mode: 'play',
-  time: 10,
-  playlist_cur_index: 0,
-  playlist_tracks: 5,
-  duration: 100,
-  volume: 50
-})
 const mockPlayer = {
-  status: vi.fn(() => mockStatus),
-  skipPrevious: vi.fn()
+  status: vi.fn(),
+  skipPrevious: vi.fn(),
+  selectTrackInPlaylist: vi.fn()
 }
 
 vi.mock('../../../composables/useSqueezePlayer', () => ({
@@ -72,6 +63,9 @@ vi.mock('h3', async (orig) => {
   }
 })
 
+const mockRunTask = vi.fn()
+vi.stubGlobal('runTask', mockRunTask)
+
 describe('playback.skipPrevious route', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
@@ -106,13 +100,76 @@ describe('playback.skipPrevious route', () => {
       return headers[name]
     })
 
+    mockPlayer.status.mockResolvedValueOnce({
+      playlist_cur_index: 2,
+      remoteMeta: { url: 'http://pms.local/track3url.flac' }
+    })
+
     await handler(event)
 
     expect(mockPlayer.skipPrevious).toHaveBeenCalledTimes(1)
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(
       event,
       expect.objectContaining({
-        'x-plex-player-id': '123',
+        'x-plex-player-id': 'player-1',
+        'x-plex-player-name': 'Living Room'
+      })
+    )
+    expect(h3.sendNoContent).toHaveBeenCalledWith(event, 200)
+    expect(event.respondWith).not.toHaveBeenCalled()
+  })
+
+  it('skips to previous track with playQueue refresh successfully', async () => {
+    ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
+      const headers: Record<string, string> = {
+        'X-Plex-Target-Client-Identifier': 'player-1',
+        'X-Plex-Client-Identifier': 'client-1',
+        'X-Plex-Device-Name': 'Device'
+      }
+      return headers[name]
+    })
+
+    mockRunTask.mockResolvedValue({
+      result: {
+        playQueue: {
+          MediaContainer: {
+            Track: [
+              {
+                $: { playQueueItemID: 'pq-1' },
+                Media: [{ Part: [{ $: { key: 'track1url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-2' },
+                Media: [{ Part: [{ $: { key: 'track2url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-3' },
+                Media: [{ Part: [{ $: { key: 'track3url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-4' },
+                Media: [{ Part: [{ $: { key: 'track4url.flac' } }] }]
+              }
+            ]
+          }
+        }
+      }
+    })
+
+    mockPlayer.status.mockResolvedValue({
+      playlist_cur_index: 0,
+      remoteMeta: { url: 'http://pms.local/track4url.flac' }
+    })
+
+    await handler(event)
+
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher', { payload: { playerIdentifier: 'player-1' } })
+    expect(mockPlayer.selectTrackInPlaylist).toHaveBeenCalledWith(2) // pq-4 was playing, than skipped to pq-3 is at index 2
+    expect(mockPlayer.skipPrevious).not.toHaveBeenCalled() // because playQueue refresh path
+    expect(h3.setResponseHeaders).toHaveBeenCalledWith(
+      event,
+      expect.objectContaining({
+        'x-plex-player-id': 'player-1',
         'x-plex-player-name': 'Living Room'
       })
     )
@@ -131,6 +188,11 @@ describe('playback.skipPrevious route', () => {
       return headers[name]
     })
 
+    mockPlayer.status.mockResolvedValue({
+      playlist_cur_index: 3,
+      remoteMeta: { url: 'http://pms.local/track4url.flac' }
+    })
+
     await handler(event)
 
     expect(event.respondWith).toHaveBeenCalledTimes(1)
@@ -138,7 +200,4 @@ describe('playback.skipPrevious route', () => {
     expect(resp.status).toBe(404)
     expect(h3.sendNoContent).not.toHaveBeenCalled()
   })
-
-  // TODO add refresh test
-  
 })

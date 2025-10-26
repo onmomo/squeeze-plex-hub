@@ -20,7 +20,7 @@ vi.mock('../../../composables/useLogger', () => {
 
 vi.mock('../../../composables/usePlayerInfo', () => ({
   default: vi.fn(async () => ({
-    playerInfo: { playerid: '123', name: 'Living Room' }
+    playerInfo: { playerid: 'player-1', name: 'Living Room' }
   }))
 }))
 
@@ -144,7 +144,7 @@ describe('playback.skipNext route', () => {
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(
       event,
       expect.objectContaining({
-        'x-plex-player-id': '123',
+        'x-plex-player-id': 'player-1',
         'x-plex-player-name': 'Living Room'
       })
     )
