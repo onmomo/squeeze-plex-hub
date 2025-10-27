@@ -3,7 +3,6 @@ import useLogger from '../composables/useLogger'
 import type { RemoteSubscriber } from '../routes/player/timeline/poll.get'
 import type { PlexServer } from './plexApi'
 import { plexOptions } from './squeezePlexHub'
-import { r } from 'happy-dom/lib/PropertySymbol'
 
 const logger = useLogger('plexPlayerTimeline')
 

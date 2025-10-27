@@ -2,7 +2,6 @@ import type { Mock } from 'vitest'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { runPlayQueueRefresher } from './playQueueRefresher'
 import { getPlayQueue } from '../lib/plexApi'
-import { remove } from 'winston'
 
 vi.mock('../composables/useLogger', () => {
   const wrap = (level: string) =>
