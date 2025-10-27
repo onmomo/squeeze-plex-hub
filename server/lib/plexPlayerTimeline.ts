@@ -222,7 +222,7 @@ const timelineContainer = (
         {
           $: {
             state: state(),
-            duration: Math.round((playerStatus.duration || 0) * 1000).toString(), // the total duration of the track in ms
+            duration: Math.round(playerStatus.duration * 1000).toString(), // the total duration of the track in ms
             time: Math.round(playerStatus.time * 1000).toString(), // the current time of the track playing in ms
             playQueueItemID: currentTrack?.$.playQueueItemID,
             key: currentTrack?.$.key,

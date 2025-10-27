@@ -11,7 +11,7 @@ export interface PlayerStatus {
   playerId: string
   mode: string
   time: number
-  duration?: number
+  duration: number
   playlist_cur_index: number
   playlist_tracks: number
   volume: number
