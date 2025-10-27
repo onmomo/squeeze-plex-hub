@@ -44,9 +44,13 @@ export default eventHandler(async (event) => {
         const endedTrackIndex = tracks.findIndex((t) => status.remoteMeta?.url.includes(t?.Media[0]?.Part[0]?.$.key))
         const previousTrackIndex = Math.max(endedTrackIndex - 1, 0)
         await player.selectTrackInPlaylist(previousTrackIndex)
-        logger.info(`Player '${targetClientIdentifier}' (${playerInfo.name}) skipped to previous track at playQueue index ${previousTrackIndex} after refreshing play queue`)
+        logger.info(
+          `Player '${targetClientIdentifier}' (${playerInfo.name}) skipped to previous track at playQueue index ${previousTrackIndex} after refreshing play queue`
+        )
       } else {
-        logger.warn(`Could not refresh play queue for player '${targetClientIdentifier}' (${playerInfo.name}): playQueue not loaded for player`)
+        logger.warn(
+          `Could not refresh play queue for player '${targetClientIdentifier}' (${playerInfo.name}): playQueue not loaded for player`
+        )
       }
     } else {
       await player.skipPrevious()
@@ -55,7 +59,7 @@ export default eventHandler(async (event) => {
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
   } catch (error) {
-    logger.warn(`Error when skipping to previous track with player '${targetClientIdentifier}' + ${error}`, error)
+    logger.warn(`Error when skipping to previous track with player '${targetClientIdentifier}'`, error)
     return event.respondWith(
       new Response(`Player '${targetClientIdentifier}' not available to start playing, try again later`, { status: 404 })
     )

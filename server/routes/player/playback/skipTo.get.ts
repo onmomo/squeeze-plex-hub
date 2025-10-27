@@ -63,13 +63,17 @@ export default eventHandler(async (event) => {
       const playQueueResult = await runTask('playQueueRefresher', { payload })
       const refreshedPlayerQueue = playQueueResult?.result as PlayerPlayQueue | undefined
       if (!refreshedPlayerQueue) {
-        throw new Error(`Could not refresh play queue for player '${targetClientIdentifier}' (${playerInfo.name}) to resolve playQueueItemID '${queryParameters.playQueueItemID}'`)
+        throw new Error(
+          `Could not refresh play queue for player '${targetClientIdentifier}' (${playerInfo.name}) to resolve playQueueItemID '${queryParameters.playQueueItemID}'`
+        )
       }
       const maybeRefreshedTrackIndex = getTrackIndexByPlayQueueItemID(refreshedPlayerQueue, queryParameters.playQueueItemID)
       if (isTrackIndexValid(maybeRefreshedTrackIndex)) {
         return maybeRefreshedTrackIndex
       }
-      throw new Error(`Could not find track with playQueueItemID '${queryParameters.playQueueItemID}' in refreshedplayerQueue, cannot skipTo`)
+      throw new Error(
+        `Could not find track with playQueueItemID '${queryParameters.playQueueItemID}' in refreshedplayerQueue, cannot skipTo`
+      )
     }
 
     const trackIndex = await resolveTrackIndexOrThrow(playerQueue)
