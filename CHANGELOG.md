@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.12.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.11.0...v1.12.0) (2025-10-27)
+
+
+### Features
+
+* add deleteFromPlaylist method and enhance playQueue refresh logging ([a01a8fd](https://github.com/onmomo/squeeze-plex-hub/commit/a01a8fd94d6bb82a24481cf4b572df6e8b491436))
+* enhance playQueueRefresher to support forced refresh when selecting items or skipping forward ([4c9f731](https://github.com/onmomo/squeeze-plex-hub/commit/4c9f7316e8b261a07a725d924b488bc30b295cbc))
+* enhance playQueueRefresher to support player-specific refresh and improve playQueue playback handling ([a902d77](https://github.com/onmomo/squeeze-plex-hub/commit/a902d7721e353477e12d7d3f58addbb59b6c72f8))
+* run playQueueRefresher when a track ends to ensure playList is always up to date ([49243a6](https://github.com/onmomo/squeeze-plex-hub/commit/49243a6512bb7f615c3317e2cf8a208f794423e0))
+
 ## [1.11.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.10.0...v1.11.0) (2025-10-15)
 
 
