@@ -11,7 +11,9 @@ vi.mock('xml2js', () => ({
 
 vi.mock('../composables/useLogger', () => ({
   default: () => ({
-    warn: vi.fn()
+    warn: vi.fn(),
+    debug: vi.fn(),
+    info: vi.fn()
   })
 }))
 

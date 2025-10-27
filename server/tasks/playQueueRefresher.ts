@@ -1,104 +1,77 @@
-/**
- * Nitro task that refreshes the Plex play queue for all Squeeze players.
- *
- * This task iterates through all discovered Squeeze players stored in the DISCOVERY storage,
- * checks for updates to their associated Plex play queues, and updates the queues if changes are detected.
- * If new tracks are found in the refreshed play queue, they are added to the player's playlist.
- *
- * Can be manually triggered in dev mode via: http://localhost:3000/_nitro/tasks/playQueueRefresher
- *
- * @returns An object indicating the result of the refresh operation.
- */
-import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import useLogger from '../composables/useLogger'
 import useSqueezePlayer from '../composables/useSqueezePlayer'
 import { getPlayQueue, metadata, getPlexApiTrack } from '../lib/plexApi'
 import type { PlayerPlayQueue } from '../lib/plexPlayerTimeline'
+import type { TaskPayload } from 'nitropack'
+import usePlayerInfo from '../composables/usePlayerInfo'
 
-/**
- * Manually trigger the refresh: http://localhost:3000/_nitro/tasks/playQueueRefresher
- */
+export interface PlayQueueRefresherPayload extends TaskPayload {
+  playerIdentifier: string // playerid or clientIdentifier
+}
+
 export default defineTask({
   meta: {
     name: 'playQueueRefresher',
-    description: 'Refreshes the Plex play queue for all Squeeze players'
+    description: 'Refreshes the Plex play queue for a specific Squeeze player'
   },
-  async run(_event) {
-    await runPlayQueueRefresher()
-    return { result: 'ok' }
+  async run(event) {
+    const payload = event.payload as PlayQueueRefresherPayload
+    const refreshedPlayerQueue = await runPlayQueueRefresher(payload)
+    return { result: refreshedPlayerQueue }
   }
 })
 
-/**
- * Checks for Plex (PMS) play queue updates and stores them in the DISCOVERY storage.
- */
-export async function runPlayQueueRefresher() {
+export async function runPlayQueueRefresher(payload: PlayQueueRefresherPayload) {
+  const { playerIdentifier } = payload
+  if (!playerIdentifier) {
+    return undefined
+  }
   const logger = useLogger('playQueueRefresher')
   const storage = useStorage('DISCOVERY')
   try {
-    logger.info('Refreshing Plex play queues for all Squeeze players ..')
+    // Set updating state
+    await storage.setItem(`playerQueueUpdating/${playerIdentifier}`, true)
+    logger.debug(`Refreshing Plex play queue task for player '${playerIdentifier}' ..`)
 
-    const serverKeys = await storage.getKeys('players/')
-    if (!serverKeys || serverKeys.length === 0) {
-      logger.debug('No LMS found in storage, skipping')
-      return
+    const { playerInfo } = await usePlayerInfo(playerIdentifier)
+    const { player } = await useSqueezePlayer(playerIdentifier)
+
+    const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
+    if (!playerQueue) {
+      logger.info(`No playQueue available for player '${playerInfo.name}' (${playerInfo.playerid}), skipping refresh`)
+      return undefined
     }
 
-    const allPlayers: [string, IPlayerInfo][] = [] // Array of tuples (serverId, IPlayerInfo)
-
-    for (const key of serverKeys) {
-      const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
-      logger.debug(`Found ${playerInfos?.length || 0} players for server '${key}'`)
-      const serverId = key.split(':')[1]
-      if (playerInfos) {
-        for (const player of playerInfos) {
-          allPlayers.push([serverId, player])
-        }
-      }
+    const playQueueId = playerQueue.playQueue.MediaContainer.$.playQueueID
+    const refreshedPlayQueue = await getPlayQueue(playerQueue.plexServer, `/playQueues/${playQueueId}`)
+    const refreshedPlayerQueue: PlayerPlayQueue = {
+      playerId: playerInfo.playerid,
+      playQueue: refreshedPlayQueue,
+      plexServer: playerQueue.plexServer
     }
 
-    await Promise.all(
-      allPlayers.map(async ([_serverId, playerInfo]) => {
-        const { player } = await useSqueezePlayer(playerInfo.playerid)
+    logger.info(`Force refreshing playQueue '${playQueueId}' for player '${playerInfo.name}' (${playerInfo.playerid}) ..`)
+    await player.clearPlaylist()
+    for (const track of refreshedPlayQueue.MediaContainer.Track) {
+      const trackUrl = getPlexApiTrack(playerQueue.plexServer, track)
+      logger.info(
+        `Adding track '${track.$.title}' / '${track.$.key}' (${track.$.playQueueItemID}) to refreshed playQueue for player '${playerInfo.name}' (${playerInfo.playerid}) ..`
+      )
+      await player.addToPlaylist(trackUrl, metadata(track))
+    }
 
-        const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
-        if (!playerQueue) {
-          logger.info(`No playQueue available for player '${playerInfo.name}' (${playerInfo.playerid}), skipping refresh`)
-          return
-        }
-
-        const playQueueId = playerQueue.playQueue.MediaContainer.$.playQueueID
-
-        logger.info(`Refreshing playQueue '${playQueueId}' of player '${playerInfo.name}' (${playerInfo.playerid}) ..`)
-        const refreshedPlayQueue = await getPlayQueue(playerQueue.plexServer, `/playQueues/${playQueueId}`)
-        const refreshedPlayerQueue: PlayerPlayQueue = {
-          playerId: playerInfo.playerid,
-          playQueue: refreshedPlayQueue,
-          plexServer: playerQueue.plexServer
-        }
-
-        if (refreshedPlayQueue.MediaContainer.$.size === playerQueue.playQueue.MediaContainer.$.size) {
-          logger.info(
-            `PlayQueue '${playQueueId}' of player '${playerInfo.name}' (${playerInfo.playerid}) has not changed in size (${refreshedPlayQueue.MediaContainer.$.size} items), skipping`
-          )
-          return
-        }
-
-        const updatedTrackQueue = refreshedPlayQueue.MediaContainer.Track.slice(Number(playerQueue.playQueue.MediaContainer.$.size))
-        for (const track of updatedTrackQueue) {
-          logger.info(`Adding track '${track.$.title}' / '${track.$.key}' to refreshed playQueue for player '${playerInfo.name}' (${playerInfo.playerid}) ..`)
-          const trackUrl = getPlexApiTrack(playerQueue.plexServer, track)
-          await player.addToPlaylist(trackUrl, metadata(track))
-        }
-
-        await storage.setItem(`playerQueue/${playerInfo.playerid}`, refreshedPlayerQueue)
-
-        logger.info(
-          `Player '${playerInfo.name}' (${playerInfo.playerid}): playQueue '${playQueueId}' size changed from '${playerQueue.playQueue.MediaContainer.$.size}' to '${refreshedPlayQueue.MediaContainer.$.size}' tracks.`
-        )
-      })
+    await storage.setItem(`playerQueue/${playerInfo.playerid}`, refreshedPlayerQueue)
+    // Note: The playQueueSelectedItemID and playQueueSelectedItemOffset may not always match the current state of the tracks in the playlist. Seems like a bug on PMS side.
+    // Therefore we do not select tracks based on these values since it will randomly fail. The caller should handle track selection based on the tracks array index in the refreshed queue.
+    logger.info(
+      `Player '${playerInfo.name}' (${playerInfo.playerid}): playQueue '${playQueueId}' refreshed (old size: ${playerQueue.playQueue.MediaContainer.$.size}, refreshed size: ${refreshedPlayQueue.MediaContainer.$.size}, selected item / index offset: ${refreshedPlayQueue.MediaContainer.$.playQueueSelectedItemID} / ${refreshedPlayQueue.MediaContainer.$.playQueueSelectedItemOffset}).`
     )
+    return refreshedPlayerQueue
   } catch (error) {
-    logger.error(`Error when refreshing play queues ${error}`, error)
+    logger.error(`Error when refreshing play queue: ${error}`, error)
+    return undefined
+  } finally {
+    // Clear updating state
+    await storage.removeItem(`playerQueueUpdating/${playerIdentifier}`)
   }
 }

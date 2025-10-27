@@ -1,4 +1,4 @@
-import type { Mock } from 'vitest';
+import type { Mock } from 'vitest'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { runPlayQueueRefresher } from './playQueueRefresher'
 import { getPlayQueue } from '../lib/plexApi'
@@ -20,14 +20,20 @@ vi.mock('../composables/useLogger', () => {
 })
 
 // Mock useSqueezePlayer
+const mockClearPlaylist = vi.fn()
 const mockAddToPlaylist = vi.fn()
 
 vi.mock('../composables/useSqueezePlayer', () => ({
   default: vi.fn().mockImplementation(() => ({
-    player: { addToPlaylist: mockAddToPlaylist }
+    player: { addToPlaylist: mockAddToPlaylist, clearPlaylist: mockClearPlaylist }
   }))
 }))
 
+vi.mock('../composables/usePlayerInfo', () => ({
+  default: vi.fn(async () => ({
+    playerInfo: { playerid: 'player1', name: 'Living Room' }
+  }))
+}))
 
 // Mock plexApi
 vi.mock('../lib/plexApi', () => {
@@ -45,87 +51,85 @@ vi.mock('../lib/plexApi', () => {
 const storageMock = {
   getKeys: vi.fn(),
   getItem: vi.fn(),
-  setItem: vi.fn()
+  setItem: vi.fn(),
+  removeItem: vi.fn()
 }
 vi.stubGlobal('useStorage', () => storageMock)
 
 describe('runPlayQueueRefresher', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    storageMock.getKeys.mockReset()
-    storageMock.getItem.mockReset()
-    storageMock.setItem.mockReset()
-    mockAddToPlaylist.mockReset()
-    ;(getPlayQueue as Mock).mockReset()
   })
 
-  it('skips if no players found', async () => {
-    storageMock.getKeys.mockResolvedValue([])
-    await runPlayQueueRefresher()
-    expect(storageMock.getKeys).toHaveBeenCalledWith('players/')
-    expect(storageMock.getItem).not.toHaveBeenCalled()
-    expect(mockAddToPlaylist).not.toHaveBeenCalled()
+  it('returns undefined if playerIdentifier is missing', async () => {
+    const result = await runPlayQueueRefresher({ playerIdentifier: '' })
+    expect(result).toBeUndefined()
   })
 
-  it('skips if no playerQueue found', async () => {
-    storageMock.getKeys.mockResolvedValue(['players/server1'])
-    storageMock.getItem.mockResolvedValueOnce([{ playerid: 'p1', name: 'Player 1' }])
-    storageMock.getItem.mockResolvedValueOnce(undefined) // playerQueue
-    await runPlayQueueRefresher()
-    expect(storageMock.getItem).toHaveBeenCalledWith('players/server1')
-    expect(mockAddToPlaylist).not.toHaveBeenCalled()
+  it('returns undefined if no playQueue is available', async () => {
+    storageMock.getItem.mockResolvedValueOnce(undefined)
+    const result = await runPlayQueueRefresher({ playerIdentifier: 'player1' })
+    expect(result).toBeUndefined()
+    expect(storageMock.setItem).toHaveBeenCalledWith(`playerQueueUpdating/player1`, true)
+    expect(storageMock.removeItem).toHaveBeenCalledWith(`playerQueueUpdating/player1`)
   })
 
-  it('adds new tracks if playQueue size increased', async () => {
-    storageMock.getKeys.mockResolvedValue(['players/server1'])
-    storageMock.getItem.mockResolvedValueOnce([{ playerid: 'p1', name: 'Player 1' }])
-    storageMock.getItem.mockResolvedValueOnce({
-      playerid: 'p1',
-      playQueue: {
-        MediaContainer: {
-          $: { playQueueID: 'pqid', size: '1' },
-          Track: [{ $: { title: 'Old Track', key: 'old' } }]
-        }
-      },
-      plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
-    })
-    ;(getPlayQueue as Mock).mockResolvedValue({
+  it('refreshes playQueue and returns refreshedPlayerQueue', async () => {
+    // Mock the playQueue object returned from storage
+    const mockPlayQueue = {
       MediaContainer: {
-        $: { playQueueID: 'pqid', size: '2' },
-        Track: [{ $: { title: 'Old Track', key: 'old' } }, { $: { title: 'New Track', key: 'new' } }]
+        $: { playQueueID: 'pq123' }
       }
-    })
-    await runPlayQueueRefresher()
-    expect(mockAddToPlaylist).toHaveBeenCalledWith('http://track.url', 'meta')
-    expect(storageMock.setItem).toHaveBeenCalledWith('playerQueue/p1', expect.anything())
-  })
-
-  it('skips if playQueue size unchanged', async () => {
-    storageMock.getKeys.mockResolvedValue(['players/server1'])
-    storageMock.getItem.mockResolvedValueOnce([{ playerid: 'p1', name: 'Player 1' }])
+    }
     storageMock.getItem.mockResolvedValueOnce({
-      playerid: 'p1',
-      playQueue: {
-        MediaContainer: {
-          $: { playQueueID: 'pqid', size: '1' },
-          Track: [{ $: { title: 'Old Track', key: 'old' } }]
-        }
-      },
-      plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
+      playerId: 'player1',
+      playQueue: mockPlayQueue,
+      plexServer: 'server1'
     })
-    ;(getPlayQueue as Mock).mockResolvedValue({
+
+    // Mock getPlayQueue to return a refreshed playQueue
+    const refreshedPlayQueue = {
       MediaContainer: {
-        $: { playQueueID: 'pqid', size: '1' },
-        Track: [{ $: { title: 'Old Track', key: 'old' } }]
+        $: {
+          playQueueID: 'pq123',
+          size: 4,
+          playQueueSelectedItemID: 'pq-2',
+          playQueueSelectedItemOffset: 1
+        },
+        Track: [
+          { $: { playQueueItemID: 'pq-1', title: 'Track 1', key: '/library/metadata/1' } },
+          { $: { playQueueItemID: 'pq-2', title: 'Track 2', key: '/library/metadata/2' } },
+          { $: { playQueueItemID: 'pq-3', title: 'Track 3', key: '/library/metadata/3' } },
+          { $: { playQueueItemID: 'pq-4', title: 'Track 4', key: '/library/metadata/4' } }
+        ]
       }
+    }
+    ;(getPlayQueue as Mock).mockResolvedValueOnce(refreshedPlayQueue)
+
+    const result = await runPlayQueueRefresher({ playerIdentifier: 'player1' })
+    expect(mockClearPlaylist).toHaveBeenCalled()
+    expect(mockAddToPlaylist).toHaveBeenCalledTimes(4)
+    expect(storageMock.setItem).toHaveBeenCalledWith(`playerQueueUpdating/player1`, true)
+    expect(storageMock.removeItem).toHaveBeenCalledWith(`playerQueueUpdating/player1`)
+    expect(storageMock.getItem).toHaveBeenCalledWith('playerQueue/player1')
+    expect(storageMock.setItem).toHaveBeenCalledWith(
+      'playerQueue/player1',
+      expect.objectContaining({
+        playerId: 'player1',
+        playQueue: refreshedPlayQueue,
+        plexServer: 'server1'
+      })
+    )
+    expect(result).toEqual({
+      playerId: 'player1',
+      playQueue: refreshedPlayQueue,
+      plexServer: 'server1'
     })
-    await runPlayQueueRefresher()
-    expect(mockAddToPlaylist).not.toHaveBeenCalled()
-    expect(storageMock.setItem).not.toHaveBeenCalled()
   })
 
-  it('handles errors gracefully', async () => {
-    storageMock.getKeys.mockRejectedValue(new Error('fail'))
-    await expect(runPlayQueueRefresher()).resolves.toBeUndefined()
+  it('logs error and returns undefined on exception', async () => {
+    storageMock.getItem.mockRejectedValueOnce(new Error('fail'))
+    const result = await runPlayQueueRefresher({ playerIdentifier: 'player1' })
+    expect(result).toBeUndefined()
   })
 })

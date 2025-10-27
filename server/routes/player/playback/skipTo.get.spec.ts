@@ -228,15 +228,18 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
         }
       }
     })
-    mockGetItem.mockResolvedValueOnce({
-      playQueue: {
-        MediaContainer: {
-          Track: [
-            { $: { playQueueItemID: 'pq-1' } },
-            { $: { playQueueItemID: 'pq-2' } },
-            { $: { playQueueItemID: 'pq-3' } },
-            { $: { playQueueItemID: 'pq-4' } }
-          ]
+    // simulates refreshed playQueue including pq-4
+    mockRunTask.mockResolvedValue({
+      result: {
+        playQueue: {
+          MediaContainer: {
+            Track: [
+              { $: { playQueueItemID: 'pq-1' } },
+              { $: { playQueueItemID: 'pq-2' } },
+              { $: { playQueueItemID: 'pq-3' } },
+              { $: { playQueueItemID: 'pq-4' } }
+            ]
+          }
         }
       }
     })
@@ -248,10 +251,53 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
 
     await handler(event)
 
-    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher')
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher', { payload: { playerIdentifier: 'player-1' } })
     expect(selectTrackInPlaylist).toHaveBeenCalledWith(3) // pq-4 is at index 3 (0-based)
     expect(h3.setResponseHeaders as Mock).toHaveBeenCalledTimes(1)
     expect(h3.sendNoContent as Mock).toHaveBeenCalledWith(event, 200)
     expect(event.respondWith).not.toHaveBeenCalled()
+  })
+
+  it('refresh playQueue fails, abort skip to track', async () => {
+    // Mock headers and query
+    ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
+      const headers: Record<string, string> = {
+        'X-Plex-Target-Client-Identifier': 'player-1',
+        'X-Plex-Client-Identifier': 'client-1',
+        'X-Plex-Device-Name': 'Device'
+      }
+      return headers[name]
+    })
+    ;(h3.getQuery as Mock).mockReturnValue({
+      key: '/library/metadata/1',
+      commandID: 'cmd-99',
+      playQueueItemID: 'pq-4'
+    })
+    ;(usePlayerInfo as Mock).mockResolvedValue({
+      playerInfo: { playerid: 'player-1', name: 'Player One' },
+      serverStub: {}
+    })
+    // First call returns queue without pq-4, second call returns queue with pq-4 to simulate refresh
+    mockGetItem.mockResolvedValueOnce({
+      playQueue: {
+        MediaContainer: {
+          Track: [{ $: { playQueueItemID: 'pq-1' } }, { $: { playQueueItemID: 'pq-2' } }, { $: { playQueueItemID: 'pq-3' } }]
+        }
+      }
+    })
+    // simulates refreshed playQueue including pq-4
+    mockRunTask.mockRejectedValue(new Error('Failed to refresh playQueue'))
+
+    const event: any = {
+      node: { req: { headers: {} } },
+      respondWith: vi.fn()
+    }
+
+    await handler(event)
+
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher', { payload: { playerIdentifier: 'player-1' } })
+    expect(selectTrackInPlaylist).not.toHaveBeenCalled()
+    expect(h3.setResponseHeaders as Mock).not.toHaveBeenCalled()
+    expect(event.respondWith).toHaveBeenCalled()
   })
 })

@@ -5,6 +5,7 @@ import { type PlayerPlayQueue, timelineResponse } from '../../../lib/plexPlayerT
 import { responseHeaders } from '../../../lib/plexApi'
 import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 import useXmlBuilder from '../../../composables/useXmlBuilder'
+import type { PlayQueueRefresherPayload } from '../../../../server/tasks/playQueueRefresher'
 
 const logger = useLogger('timeline.poll')
 
@@ -54,9 +55,48 @@ export default eventHandler(async (event) => {
 
     const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
     const { player } = await useSqueezePlayer(targetClientIdentifier)
-    const playerStatus = await player.status()
+    let playerStatus = await player.status()
     if (!playerStatus) {
       throw new Error(`Player '${targetClientIdentifier}' status not available yet`)
+    }
+
+    // check if player playQueue is currently being updated on LMS via playQueueRefresher task
+    let playerQueueUpdating = (await storage.getItem<boolean>(`playerQueueUpdating/${targetClientIdentifier}`)) ?? false
+    if (
+      !playerQueueUpdating &&
+      playerStatus.mode === 'stop' &&
+      playerStatus.time > 0 &&
+      playerStatus.playlist_cur_index === playerStatus.playlist_tracks - 1 // check if the player is at the end of the track and refresh the playQueue
+    ) {
+      logger.info(`Last track of playlist playing on player '${playerInfo.name}' reached end of track, triggering playQueue refresher ..`)
+      const payload = { playerIdentifier: targetClientIdentifier } as PlayQueueRefresherPayload
+      const playQueueResult = await runTask('playQueueRefresher', { payload })
+      const refreshedPlayerQueue = playQueueResult?.result as PlayerPlayQueue
+      if (!refreshedPlayerQueue) {
+        throw new Error(`Could not refresh play queue for player '${targetClientIdentifier}' (${playerInfo.name}) after last track ended`)
+      }
+
+      const tracks = refreshedPlayerQueue.playQueue.MediaContainer.Track ?? []
+      logger.debug(
+        `Refreshed playQueue for player '${playerInfo.name}' has ${tracks.length} tracks. Selecting next track ..`
+      )
+      // found that the PMS provided playQueueSelectedItemOffset and playQueueSelectedItemId can be out of sync with the already updated tracks in the playQueue on PMS
+      // therefore we try to find the currently ended track by URL matching and select the next one
+      const endedTrackIndex = tracks.findIndex((t) => playerStatus?.remoteMeta?.url.includes(t?.Media[0]?.Part[0]?.$.key))
+      let nextTrackIndex = endedTrackIndex + 1
+      if (nextTrackIndex >= tracks.length) {
+        // it can happen, that the refreshed playQueue already moved to the next track before we refreshed, so we need to handle that here
+        logger.warn(
+          `Refreshed playQueueSelectedItemOffset ${nextTrackIndex} exceeds track count ${tracks.length}, setting to last track index`
+        )
+        nextTrackIndex = tracks.length - 1
+      }
+      logger.info(`Selecting next track at index ${nextTrackIndex} on player '${playerInfo.name}' after playQueue refresh on track end ..`)
+      await player.selectTrackInPlaylist(nextTrackIndex)
+      const updated = await player.status()
+      // Update the playerStatus, since the select track index change after the refresh
+      playerStatus = updated ?? playerStatus
+      playerQueueUpdating = false
     }
 
     /**
@@ -84,7 +124,7 @@ export default eventHandler(async (event) => {
       await new Promise((resolve) => setTimeout(resolve, 5000))
       const status = await player.status()
       if (status) {
-        const timelineXml = await timelineResponse(status, subscriber, playerQueue, queryParameters.includeMetadata)
+        const timelineXml = await timelineResponse(status, subscriber, playerQueue, queryParameters.includeMetadata, playerQueueUpdating)
         const { xmlString } = useXmlBuilder(timelineXml, true)
         return event.respondWith(new Response(xmlString, { status: 200, headers }))
       }
@@ -92,7 +132,7 @@ export default eventHandler(async (event) => {
       return
     }
 
-    const timelineXml = await timelineResponse(playerStatus, subscriber, playerQueue, queryParameters.includeMetadata)
+    const timelineXml = await timelineResponse(playerStatus, subscriber, playerQueue, queryParameters.includeMetadata, playerQueueUpdating)
     const { xmlString } = useXmlBuilder(timelineXml, true)
     logger.debug(
       `Polling player ${playerInfo.name}, wait: ${queryParameters.wait}, includeMeta: ${queryParameters.includeMetadata}, timeline: ${xmlString}, queue ${playerQueue?.playerId}`

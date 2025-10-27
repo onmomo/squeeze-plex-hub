@@ -20,12 +20,16 @@ vi.mock('../../../composables/useLogger', () => {
 
 vi.mock('../../../composables/usePlayerInfo', () => ({
   default: vi.fn(async () => ({
-    playerInfo: { playerid: '123', name: 'Living Room' }
+    playerInfo: { playerid: 'player-1', name: 'Living Room' }
   }))
 }))
 
 const mockPlayer = {
-  skipNext: vi.fn()
+  skipNext: vi.fn(),
+  selectTrackInPlaylist: vi.fn(),
+  status: vi.fn().mockResolvedValue({
+    playlist_cur_index: 2
+  })
 }
 
 vi.mock('../../../composables/useSqueezePlayer', () => ({
@@ -88,7 +92,8 @@ describe('playback.skipNext route', () => {
     expect(h3.sendNoContent).not.toHaveBeenCalled()
   })
 
-  it('skips track successfully', async () => {
+  it('skips track successfully if playing last track of playlist', async () => {
+    // Simulate required headers
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       const headers: Record<string, string> = {
         'X-Plex-Target-Client-Identifier': 'player-1',
@@ -98,14 +103,48 @@ describe('playback.skipNext route', () => {
       return headers[name]
     })
 
+    // Simulate current track is last in playlist (index 2, next is 3)
+    mockPlayer.status.mockResolvedValueOnce({
+      playlist_cur_index: 2,
+      playlist_tracks: 3,
+      remoteMeta: { url: 'http://pms.local/track4url.flac' }
+    })
+
+    mockRunTask.mockResolvedValue({
+      result: {
+        playQueue: {
+          MediaContainer: {
+            Track: [
+              {
+                $: { playQueueItemID: 'pq-1' },
+                Media: [{ Part: [{ $: { key: 'track1url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-2' },
+                Media: [{ Part: [{ $: { key: 'track2url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-3' },
+                Media: [{ Part: [{ $: { key: 'track3url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-4' },
+                Media: [{ Part: [{ $: { key: 'track4url.flac' } }] }]
+              }
+            ]
+          }
+        }
+      }
+    })
+
     await handler(event)
 
-    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher')
-    expect(mockPlayer.skipNext).toHaveBeenCalledTimes(1)
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher', { payload: { playerIdentifier: 'player-1' } })
+    expect(mockPlayer.selectTrackInPlaylist).toHaveBeenCalledWith(3) // pq-4 is at index 3
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(
       event,
       expect.objectContaining({
-        'x-plex-player-id': '123',
+        'x-plex-player-id': 'player-1',
         'x-plex-player-name': 'Living Room'
       })
     )
@@ -121,7 +160,7 @@ describe('playback.skipNext route', () => {
         'X-Plex-Client-Identifier': 'client-1',
         'X-Plex-Device-Name': 'Device'
       }
-      return headers[name]
+      return headers[name]  
     })
 
     await handler(event)

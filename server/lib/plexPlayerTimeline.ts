@@ -208,7 +208,8 @@ const timelineContainer = (
   playerStatus: PlayerStatus,
   subscriber: RemoteSubscriber,
   playerQueue?: PlayerPlayQueue,
-  includeMetadata?: boolean
+  includeMetadata?: boolean,
+  buffering: boolean = false
 ) => {
   const currentTrack = findCurrentTrack()
 
@@ -221,7 +222,7 @@ const timelineContainer = (
         {
           $: {
             state: state(),
-            duration: Math.round((playerStatus.duration || 0) * 1000).toString(), // the total duration of the track in ms
+            duration: Math.round(playerStatus.duration * 1000).toString(), // the total duration of the track in ms
             time: Math.round(playerStatus.time * 1000).toString(), // the current time of the track playing in ms
             playQueueItemID: currentTrack?.$.playQueueItemID,
             key: currentTrack?.$.key,
@@ -254,15 +255,19 @@ const timelineContainer = (
   }
 
   function findCurrentTrack() {
+    if (buffering) return undefined // do not return a track while buffering to avoid Plexamp showing wrong track info
     return playerQueue?.playQueue?.MediaContainer.Track?.[playerStatus.playlist_cur_index] ?? undefined
   }
 
   /**
    * Plex accepts one of the following states: stopped, paused, playing, buffering, error.
    * Whereas LMS has play, pause, stop, and mode undefined == off.
-   * @returns one of stopped, paused, playing
+   * @returns one of stopped, paused, playing, buffering
    */
   function state() {
+    if (buffering) {
+      return 'buffering' // Plexamp will show a loading indicator
+    }
     switch (playerStatus.mode) {
       case 'play':
         return 'playing'
@@ -305,10 +310,22 @@ export async function timelineResponse(
   playerStatus: PlayerStatus,
   subscriber: RemoteSubscriber,
   playerQueue?: PlayerPlayQueue,
-  includeMetadata?: boolean
+  includeMetadata?: boolean,
+  buffering: boolean = false
 ): Promise<TimelineContainer> {
   logger.debug(
     `Generating timeline line XML for playqueue ${playerQueue?.playQueue.MediaContainer.$.playQueueID}, server ${playerQueue?.plexServer.server.localAddress} and player ${playerQueue?.playerId} ..`
   )
-  return timelineContainer(playerStatus, subscriber, playerQueue, includeMetadata)
+  return timelineContainer(playerStatus, subscriber, playerQueue, includeMetadata, buffering)
+}
+
+/**
+ * Get the index of a track in the play queue by its playQueueItemID
+ * @param queue current player queue
+ * @param playQueueItemID the playQueueItemID of the track
+ * @returns -1 if not found, otherwise the 0-based index of the item in the play queue
+ */
+export function getTrackIndexByPlayQueueItemID(queue: PlayerPlayQueue, playQueueItemID: string): number {
+  const tracks = queue.playQueue?.MediaContainer?.Track ?? []
+  return tracks.findIndex((t) => t.$.playQueueItemID === playQueueItemID)
 }
