@@ -2,6 +2,7 @@ import type { Mock } from 'vitest'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { runPlayQueueRefresher } from './playQueueRefresher'
 import { getPlayQueue } from '../lib/plexApi'
+import { remove } from 'winston'
 
 vi.mock('../composables/useLogger', () => {
   const wrap = (level: string) =>
@@ -51,7 +52,8 @@ vi.mock('../lib/plexApi', () => {
 const storageMock = {
   getKeys: vi.fn(),
   getItem: vi.fn(),
-  setItem: vi.fn()
+  setItem: vi.fn(),
+  removeItem: vi.fn()
 }
 vi.stubGlobal('useStorage', () => storageMock)
 
@@ -69,6 +71,8 @@ describe('runPlayQueueRefresher', () => {
     storageMock.getItem.mockResolvedValueOnce(undefined)
     const result = await runPlayQueueRefresher({ playerIdentifier: 'player1' })
     expect(result).toBeUndefined()
+    expect(storageMock.setItem).toHaveBeenCalledWith(`playerQueueUpdating/player1`, true)
+    expect(storageMock.removeItem).toHaveBeenCalledWith(`playerQueueUpdating/player1`)
   })
 
   it('refreshes playQueue and returns refreshedPlayerQueue', async () => {
@@ -106,6 +110,8 @@ describe('runPlayQueueRefresher', () => {
     const result = await runPlayQueueRefresher({ playerIdentifier: 'player1' })
     expect(mockClearPlaylist).toHaveBeenCalled()
     expect(mockAddToPlaylist).toHaveBeenCalledTimes(4)
+    expect(storageMock.setItem).toHaveBeenCalledWith(`playerQueueUpdating/player1`, true)
+    expect(storageMock.removeItem).toHaveBeenCalledWith(`playerQueueUpdating/player1`)
     expect(storageMock.getItem).toHaveBeenCalledWith('playerQueue/player1')
     expect(storageMock.setItem).toHaveBeenCalledWith(
       'playerQueue/player1',

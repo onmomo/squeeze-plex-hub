@@ -3,6 +3,7 @@ import useLogger from '../composables/useLogger'
 import type { RemoteSubscriber } from '../routes/player/timeline/poll.get'
 import type { PlexServer } from './plexApi'
 import { plexOptions } from './squeezePlexHub'
+import { r } from 'happy-dom/lib/PropertySymbol'
 
 const logger = useLogger('plexPlayerTimeline')
 
@@ -208,7 +209,8 @@ const timelineContainer = (
   playerStatus: PlayerStatus,
   subscriber: RemoteSubscriber,
   playerQueue?: PlayerPlayQueue,
-  includeMetadata?: boolean
+  includeMetadata?: boolean,
+  buffering: boolean = false
 ) => {
   const currentTrack = findCurrentTrack()
 
@@ -254,6 +256,7 @@ const timelineContainer = (
   }
 
   function findCurrentTrack() {
+    if (buffering) return undefined // do not return a track while buffering to avoid Plexamp showing wrong track info
     return playerQueue?.playQueue?.MediaContainer.Track?.[playerStatus.playlist_cur_index] ?? undefined
   }
 
@@ -263,6 +266,9 @@ const timelineContainer = (
    * @returns one of stopped, paused, playing
    */
   function state() {
+    if (buffering) {
+      return 'buffering' // Plexamp will show a loading indicator
+    }
     switch (playerStatus.mode) {
       case 'play':
         return 'playing'
@@ -305,12 +311,13 @@ export async function timelineResponse(
   playerStatus: PlayerStatus,
   subscriber: RemoteSubscriber,
   playerQueue?: PlayerPlayQueue,
-  includeMetadata?: boolean
+  includeMetadata?: boolean,
+  buffering: boolean = false
 ): Promise<TimelineContainer> {
   logger.debug(
     `Generating timeline line XML for playqueue ${playerQueue?.playQueue.MediaContainer.$.playQueueID}, server ${playerQueue?.plexServer.server.localAddress} and player ${playerQueue?.playerId} ..`
   )
-  return timelineContainer(playerStatus, subscriber, playerQueue, includeMetadata)
+  return timelineContainer(playerStatus, subscriber, playerQueue, includeMetadata, buffering)
 }
 
 /**

@@ -5,13 +5,21 @@ import { timelineResponse, type PlayerPlayQueue } from '../../../lib/plexPlayerT
 import usePlayerInfo from '../../../composables/usePlayerInfo'
 import useSqueezePlayer from '../../../composables/useSqueezePlayer'
 
-vi.mock('../../../composables/useLogger', () => ({
-  default: () => ({
-    debug: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn()
-  })
-}))
+vi.mock('../../../composables/useLogger', () => {
+  const wrap = (level: string) =>
+    vi.fn((...args: any[]) => {
+      console.log(`[logger:${level}]`, ...args)
+    })
+
+  return {
+    default: vi.fn().mockImplementation(() => ({
+      info: wrap('info'),
+      warn: wrap('warn'),
+      error: wrap('error'),
+      debug: wrap('debug')
+    }))
+  }
+})
 
 vi.mock('../../../composables/usePlayerInfo', () => ({
   default: vi.fn()
@@ -22,17 +30,9 @@ vi.mock('../../../lib/plexApi', () => ({
   responseHeaders: vi.fn(() => ({ 'Content-Type': 'text/xml' }))
 }))
 
-const mockStatus = vi.fn().mockResolvedValue({
-  playerId: 'abc123',
-  mode: 'play',
-  time: 10,
-  playlist_cur_index: 0,
-  playlist_tracks: 5,
-  duration: 100,
-  volume: 50
-})
 const mockPlayer = {
-  status: vi.fn(() => mockStatus)
+  selectTrackInPlaylist: vi.fn(),
+  status: vi.fn()
 }
 
 vi.mock('../../../composables/useSqueezePlayer', () => ({
@@ -40,6 +40,9 @@ vi.mock('../../../composables/useSqueezePlayer', () => ({
     player: mockPlayer
   }))
 }))
+
+const mockRunTask = vi.fn()
+vi.stubGlobal('runTask', mockRunTask)
 
 function createEvent({
   query = {},
@@ -147,7 +150,9 @@ describe('timeline.poll handler', () => {
     )
   })
 
-  it('responds with timeline xml for normal poll', async () => {
+  it('responds with timeline xml for non wait poll without loaded player playQueue', async () => {
+    // Simulate playQueue currently updating for player
+    mockGetItem.mockResolvedValueOnce(true)
     const respondWith = vi.fn()
     const event = createEvent({
       headers: {
@@ -161,18 +166,117 @@ describe('timeline.poll handler', () => {
 
     ;(timelineResponse as Mock).mockResolvedValue(mockTimelineXml)
 
+    mockPlayer.status.mockResolvedValue({
+      playerId: 'abc123',
+      mode: 'play',
+      time: 50,
+      playlist_cur_index: 3,
+      playlist_tracks: 5,
+      duration: 100,
+      volume: 50,
+      remoteMeta: { url: 'http://pms.local/track3url.flac' }
+    })
+
     await pollHandler(event)
     expect(timelineResponse).toHaveBeenCalledWith(
-      mockStatus,
+      expect.anything(),
       expect.objectContaining({
         clientIdentifier: 'client1',
         deviceName: 'dev1',
         commandId: 'cmd1',
         poll: true,
-        targetClientIdentifier: 'abc123'
-        // omit subscribedAt so it's ignored in the match
+        targetClientIdentifier: 'abc123',
+        subscribedAt: expect.any(Date)
       }),
       undefined,
+      false,
+      true
+    )
+    expect(timelineResponse).toHaveBeenCalledTimes(1)
+    expect(respondWith).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 200
+      })
+    )
+  })
+
+  it('responds with timeline xml for non wait poll with player playQueue refreshed', async () => {
+    mockGetItem.mockResolvedValueOnce(false)
+    // Simulate that getItem returns a valid playQueue (already loaded)
+    mockGetItem.mockResolvedValueOnce(mockPlayerQueue)
+    const respondWith = vi.fn()
+    const event = createEvent({
+      headers: {
+        'X-Plex-Target-Client-Identifier': 'abc123',
+        'X-Plex-Client-Identifier': 'client1',
+        'X-Plex-Device-Name': 'dev1'
+      },
+      query: { commandID: 'cmd1' },
+      respondWith
+    })
+    mockPlayer.status.mockResolvedValueOnce({
+      playerId: 'abc123',
+      mode: 'stop',
+      time: 100,
+      playlist_cur_index: 4,
+      playlist_tracks: 5,
+      duration: 100,
+      volume: 50,
+      remoteMeta: { url: 'http://pms.local/track3url.flac' }
+    })
+    mockRunTask.mockResolvedValue({
+      result: {
+        playQueue: {
+          MediaContainer: {
+            Track: [
+              {
+                $: { playQueueItemID: 'pq-1' },
+                Media: [{ Part: [{ $: { key: 'track1url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-2' },
+                Media: [{ Part: [{ $: { key: 'track2url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-3' },
+                Media: [{ Part: [{ $: { key: 'track3url.flac' } }] }]
+              },
+              {
+                $: { playQueueItemID: 'pq-4' },
+                Media: [{ Part: [{ $: { key: 'track4url.flac' } }] }]
+              }
+            ]
+          }
+        }
+      }
+    })
+    ;(timelineResponse as Mock).mockResolvedValue(mockTimelineXml)
+
+    await pollHandler(event)
+    expect(mockGetItem).toHaveBeenCalledWith('playerQueueUpdating/abc123')
+    expect(mockRunTask).toHaveBeenCalledWith('playQueueRefresher', { payload: { playerIdentifier: 'abc123' } })
+    expect(mockPlayer.selectTrackInPlaylist).toHaveBeenCalledWith(3)
+    expect(timelineResponse).toHaveBeenCalledWith(
+      {
+        playerId: 'abc123',
+        mode: 'stop',
+        time: 100,
+        playlist_cur_index: 4,
+        playlist_tracks: 5,
+        duration: 100,
+        volume: 50,
+        remoteMeta: { url: 'http://pms.local/track3url.flac' }
+      },
+      expect.objectContaining({
+        clientIdentifier: 'client1',
+        deviceName: 'dev1',
+        commandId: 'cmd1',
+        poll: true,
+        targetClientIdentifier: 'abc123',
+        subscribedAt: expect.any(Date)
+      }),
+      expect.anything(),
+      false,
       false
     )
     expect(timelineResponse).toHaveBeenCalledTimes(1)
