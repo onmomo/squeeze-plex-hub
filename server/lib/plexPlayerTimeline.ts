@@ -262,7 +262,7 @@ const timelineContainer = (
   /**
    * Plex accepts one of the following states: stopped, paused, playing, buffering, error.
    * Whereas LMS has play, pause, stop, and mode undefined == off.
-   * @returns one of stopped, paused, playing
+   * @returns one of stopped, paused, playing, buffering
    */
   function state() {
     if (buffering) {

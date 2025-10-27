@@ -62,7 +62,6 @@ export default eventHandler(async (event) => {
 
     // check if player playQueue is currently being updated on LMS via playQueueRefresher task
     let playerQueueUpdating = (await storage.getItem<boolean>(`playerQueueUpdating/${targetClientIdentifier}`)) ?? false
-    logger.info(JSON.stringify(playerStatus))
     if (
       !playerQueueUpdating &&
       playerStatus.mode === 'stop' &&
