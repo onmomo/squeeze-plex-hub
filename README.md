@@ -90,16 +90,19 @@ Please check the Squeeze Plex Hub logs for any errors, the logging is quite exte
 
 ```
 squeeze-plex-hub
-├── components      # Vue components for application pages
-│   └── DiscoveredDevices.vue
-├── pages           # Application pages
-│   └── index.vue   # Main page of the application
-├── public          # Static files served directly
-├── server          # Backend logic and API routes
-├── nuxt.config.ts  # Nuxt configuration file
-├── tsconfig.json   # TypeScript configuration file
-├── package.json    # npm configuration file
-└── README.md       # Project documentation
+├── app
+│   ├── components      # Vue components for application pages
+│   │   └── DiscoveredDevices.vue
+│   └── pages           # Application pages
+│       └── index.vue   # Main page of the application
+├── public              # Static files served directly
+├── server              # Backend logic and API routes
+├── middleware          # Middleware logic
+├── nuxt.config.ts      # Nuxt configuration file
+├── vitest.config.ts    # Vite test configuration for unit and nuxt tests
+├── tsconfig.json       # TypeScript configuration file
+├── package.json        # npm configuration file
+└── README.md           # Project documentation
 ```
 
 ## Dev Setup Instructions
