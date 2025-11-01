@@ -86,9 +86,6 @@ describe('playback.refreshPlayQueue route', () => {
     vi.clearAllMocks()
     getItemMock.mockReset()
     setItemMock.mockReset()
-    // mockPlayer.status.mockResolvedValue(playerStatusMock)
-    // mockPlayer.deleteTrackFromPlaylist.mockResolvedValue(undefined)
-    // mockPlayer.addToPlaylist.mockResolvedValue(undefined)
   })
 
   it('returns 400 when required headers or playQueueID are missing', async () => {
