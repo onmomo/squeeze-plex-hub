@@ -62,7 +62,11 @@ export default eventHandler(async (event) => {
     if (pendingRefresh) {
       await storage.removeItem(`${lockKey}/pending`)
       logger.info(`Pending refresh detected for player '${targetClientIdentifier}', refreshing again ..`)
-      await refreshPlayQueue(playerInfo, targetClientIdentifier)
+      try {
+        await refreshPlayQueue(playerInfo, targetClientIdentifier)
+      } catch (error) {
+        logger.warn(`Error when refreshing play queue for player '${targetClientIdentifier}' during pending refresh in finally block`, error)
+      }
     }
     await storage.removeItem(lockKey)
   }
