@@ -61,7 +61,7 @@ export default eventHandler(async (event) => {
     const pendingRefresh = await storage.getItem(`${lockKey}/pending`)
     if (pendingRefresh) {
       await storage.removeItem(`${lockKey}/pending`)
-      logger.info(`Pending refresh detected for player '${targetClientIdentifier}', refreshing again ..`)
+      logger.info(`Pending refresh detected for player '${targetClientIdentifier}', refreshing again …`)
       try {
         await refreshPlayQueue(playerInfo, targetClientIdentifier)
       } catch (error) {
