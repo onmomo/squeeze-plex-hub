@@ -200,6 +200,22 @@ describe('playback.refreshPlayQueue route', () => {
     expect(removeItemMock).toHaveBeenCalled()
   })
 
+  it('returns 404 if play queue update is locked', async () => {
+    ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
+      return mockHeaders[name]
+    })
+    
+    getItemMock.mockResolvedValueOnce(new Date())
+
+    await handler(event)
+    expect(setItemMock).toHaveBeenCalledWith('refreshPlayQueueLock/player-1/pending', true)
+    expect(event.respondWith).toHaveBeenCalledTimes(1)
+    const resp: Response = event.respondWith.mock.calls[0][0]
+    expect(resp.status).toBe(404)
+    expect(h3.sendNoContent).not.toHaveBeenCalled()
+    expect(removeItemMock).not.toHaveBeenCalled()
+  })
+
   it('returns 404 when player status fails', async () => {
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       return mockHeaders[name]
