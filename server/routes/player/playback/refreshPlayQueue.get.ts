@@ -31,6 +31,19 @@ export default eventHandler(async (event) => {
     )
   }
 
+  const lockKey = `refreshPlayQueueLock/${targetClientIdentifier}`
+  // Try to acquire lock
+  const lock = await storage.getItem(lockKey)
+  if (lock) {
+    // Mark that a refresh was requested while the lock was held
+    await storage.setItem(`${lockKey}/pending`, true)
+    logger.warn(`Refresh play queue already in progress for player '${targetClientIdentifier}', skipping concurrent request.`)
+    return event.respondWith(
+      new Response(`Refresh play queue already in progress for player '${targetClientIdentifier}', try again later`, { status: 400 })
+    )
+  }
+  await storage.setItem(lockKey, Date.now())
+
   try {
     const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
     const { player } = await useSqueezePlayer(targetClientIdentifier)
@@ -46,36 +59,72 @@ export default eventHandler(async (event) => {
       playQueue: refreshedPlayQueue,
       plexServer: playerQueue.plexServer
     }
+    const refreshedTracks = refreshedPlayerQueue.playQueue.MediaContainer.Track ?? []
 
     const playerStatus = await player.status()
     if (!playerStatus) {
       throw new Error(`Could not get status from player '${playerInfo.name}', cannot refresh play queue`)
     }
-    const currentPlaylistIndex = playerStatus?.playlist_cur_index
-    const playlistTrackCount = playerStatus?.playlist_tracks
+    const currentPlaylistIndex = playerStatus.playlist_cur_index
+    const playlistTrackCount = playerStatus.playlist_tracks
+    const currentTrackUrl = playerStatus.remoteMeta?.url
 
+    // Remove all tracks except the one at currentPlaylistIndex
+    // Deleting of all the upcoming tracks is necessary if the user moved tracks around in the upcoming tracks to play in the playlist
     logger.info(
-      `Cleaning up existing playQueue in player '${playerInfo.name}' from index ${currentPlaylistIndex + 1} to ${playlistTrackCount} to prepare for playQueue refresh ..`
+      `Preparing to remove ${playlistTrackCount - 1} tracks from playlist for player '${playerInfo.name}'. Keeping track at index ${currentPlaylistIndex}, removing all others.`
     )
-    for (let trackIndex = playlistTrackCount - 1; trackIndex > currentPlaylistIndex; trackIndex--) {
-      await player.deleteTrackFromPlaylist(trackIndex)
+    // Remove tracks before currentPlaylistIndex
+    for (let i = 0; i < currentPlaylistIndex; i++) {
+      const stillExists = refreshedTracks.some((t) => currentTrackUrl?.includes(t?.Media[0]?.Part[0]?.$.key))
+      if (!stillExists) {
+        await player.deleteTrackFromPlaylist(i)
+        logger.info(
+          `(before) Removed track at index '${i}' from playlist for player '${playerInfo.name}' (no longer exists in refreshed playQueue)`
+        )
+      }
     }
 
-    const selectedOffset = Number(refreshedPlayQueue.MediaContainer.$.playQueueSelectedItemOffset)
-    const tracks = refreshedPlayQueue.MediaContainer.Track.slice(selectedOffset + 1)
-    for (const track of tracks) {
+    // Remove tracks after currentPlaylistIndex
+    for (let i = playlistTrackCount - 1; i > currentPlaylistIndex; i--) {
+      await player.deleteTrackFromPlaylist(i)
+      logger.info(`(after) Removed track at index '${i}' from playlist for player '${playerInfo.name}'`)
+    }
+    const currentTrackIndex = refreshedTracks.findIndex((t) => currentTrackUrl?.includes(t?.Media[0]?.Part[0]?.$.key))
+    if (currentTrackIndex === -1) {
+      logger.warn(`Could not find currently loaded track in refreshedTracks by remoteMeta.url (${currentTrackUrl})`)
+    }
+
+    logger.info(`Current track in refreshed play queue is at index ${currentTrackIndex}`)
+    // Add all tracks in refreshedTracks that come after the current track
+    const tracksToAdd = currentTrackIndex !== -1 ? refreshedTracks.slice(currentTrackIndex + 1) : []
+
+    logger.info(`Tracks to queue from refreshed play queue after current track: ${JSON.stringify(tracksToAdd.map((t) => t.$.title))}`)
+    for (const track of tracksToAdd) {
       logger.info(`Adding track '${track.$.title}' to refreshed playQueue for player '${playerInfo.name}' ..`)
       const trackUrl = getPlexApiTrack(playerQueue.plexServer, track)
       await player.addToPlaylist(trackUrl, metadata(track))
     }
-    await storage.setItem(`playerQueue/${playerInfo.playerid}`, refreshedPlayerQueue)
 
+    await storage.setItem(`playerQueue/${playerInfo.playerid}`, refreshedPlayerQueue)
     setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
     return sendNoContent(event, 200)
   } catch (error) {
     logger.warn(`Error when refreshing play queue for player '${targetClientIdentifier}'`, error)
     return event.respondWith(
-      new Response(`Player '${targetClientIdentifier}' play queue not available for refreshing, try again later`, { status: 404 })
+      new Response(`Player '${targetClientIdentifier}' failed to refresh play queue, try again later`, { status: 404 })
     )
+  } finally {
+    await storage.removeItem(lockKey)
+    // After releasing the lock, check if a pending refresh was requested
+    // (Place this inside the finally block, after removing the lock)
+    const pendingRefresh = await storage.getItem(`${lockKey}/pending`)
+    if (pendingRefresh) {
+      await storage.removeItem(`${lockKey}/pending`)
+      logger.info(`Pending refresh detected for player '${targetClientIdentifier}', refreshing again ..`)
+      //  eventHandler(event)
+    }
+
+    logger.info(`Finished refreshing play queue for player '${targetClientIdentifier}'`)
   }
 })
