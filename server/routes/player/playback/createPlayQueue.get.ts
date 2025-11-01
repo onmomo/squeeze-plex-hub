@@ -126,7 +126,6 @@ export default eventHandler(async (event) => {
       await player.addToPlaylist(trackUrl, metadata(meta))
     }
     await player.selectTrackInPlaylist(Number(playQueue.MediaContainer.$.playQueueSelectedItemOffset))
-    await player.play()
     logger.info(
       `Playing playlist index '${playQueue.MediaContainer.$.playQueueSelectedItemOffset}' on player '${playerInfo.name} / ${playerInfo.playerid}'`
     )

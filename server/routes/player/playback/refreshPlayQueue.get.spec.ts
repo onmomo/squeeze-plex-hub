@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import * as h3 from 'h3'
 import handler from './refreshPlayQueue.get'
+import { getPlayQueue } from '../../../lib/plexApi'
 
 vi.mock('../../../composables/useLogger', () => {
   const wrap = (level: string) =>
@@ -23,9 +24,8 @@ vi.mock('../../../composables/usePlayerInfo', () => ({
   default: vi.fn(async () => ({ playerInfo: playerInfoMock }))
 }))
 
-const playerStatusMock = { playlist_cur_index: 1, playlist_tracks: 3 }
 const mockPlayer = {
-  status: vi.fn().mockResolvedValue(playerStatusMock),
+  status: vi.fn(),
   deleteTrackFromPlaylist: vi.fn().mockResolvedValue(undefined),
   addToPlaylist: vi.fn().mockResolvedValue(undefined)
 }
@@ -35,10 +35,12 @@ vi.mock('../../../composables/useSqueezePlayer', () => ({
 
 const setItemMock = vi.fn()
 const getItemMock = vi.fn()
+const removeItemMock = vi.fn()
 function useStorage() {
   return {
     setItem: setItemMock,
-    getItem: getItemMock
+    getItem: getItemMock,
+    removeItem: removeItemMock
   }
 }
 vi.stubGlobal('useStorage', useStorage)
@@ -50,15 +52,7 @@ vi.mock('../../../lib/plexApi', () => ({
     h.set('X-Plex-Player-Name', name)
     return h
   }),
-  getPlayQueue: vi.fn().mockResolvedValue({
-    MediaContainer: {
-      $: { playQueueSelectedItemOffset: '0' },
-      Track: [
-        { $: { title: 'Track 1' }, Media: [{ Part: [{ $: { key: '1' } }] }] },
-        { $: { title: 'Track 2' }, Media: [{ Part: [{ $: { key: '2' } }] }] }
-      ]
-    }
-  }),
+  getPlayQueue: vi.fn(),
   getPlexApiTrack: vi.fn().mockReturnValue('http://10.10.1.1/track1'),
   metadata: vi.fn().mockReturnValue('metadata-string')
 }))
@@ -92,9 +86,6 @@ describe('playback.refreshPlayQueue route', () => {
     vi.clearAllMocks()
     getItemMock.mockReset()
     setItemMock.mockReset()
-    mockPlayer.status.mockResolvedValue(playerStatusMock)
-    mockPlayer.deleteTrackFromPlaylist.mockResolvedValue(undefined)
-    mockPlayer.addToPlaylist.mockResolvedValue(undefined)
   })
 
   it('returns 400 when required headers or playQueueID are missing', async () => {
@@ -110,7 +101,8 @@ describe('playback.refreshPlayQueue route', () => {
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       return mockHeaders[name]
     })
-    getItemMock.mockResolvedValue(undefined)
+    getItemMock.mockResolvedValueOnce(undefined)
+    getItemMock.mockResolvedValueOnce(undefined)
     await handler(event)
     expect(getItemMock).toHaveBeenCalled()
     expect(mockPlayer.deleteTrackFromPlaylist).not.toHaveBeenCalled()
@@ -119,33 +111,117 @@ describe('playback.refreshPlayQueue route', () => {
     const resp: Response = event.respondWith.mock.calls[0][0]
     expect(resp.status).toBe(404)
     expect(h3.setResponseHeaders).not.toHaveBeenCalled()
+    expect(removeItemMock).toHaveBeenCalled()
   })
 
   it('refreshes play queue and updates playlist', async () => {
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       return mockHeaders[name]
     })
-    getItemMock.mockResolvedValue({
+    getItemMock.mockResolvedValueOnce(undefined)
+    // existing playerQueue before refresh
+    getItemMock.mockResolvedValueOnce({
       playerId: playerInfoMock.playerid,
-      playQueue: {},
+      playQueue: {
+        MediaContainer: {
+          Track: [
+            {
+              $: { playQueueItemID: 'pq-1', title: 'Track 1' },
+              Media: [{ Part: [{ $: { key: 'track1url.flac' } }] }]
+            },
+            {
+              $: { playQueueItemID: 'pq-2', title: 'Track 2' },
+              Media: [{ Part: [{ $: { key: 'track2url.flac' } }] }]
+            },
+            {
+              $: { playQueueItemID: 'pq-3', title: 'Track 3' },
+              Media: [{ Part: [{ $: { key: 'track3url.flac' } }] }]
+            },
+            {
+              $: { playQueueItemID: 'pq-4', title: 'Track 4' },
+              Media: [{ Part: [{ $: { key: 'track4url.flac' } }] }]
+            }
+          ]
+        }
+      },
       plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
     })
+    // simulate pending lock active
+    getItemMock.mockResolvedValueOnce(true)
+    // new play queue after refresh, missing first two tracks with two others queued
+    ;(getPlayQueue as Mock).mockResolvedValueOnce({
+      MediaContainer: {
+        Track: [
+          {
+            $: { playQueueItemID: 'pq-3', title: 'Track 3' },
+            Media: [{ Part: [{ $: { key: 'track3url.flac' } }] }]
+          },
+          {
+            $: { playQueueItemID: 'pq-4', title: 'Track 4' },
+            Media: [{ Part: [{ $: { key: 'track4url.flac' } }] }]
+          },
+          {
+            $: { playQueueItemID: 'pq-5', title: 'Track 5' },
+            Media: [{ Part: [{ $: { key: 'track5url.flac' } }] }]
+          },
+          {
+            $: { playQueueItemID: 'pq-6', title: 'Track 6' },
+            Media: [{ Part: [{ $: { key: 'track6url.flac' } }] }]
+          }
+        ]
+      }
+    })
+
+    mockPlayer.status.mockResolvedValueOnce(
+      {
+        playlist_cur_index: 2,
+        playlist_tracks: 4,
+        remoteMeta: {
+          id: 'id-3',
+          title: 'Track 3',
+          url: 'track3url.flac'
+        }
+      } // must reflect the loaded playQueue
+    )
     await handler(event)
-    expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalled()
-    // skip the first track which is currently playing (playQueueSelectedItemOffset)
-    expect(mockPlayer.addToPlaylist).toHaveBeenCalledOnce()
-    expect(mockPlayer.addToPlaylist).toHaveBeenCalledWith('http://10.10.1.1/track1', 'metadata-string')
+    // delete the first two tracks
+    expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledTimes(3)
+    expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledWith(0)
+    expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledWith(1)
+    expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledWith(3)
+    // add all the tracks after the current, now updated index which is 0 after we deleted the first two tracks to reflect refreshed queue
+    expect(mockPlayer.addToPlaylist).toHaveBeenCalledTimes(3)
+    expect(mockPlayer.addToPlaylist).toHaveBeenCalledWith('http://10.10.1.1/track1', 'metadata-string') // statically mocked input
     expect(setItemMock).toHaveBeenCalledWith('playerQueue/123', expect.anything())
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(event, expect.anything())
     expect(h3.sendNoContent).toHaveBeenCalledWith(event, 200)
     expect(event.respondWith).not.toHaveBeenCalledWith(expect.any(Response))
+    expect(removeItemMock).toHaveBeenCalledWith('refreshPlayQueueLock/player-1/pending')
+    expect(removeItemMock).toHaveBeenCalledWith('refreshPlayQueueLock/player-1')
+  })
+
+  it('returns 404 if play queue update is locked', async () => {
+    ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
+      return mockHeaders[name]
+    })
+    
+    getItemMock.mockResolvedValueOnce(new Date())
+
+    await handler(event)
+    expect(setItemMock).toHaveBeenCalledWith('refreshPlayQueueLock/player-1/pending', true)
+    expect(event.respondWith).toHaveBeenCalledTimes(1)
+    const resp: Response = event.respondWith.mock.calls[0][0]
+    expect(resp.status).toBe(404)
+    expect(h3.sendNoContent).not.toHaveBeenCalled()
+    expect(removeItemMock).not.toHaveBeenCalled()
   })
 
   it('returns 404 when player status fails', async () => {
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       return mockHeaders[name]
     })
-    getItemMock.mockResolvedValue({
+    getItemMock.mockResolvedValueOnce(undefined)
+    getItemMock.mockResolvedValueOnce({
       playerId: playerInfoMock.playerid,
       playQueue: {},
       plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
@@ -156,13 +232,15 @@ describe('playback.refreshPlayQueue route', () => {
     const resp: Response = event.respondWith.mock.calls[0][0]
     expect(resp.status).toBe(404)
     expect(h3.sendNoContent).not.toHaveBeenCalled()
+    expect(removeItemMock).toHaveBeenCalled()
   })
 
   it('returns 404 when an error is thrown', async () => {
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       return mockHeaders[name]
     })
-    getItemMock.mockResolvedValue({
+    getItemMock.mockResolvedValueOnce(undefined)
+    getItemMock.mockResolvedValueOnce({
       playerId: playerInfoMock.playerid,
       playQueue: {},
       plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
@@ -173,5 +251,6 @@ describe('playback.refreshPlayQueue route', () => {
     const resp: Response = event.respondWith.mock.calls[0][0]
     expect(resp.status).toBe(404)
     expect(h3.sendNoContent).not.toHaveBeenCalled()
+    expect(removeItemMock).toHaveBeenCalled()
   })
 })

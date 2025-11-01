@@ -166,8 +166,6 @@ describe('playback.createPlayQueue route', () => {
     expect(mockPlayer.addToPlaylist).toHaveBeenCalledTimes(2)
     // Assert that selectTrackInPlaylist is called with the correct offset
     expect(mockPlayer.selectTrackInPlaylist).toHaveBeenCalledWith(4)
-    // Assert that play is called after adding tracks and selecting track
-    expect(mockPlayer.play).toHaveBeenCalledTimes(1)
 
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(
       event,

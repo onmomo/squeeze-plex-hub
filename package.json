@@ -17,8 +17,8 @@
     "format": "prettier --write app/** server/**"
   },
   "dependencies": {
-    "@nuxt/kit": "^4.1.3",
-    "@nuxt/ui": "^4.0.1",
+    "@nuxt/kit": "^4.2.0",
+    "@nuxt/ui": "^4.1.0",
     "axios": "^1.12.0",
     "lms-discovery": "^1.1.0",
     "lms-squeeze-rpc-x": "1.1.0",
