@@ -35,7 +35,7 @@ export default eventHandler(async (event) => {
   }
 
   const lockKey = `refreshPlayQueueLock/${targetClientIdentifier}`
-  // Try to acquire lock, this is necessary to avoid multiple concurrent refreshes for the same player if the client spams the refresh endpoint by adding many tracks quickly 
+  // Try to acquire lock, this is necessary to avoid multiple concurrent refreshes for the same player if the client spams the refresh endpoint by adding many tracks quickly.
   const lock = await storage.getItem(lockKey)
   if (lock) {
     // Mark that a refresh was requested while the lock was held
