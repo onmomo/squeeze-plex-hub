@@ -35,20 +35,39 @@ export default eventHandler(async (event) => {
   }
 
   const lockKey = `refreshPlayQueueLock/${targetClientIdentifier}`
-  // Try to acquire lock
+  // Try to acquire lock, this is necessary to avoid multiple concurrent refreshes for the same player if the client spams the refresh endpoint by adding many tracks quickly 
   const lock = await storage.getItem(lockKey)
   if (lock) {
     // Mark that a refresh was requested while the lock was held
     await storage.setItem(`${lockKey}/pending`, true)
     logger.warn(`Refresh play queue already in progress for player '${targetClientIdentifier}', skipping concurrent request.`)
     return event.respondWith(
-      new Response(`Refresh play queue already in progress for player '${targetClientIdentifier}', try again later`, { status: 400 })
+      new Response(`Refresh play queue already in progress for player '${targetClientIdentifier}', try again later`, { status: 404 })
     )
   }
   await storage.setItem(lockKey, Date.now())
-
+  const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
   try {
-    const { playerInfo } = await usePlayerInfo(targetClientIdentifier)
+    await refreshPlayQueue(playerInfo, targetClientIdentifier)
+    setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
+    return sendNoContent(event, 200)
+  } catch (error) {
+    logger.warn(`Error when refreshing play queue for player '${targetClientIdentifier}'`, error)
+    return event.respondWith(
+      new Response(`Player '${targetClientIdentifier}' failed to refresh play queue, try again later`, { status: 404 })
+    )
+  } finally {
+    // Check if a pending refresh was requested before releasing the lock
+    const pendingRefresh = await storage.getItem(`${lockKey}/pending`)
+    if (pendingRefresh) {
+      await storage.removeItem(`${lockKey}/pending`)
+      logger.info(`Pending refresh detected for player '${targetClientIdentifier}', refreshing again ..`)
+      await refreshPlayQueue(playerInfo, targetClientIdentifier)
+    }
+    await storage.removeItem(lockKey)
+  }
+
+  async function refreshPlayQueue(playerInfo: IPlayerInfo, targetClientIdentifier: string) {
     const { player } = await useSqueezePlayer(targetClientIdentifier)
     logger.info(`Refreshing playQueue '${playQueueID}' for player '${playerInfo.name}' ..`)
     const playerQueue = (await storage.getItem<PlayerPlayQueue>(`playerQueue/${playerInfo.playerid}`)) ?? undefined
@@ -92,25 +111,7 @@ export default eventHandler(async (event) => {
     }
 
     await storage.setItem(`playerQueue/${playerInfo.playerid}`, refreshedPlayerQueue)
-    setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name).entries()))
-    return sendNoContent(event, 200)
-  } catch (error) {
-    logger.warn(`Error when refreshing play queue for player '${targetClientIdentifier}'`, error)
-    return event.respondWith(
-      new Response(`Player '${targetClientIdentifier}' failed to refresh play queue, try again later`, { status: 404 })
-    )
-  } finally {
-    await storage.removeItem(lockKey)
-    // After releasing the lock, check if a pending refresh was requested
-    // (Place this inside the finally block, after removing the lock)
-    const pendingRefresh = await storage.getItem(`${lockKey}/pending`)
-    if (pendingRefresh) {
-      await storage.removeItem(`${lockKey}/pending`)
-      logger.info(`Pending refresh detected for player '${targetClientIdentifier}', refreshing again ..`)
-      //  eventHandler(event)
-    }
-
-    logger.info(`Finished refreshing play queue for player '${targetClientIdentifier}'`)
+    logger.info(`Finished refreshing play queue for player '${playerInfo.name}'`)
   }
 
   /**
