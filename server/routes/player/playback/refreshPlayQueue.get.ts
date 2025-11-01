@@ -131,7 +131,7 @@ export default eventHandler(async (event) => {
     const currentPlaylistIndex = playerStatus.playlist_cur_index
     const playlistTrackCount = playerStatus.playlist_tracks
     logger.info(
-      `Preparing to remove ${playlistTrackCount} tracks from playlist for player '${playerInfo.name}'. Keeping track at index ${currentPlaylistIndex}...`
+      `Synchronizing playlist for player '${playerInfo.name}'. Current track at index ${currentPlaylistIndex}, playlist has ${playlistTrackCount} tracks.`
     )
     // Remove all tracks after currentPlaylistIndex
     for (let i = playlistTrackCount - 1; i > currentPlaylistIndex; i--) {
