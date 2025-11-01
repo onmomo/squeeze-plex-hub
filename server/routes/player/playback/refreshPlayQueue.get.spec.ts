@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import * as h3 from 'h3'
 import handler from './refreshPlayQueue.get'
 import { getPlayQueue } from '../../../lib/plexApi'
-import { tr } from '@nuxt/ui/runtime/locale/index.js'
 
 vi.mock('../../../composables/useLogger', () => {
   const wrap = (level: string) =>
