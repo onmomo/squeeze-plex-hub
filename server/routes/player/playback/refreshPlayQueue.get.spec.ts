@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import * as h3 from 'h3'
 import handler from './refreshPlayQueue.get'
 import { getPlayQueue } from '../../../lib/plexApi'
+import { tr } from '@nuxt/ui/runtime/locale/index.js'
 
 vi.mock('../../../composables/useLogger', () => {
   const wrap = (level: string) =>
@@ -146,6 +147,8 @@ describe('playback.refreshPlayQueue route', () => {
       },
       plexServer: { server: { protocol: 'http', localAddress: '127.0.0.1', port: 32400 } }
     })
+    // simulate pending lock active
+    getItemMock.mockResolvedValueOnce(true)
     // new play queue after refresh, missing first two tracks with two others queued
     ;(getPlayQueue as Mock).mockResolvedValueOnce({
       MediaContainer: {
@@ -194,7 +197,8 @@ describe('playback.refreshPlayQueue route', () => {
     expect(h3.setResponseHeaders).toHaveBeenCalledWith(event, expect.anything())
     expect(h3.sendNoContent).toHaveBeenCalledWith(event, 200)
     expect(event.respondWith).not.toHaveBeenCalledWith(expect.any(Response))
-    expect(removeItemMock).toHaveBeenCalled()
+    expect(removeItemMock).toHaveBeenCalledWith('refreshPlayQueueLock/player-1/pending')
+    expect(removeItemMock).toHaveBeenCalledWith('refreshPlayQueueLock/player-1')
   })
 
   it('returns 404 if play queue update is locked', async () => {
