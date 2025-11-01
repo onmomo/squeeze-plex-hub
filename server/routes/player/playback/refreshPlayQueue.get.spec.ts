@@ -186,12 +186,10 @@ describe('playback.refreshPlayQueue route', () => {
     )
     await handler(event)
     // delete the first two tracks
-    //expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledTimes(2)
+    expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledTimes(3)
     expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledWith(0)
     expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledWith(1)
     expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledWith(3)
-    //expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledWith(4)
-    //expect(mockPlayer.deleteTrackFromPlaylist).toHaveBeenCalledWith(5)
     // add all the tracks after the current, now updated index which is 0 after we deleted the first two tracks to reflect refreshed queue
     expect(mockPlayer.addToPlaylist).toHaveBeenCalledTimes(3)
     expect(mockPlayer.addToPlaylist).toHaveBeenCalledWith('http://10.10.1.1/track1', 'metadata-string') // statically mocked input
