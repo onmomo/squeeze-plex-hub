@@ -1,11 +1,13 @@
+const { appVersion } = useRuntimeConfig()
+
 export const plexOptions = {
   identifier: 'SqueezePlexHub',
   product: 'Squeeze Plex Hub', // Plexamp, Plex Web,
-  version: '1.0',
-  device: 'Windows', // $device:$model combination found to be accepted by controller = Windows:$ANYSTRING, Android:$ANYSTRING iOS:$ANYSTRING
+  version: appVersion,
+  device: 'Windows', // $device:$model combination found to be accepted by :/timeline endpoint = Windows:$ANYSTRING, Android:$ANYSTRING iOS:$ANYSTRING
   model: 'Squeezebox Player',
   platform: 'Squeeze Plex Hub', // Linux, Safari
-  platformVersion: '1.0',
+  platformVersion: appVersion,
   deviceClass: 'speaker', // will result in a speaker icon on mobile (also possible values: stb, tablet, mobile, pc)
   protocol: 'plex',
   protocolVersion: '1',

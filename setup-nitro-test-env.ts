@@ -5,5 +5,7 @@ import { defineNitroPlugin as _defineNitroPlugin } from 'nitropack/runtime/inter
 
 // Define a dummy defineTask to avoid ReferenceError in tests
 ;(globalThis as any).defineTask = (task: any) => task
-
-
+// Define a dummy useRuntimeConfig for tests
+;(globalThis as any).useRuntimeConfig = () => ({
+  appVersion: '1.2.3-test'
+})
