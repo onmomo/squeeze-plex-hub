@@ -244,8 +244,8 @@ const timelineContainer = (
           },
           ...(includeMetadata && currentTrack ? { Track: currentTrack } : {}) // THIS IS ESSENTIAL since Plexamp struggles with </Track> tag if no playQueue is loaded
         },
-        createEmptyTimeline('video', playerStatus),
-        createEmptyTimeline('photo', playerStatus)
+        createEmptyTimeline('video'),
+        createEmptyTimeline('photo')
       ]
     }
   }
@@ -292,14 +292,14 @@ const timelineContainer = (
     return playerStatus.volume < 0 ? '1' : '0'
   }
 
-  function createEmptyTimeline(type: string, playerStatus: PlayerStatus): Timeline {
+  function createEmptyTimeline(type: string): Timeline {
     return {
       $: {
         type,
         itemType: type,
         state: 'stopped',
-        time: Math.round(playerStatus.time * 1000).toString(), // the current time of the track playing in ms
-        volume: volume(),
+        time: '0',
+        volume: '0',
         controllable: plexOptions.controllable
       }
     }

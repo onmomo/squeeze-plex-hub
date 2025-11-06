@@ -119,9 +119,9 @@ export default eventHandler(async (event) => {
     if (queryParameters.wait === '1') {
       // don't send timeline response immediately, wait for player to change state and send timeline response in timelinePublisher
       await storage.setItem(`subscribers/${targetClientIdentifier}/${clientIdentifier}`, subscriber)
-      logger.info(`Client '${clientIdentifier}' subscribed to player '${playerInfo.name}' for polling`)
+      logger.info(`Client '${clientIdentifier}' subscribed to player '${playerInfo.name}' for polling (wait = 1)`)
       // TODO don't really understand the wait === 1 logic, this works as a workaround for now to prevent the client going wild with subscribing
-      await new Promise((resolve) => setTimeout(resolve, 5000))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       const status = await player.status()
       if (status) {
         const timelineXml = await timelineResponse(status, subscriber, playerQueue, queryParameters.includeMetadata, playerQueueUpdating)

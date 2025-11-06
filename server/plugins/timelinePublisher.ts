@@ -86,11 +86,11 @@ export async function runPublishTimeline() {
 
         const serverTimelineUrl = `http://${playerQueue.plexServer.server.localAddress}:${playerQueue.plexServer.server.port}/:/timeline`
         for (const subscriber of playerSubscribers || []) {
-          const timeline = await timelineResponse(playerStatus, subscriber, playerQueue, true)
+          const timeline = await timelineResponse(playerStatus, subscriber, playerQueue, false)
           const timelineString = builder.buildObject(timeline)
           await Promise.all(
             timeline.MediaContainer.Timeline.map(async (timelineItem) => {
-              logger.debug(`Sending timeline '${timelineItem.$.itemType}' to subscriber '${subscriber.deviceName}' ..`)
+              logger.debug(`Trying to send timeline '${timelineItem.$.itemType}' to subscriber '${subscriber.deviceName}' ..`)
 
               if (
                 !timelineItem.$.state ||
