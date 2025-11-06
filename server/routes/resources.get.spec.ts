@@ -22,20 +22,6 @@ vi.mock('../composables/useLogger', () => ({
 vi.mock('../composables/usePlayerInfo', () => ({
   default: vi.fn()
 }))
-vi.mock('../lib/squeezePlexHub', () => ({
-  plexOptions: {
-    platform: 'MockPlatform',
-    platformVersion: '1.0',
-    product: 'MockProduct',
-    version: '1.0',
-    protocol: 'MockProtocol',
-    protocolVersion: '1',
-    model: 'MockModel',
-    device: 'MockDevice',
-    protocolCapabilities: 'MockCapabilities',
-    deviceClass: 'MockClass'
-  }
-}))
 
 vi.mock('h3', async () => {
   const actual = await vi.importActual<typeof import('h3')>('h3')

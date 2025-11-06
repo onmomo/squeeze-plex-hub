@@ -150,6 +150,58 @@ describe('timeline.poll handler', () => {
     )
   })
 
+  it('responds with timeline xml for wait poll without loaded player playQueue', async () => {
+    // Simulate playQueue currently not updating for player
+    mockGetItem.mockResolvedValueOnce(false)
+    const respondWith = vi.fn()
+    const event = createEvent({
+      headers: {
+        'X-Plex-Target-Client-Identifier': 'abc123',
+        'X-Plex-Client-Identifier': 'client1',
+        'X-Plex-Device-Name': 'dev1'
+      },
+      query: { commandID: 'cmd1', wait: '1' },
+      respondWith
+    })
+
+    ;(timelineResponse as Mock).mockResolvedValue(mockTimelineXml)
+
+    mockPlayer.status.mockResolvedValue({
+      playerId: 'abc123',
+      mode: 'play',
+      time: 50,
+      playlist_cur_index: 3,
+      playlist_tracks: 5,
+      duration: 100,
+      volume: 50,
+      remoteMeta: { url: 'http://pms.local/track3url.flac' }
+    })
+    const subscriber = {
+        clientIdentifier: 'client1',
+        deviceName: 'dev1',
+        commandId: 'cmd1',
+        poll: true,
+        targetClientIdentifier: 'abc123',
+        subscribedAt: expect.any(Date)
+      }
+
+    await pollHandler(event)
+    expect(mockSetItem).toHaveBeenCalledWith('subscribers/abc123/client1', subscriber)
+    expect(timelineResponse).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining(subscriber),
+      undefined,
+      false,
+      false
+    )
+    expect(timelineResponse).toHaveBeenCalledTimes(1)
+    expect(respondWith).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: 200
+      })
+    )
+  })
+
   it('responds with timeline xml for non wait poll without loaded player playQueue', async () => {
     // Simulate playQueue currently updating for player
     mockGetItem.mockResolvedValueOnce(true)
