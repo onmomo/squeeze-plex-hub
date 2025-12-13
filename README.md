@@ -68,7 +68,9 @@ No Plex credentials are ever stored. The app discovers LMS and Plex services on 
 
 ## Troubleshooting
 
-Please check the Squeeze Plex Hub logs for any errors, the logging is quite extensive.
+* Please check the Squeeze Plex Hub logs for any errors, the logging is quite extensive.
+* Enable the debug logs, for detailed insights: `NITRO_LOG_LEVEL=debug`.
+
 
 ### Squeeze players not found in Plexamp:
   1. Verify any Squeezebox player is connected and available in Lyrion / LMS first.
@@ -146,7 +148,7 @@ To build the application in a container using Docker:
    ```
    docker run --rm --network host squeeze-plex-hub
 
-   > **Note:** For full functionality, Squeeze Plex Hub should be run with Docker's `host` network mode. Host networking allows all Plexamp devices on your local network to discover Squeeze Plex Hub players via UDP broadcasts. If you use Docker's default bridge network, only Plex players or Plex Server running within the same bridge network can discover Squeeze players.
+   > **Note:** For full functionality, Squeeze Plex Hub must be run with Docker's `host` network mode. Host networking allows all Plexamp devices on your local network to discover Squeeze Plex Hub players via UDP broadcasts. If you use Docker's default bridge network, only Plex players or Plex Server running within the same bridge network can discover Squeeze players.
    ```
 
 The application will be available at `http://localhost:3000`.
@@ -155,7 +157,7 @@ Alternatively, use the published multi-arch image: `onmomo/squeeze-plex-hub:late
 
 ### Container Networking
 Squeeze Plex Hub listens for UDP broadcast on port `32412` from Plex clients and responds with the discovered players. Therefore, it is essential that it can receive these UDP requests on that specific port.
-- For best results, run the Plex Server container in either `host` or `bridge` network mode, and **always** run Squeeze Plex Hub in `host` network mode. This ensures Plexamp clients on mobile devices connected to your local network can discover Squeezebox players.
+- For best results, run the Plex Server container in either `host` or `bridge` network mode, and **always** run Squeeze Plex Hub in `host` network mode. This ensures Plexamp clients on mobile devices connected to your local network can discover Squeezebox players. Docker does not forward UDP packets from the host network (e.g. mobile devices) to the bridge network.
 - **Important:** If Plex Server is in `host` mode, always start Squeeze Plex Hub before Plex Server so it can bind to UDP port `32412`. If Plex Server starts first and binds this port, Squeeze Plex Hub will not work.
 - In `bridge` mode, do **not** bind UDP port `32412` for Plex Server, then the startup order does not matter; it will automatically fallback to other available UDP ports.
 
