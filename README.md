@@ -5,6 +5,7 @@
 
 <p>
 <a href="https://codecov.io/gh/onmomo/squeeze-plex-hub" target="_blank" rel="noopener noreferrer"><img src="https://codecov.io/gh/onmomo/squeeze-plex-hub/graph/badge.svg?token=YKSKRGA15P" alt="codecov coverage badge"></a>
+<a href="https://hub.docker.com/r/onmomo/squeeze-plex-hub/tags" target="_blank" rel="noopener noreferrer"><img src="https://badgen.net/docker/pulls/onmomo/squeeze-plex-hub?icon=docker&label=pulls" alt="dockerhub pulls badge"></a>
 <a href="https://github.com/sponsors/onmomo" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Sponsor-❤-brightgreen" alt="sponsor me"></a>
 </p>
 
