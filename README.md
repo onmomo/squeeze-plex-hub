@@ -5,10 +5,12 @@
 
 <p>
 <a href="https://codecov.io/gh/onmomo/squeeze-plex-hub" target="_blank" rel="noopener noreferrer"><img src="https://codecov.io/gh/onmomo/squeeze-plex-hub/graph/badge.svg?token=YKSKRGA15P" alt="codecov coverage badge"></a>
+<a href="https://hub.docker.com/r/onmomo/squeeze-plex-hub/tags" target="_blank" rel="noopener noreferrer"><img src="https://badgen.net/docker/pulls/onmomo/squeeze-plex-hub?icon=docker&label=pulls" alt="dockerhub pulls badge"></a>
 <a href="https://github.com/sponsors/onmomo" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/Sponsor-❤-brightgreen" alt="sponsor me"></a>
 </p>
 
 <p>
+<a href="https://github.com/onmomo/lms-squeeze-plex-hub" target="_blank" rel="noopener noreferrer">🧩 LMS Squeeze Plex Hub Plugin</a> &bull;
 <a href="https://lyrion.org" target="_blank" rel="noopener noreferrer">🔊 Lyrion</a> &bull;
 <a href="https://www.plex.tv/plexamp" target="_blank" rel="noopener noreferrer">⏯️ Plexamp</a> &bull;
 <a href="https://www.cmos.blog/?p=1014" target="_blank" rel="noopener noreferrer">🌐 Project Page</a>
@@ -32,11 +34,13 @@ Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server
 - Enables multi-room audio playback using Squeezebox players controlled by Plexamp
 - Shows player and server metadata
 - Simple Docker-based deployment
+- Full track metadata support on LMS in combination with the [LMS Squeeze Plex Hub Plugin](https://github.com/onmomo/lms-squeeze-plex-hub)
 
 ## Requirements
 
 - Running Lyrion Music Server (formerly Logitech Media Server) with at least one connected player
   - LMS JSON/CLI interfaces enabled (default)
+  - (optional) Enable the [LMS Squeeze Plex Hub Plugin](https://github.com/onmomo/lms-squeeze-plex-hub) to get full track metadata support on LMS
 - Plex Media Server with your audio library to stream from. No further media required on Lyrion Music Server
 - Plexamp client (desktop or mobile) signed into the same Plex account
 - Network: Squeeze Plex Hub must reach both LMS and Plexamp clients (usually same LAN)
@@ -86,7 +90,6 @@ No Plex credentials are ever stored. The app discovers LMS and Plex services on 
 ## Known Issues
 
 - Plex Web player: The app handles device advertisement and timeline updates differently than Plexamp. Squeeze Plex Hub works, but with limited capabilities. For the best experience, use Plexamp.
-- Album artwork not showing on the Squeezebox display: Current LMS limitation; reading artwork from stream isn’t supported for Plex audio streams.
 
 ## Project Structure
 
@@ -173,6 +176,6 @@ This project is licensed under the MIT License.
 ## Support the Project  
 
 Squeeze Plex Hub is developed and maintained in my spare time.  
-If you find it useful and want to support further development, please consider sponsoring me on GitHub:  
+If you find it useful and want to support further development, please consider sponsoring on GitHub:  
 
 👉 [GitHub Sponsors](https://github.com/sponsors/onmomo)
