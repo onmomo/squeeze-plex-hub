@@ -3,7 +3,6 @@ import { parseStringPromise } from 'xml2js'
 import * as plexApi from './plexApi'
 import type { Track } from './plexPlayerTimeline'
 import { describe, expect, it, vi, type Mock } from 'vitest'
-import { r } from 'happy-dom/lib/PropertySymbol'
 
 vi.mock('axios')
 vi.mock('xml2js', () => ({
