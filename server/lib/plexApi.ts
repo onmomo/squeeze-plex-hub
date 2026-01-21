@@ -45,7 +45,7 @@ export function getPlexApi(plexServer: PlexServer, path: string): string {
  * @returns Plex API URL for the given track to stream it
  */
 export function getPlexApiTrack(plexServer: PlexServer, track: Track): string {
-  return `${plexServer.server.protocol}://${plexServer.server.localAddress}:${plexServer.server.port}${track?.Media[0]?.Part[0]?.$.key}?X-Plex-Token=${plexServer.token}&squeezePlexHub_rk=${track.$.ratingKey}`  
+  return `${plexServer.server.protocol}://${plexServer.server.localAddress}:${plexServer.server.port}${track?.Media[0]?.Part[0]?.$.key}?X-Plex-Token=${plexServer.token}&squeezePlexHub_rk=${track?.$.ratingKey}`  
 }
 
 /**
