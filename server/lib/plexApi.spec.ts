@@ -30,7 +30,8 @@ const mockTrack: Track = {
   $: {
     grandparentTitle: 'Artist',
     parentTitle: 'Album',
-    title: 'Song'
+    title: 'Song',
+    ratingKey: '66666'
   },
   Media: [
     {
@@ -63,7 +64,7 @@ describe('plexApi', () => {
   describe('getPlexApiTrack', () => {
     it('should build the correct track URL', () => {
       const url = plexApi.getPlexApiTrack(mockPlexServer, mockTrack)
-      expect(url).toBe('http://127.0.0.1:32400/library/parts/1/file.mp3?X-Plex-Token=token123')
+      expect(url).toBe('http://127.0.0.1:32400/library/parts/1/file.mp3?X-Plex-Token=token123&squeezePlexHub_rk=66666')
     })
   })
 
