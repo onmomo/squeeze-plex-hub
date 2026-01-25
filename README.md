@@ -75,6 +75,11 @@ No Plex credentials are ever stored. The app discovers LMS and Plex services on 
 * Please check the Squeeze Plex Hub logs for any errors, the logging is quite extensive.
 * Enable the debug logs, for detailed insights: `NITRO_LOG_LEVEL=debug`.
 
+### Run it without Docker
+
+On the device the project should be executed:
+1. git clone https://github.com/onmomo/squeeze-plex-hub.git
+2. yarn install && yarn start
 
 ### Squeeze players not found in Plexamp:
   1. Verify any Squeezebox player is connected and available in Lyrion / LMS first.
