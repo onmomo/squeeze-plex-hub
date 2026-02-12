@@ -4,7 +4,7 @@ import useLogger from '../composables/useLogger'
 const broadcastAddress = '239.255.255.250'
 const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
 // needs to broadcast on this port to receive a response from plex servers in the local network
-const discoveryPort = 32414
+const pmsDiscoveryPort = 32414
 
 /**
  * Task to discover Plex servers on the local network using GDM (Global Discovery and Management) protocol.
@@ -55,7 +55,7 @@ async function runGdmDiscovery() {
     })
 
     const messageBuffer = Buffer.from(discoveryMessage)
-    discoverySocket.send(messageBuffer, 0, messageBuffer.length, discoveryPort, broadcastAddress, (err) => {
+    discoverySocket.send(messageBuffer, 0, messageBuffer.length, pmsDiscoveryPort, broadcastAddress, (err) => {
       if (err) {
         logger.error('Error sending discovery packet:', err)
         discoverySocket.close()

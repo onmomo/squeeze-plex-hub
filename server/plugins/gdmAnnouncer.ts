@@ -4,8 +4,8 @@ import useLogger from '../composables/useLogger'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import { plexOptions } from '../lib/squeezePlexHub'
 
-// GDM network discovery ports to try
-const gdmAnnouncerPorts = [32410, 32412, 32413, 32414]
+// GDM network player discovery port
+const gdmPlayerAnnouncerPort = 32412
 const logger = useLogger('gdmAnnouncer')
 
 export default defineNitroPlugin(() => {
@@ -21,75 +21,63 @@ export function runGdmAnnouncer() {
   const storage = useStorage('DISCOVERY')
   const decoder = new StringDecoder('utf8')
   
-  // Try to bind to one of the available ports
-  let boundPort: number | null = null
-  
-  for (const port of gdmAnnouncerPorts) {
-    try {
-      // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
-      // Essential that we can run multiple Plex clients or server next to Squeeze Plex Hub on the same host
-      const server = dgram.createSocket({ type: 'udp4', reuseAddr: true })
+  try {
+    // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
+    // Essential that we can run multiple Plex clients or server next to Squeeze Plex Hub on the same host
+    const server = dgram.createSocket({ type: 'udp4', reuseAddr: true })
 
-      server.on('listening', () => {
-        try {
-          server.addMembership('239.255.255.250')
-          server.setMulticastTTL(5)
-          server.setTTL(64)
-          logger.info(`GDM Announcer is listening on port ${port} to announce LMS squeeze players ..`)
-        } catch (error) {
-          logger.warn('Error listening for gdm messages:', error)
-        }
-      })
+    server.on('listening', () => {
+      try {
+        server.addMembership('239.255.255.250')
+        server.setMulticastTTL(5)
+        server.setTTL(64)
+        logger.info(`GDM Announcer is listening on port ${gdmPlayerAnnouncerPort} to announce LMS squeeze players ..`)
+      } catch (error) {
+        logger.warn('Error listening for gdm messages:', error)
+      }
+    })
 
-      server.on('message', async (msg, rinfo) => {
-        try {
-          const packetContent = decoder.write(msg).trim()
-          if (packetContent.match(/M-SEARCH \* HTTP\/1\.[0-1]/)) {
-            logger.debug(`Received GDM discovery request from ${rinfo.address}:${rinfo.port}`)
-            await storage.getKeys('players/').then(async (serverKey) => {
-              if (!serverKey) {
-                logger.debug('No LMS found in storage, skipping')
-                return
-              }
+    server.on('message', async (msg, rinfo) => {
+      try {
+        const packetContent = decoder.write(msg).trim()
+        if (packetContent.match(/M-SEARCH \* HTTP\/1\.[0-1]/)) {
+          logger.debug(`Received GDM discovery request from ${rinfo.address}:${rinfo.port}`)
+          await storage.getKeys('players/').then(async (serverKey) => {
+            if (!serverKey) {
+              logger.debug('No LMS found in storage, skipping')
+              return
+            }
 
-              for (const key of serverKey) {
-                const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
-                if (playerInfos) {
-                  logger.info(
-                    `Announcing '${playerInfos.length}' players from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
+            for (const key of serverKey) {
+              const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
+              if (playerInfos) {
+                logger.info(
+                  `Announcing '${playerInfos.length}' players from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
+                )
+                for (const playerInfo of playerInfos) {
+                  logger.debug(
+                    `Announcing squeeze player '${playerInfo.name}' from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
                   )
-                  for (const playerInfo of playerInfos) {
-                    logger.debug(
-                      `Announcing squeeze player '${playerInfo.name}' from LMS '${key}' to Plex client '${rinfo.address}:${rinfo.port}' ..`
-                    )
-                    const message = announceMessage(playerInfo)
-                    server.send(message, 0, message.length, rinfo.port, rinfo.address)
-                  }
+                  const message = announceMessage(playerInfo)
+                  server.send(message, 0, message.length, rinfo.port, rinfo.address)
                 }
               }
-            })
-          }
-        } catch (error) {
-          logger.warn('Error processing received gdm message:', error)
+            }
+          })
         }
-      })
+      } catch (error) {
+        logger.warn('Error processing received gdm message:', error)
+      }
+    })
 
-      server.on('error', (err) => {
-        logger.error('Error on gdm announcer:', err)
-        server.close()
-      })
+    server.on('error', (err) => {
+      logger.error('Error on gdm announcer:', err)
+      server.close()
+    })
 
-      server.bind(port)
-      boundPort = port
-      break // Successfully bound to a port, exit the loop
-    } catch (error) {
-      logger.warn(`UDP port ${port} is already in use, trying next port...`, error)
-    }
-  }
-  
-  // If no port could be bound, log error and quit
-  if (boundPort === null) {
-    logger.error(`Failed to bind to any of the GDM ports: ${gdmAnnouncerPorts.join(', ')}. Squeeze Plex Hub cannot continue. Ensure one of the UDP ports (32410, 32412, 32413, 32414) is available and not blocked by PMS itself or any other application. If PMS runs in Docker bridge mode, ensure that one of the ports is not mapped to PMS container, otherwise consider switching PMS to host mode or start Squeeze Plex Hub before PMS.`)
+    server.bind(gdmPlayerAnnouncerPort)
+  } catch (error) {
+    logger.error(`Failed to bind to GDM port ${gdmPlayerAnnouncerPort}. Squeeze Plex Hub cannot continue. Ensure the UDP port 32412 is available and not blocked by PMS itself or any other application. If PMS runs in Docker bridge mode, ensure that port 32412 is not mapped to PMS container, otherwise consider running Squeeze Plex Hub in host mode. Alternatively, move Squeeze Plex Hub to another host.`, error)
     process.exit(1)
   }
 }

@@ -57,7 +57,7 @@ describe('gdmAnnouncer', () => {
     expect(server.on).toHaveBeenCalledWith('listening', expect.any(Function))
     expect(server.on).toHaveBeenCalledWith('message', expect.any(Function))
     expect(server.on).toHaveBeenCalledWith('error', expect.any(Function))
-    expect(server.bind).toHaveBeenCalledWith(32410)
+    expect(server.bind).toHaveBeenCalledWith(32412)
   })
 
   it('should handle listening event and set multicast options', () => {
@@ -90,13 +90,13 @@ describe('gdmAnnouncer', () => {
     expect(server.send).not.toHaveBeenCalled()
   })
 
-  it('should exit application when all ports are blocked', () => {
+  it('should exit application when port is blocked', () => {
     // Mock process.exit to prevent test from actually exiting
     const mockExit = vi.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
       throw new Error(`process.exit called with code ${code}`)
     })
 
-    // Mock bind to throw error for all attempts
+    // Mock bind to throw error
     server.bind = vi.fn(() => {
       throw new Error('EADDRINUSE')
     })
