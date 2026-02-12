@@ -57,7 +57,7 @@ describe('gdmAnnouncer', () => {
     expect(server.on).toHaveBeenCalledWith('listening', expect.any(Function))
     expect(server.on).toHaveBeenCalledWith('message', expect.any(Function))
     expect(server.on).toHaveBeenCalledWith('error', expect.any(Function))
-    expect(server.bind).toHaveBeenCalledWith(32412)
+    expect(server.bind).toHaveBeenCalledWith(32410)
   })
 
   it('should handle listening event and set multicast options', () => {
@@ -88,6 +88,26 @@ describe('gdmAnnouncer', () => {
     const msg = Buffer.from('M-SEARCH * HTTP/1.1')
     await messageHandler(msg, { address: '1.2.3.4', port: 12345 })
     expect(server.send).not.toHaveBeenCalled()
+  })
+
+  it('should exit application when all ports are blocked', () => {
+    // Mock process.exit to prevent test from actually exiting
+    const mockExit = vi.spyOn(process, 'exit').mockImplementation((code?: string | number | null | undefined) => {
+      throw new Error(`process.exit called with code ${code}`)
+    })
+
+    // Mock bind to throw error for all attempts
+    server.bind = vi.fn(() => {
+      throw new Error('EADDRINUSE')
+    })
+
+    // Expect the function to throw due to process.exit
+    expect(() => runGdmAnnouncer()).toThrow('process.exit called with code 1')
+
+    // Verify process.exit was called with code 1
+    expect(mockExit).toHaveBeenCalledWith(1)
+
+    mockExit.mockRestore()
   })
 
   it('should handle errors gracefully', () => {
