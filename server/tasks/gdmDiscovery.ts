@@ -1,4 +1,6 @@
 import dgram from 'dgram'
+import type { AxiosError } from 'axios';
+import axios from 'axios'
 import useLogger from '../composables/useLogger'
 
 const broadcastAddress = '239.255.255.250'
@@ -74,6 +76,28 @@ async function runGdmDiscovery() {
         logger.info(
           `Discovered PLEX server '${plexServer.name}' at ${plexServer.localAddress}:${plexServer.port} (host: ${plexServer.host})`
         )
+        
+        // Verify connectivity to the Plex server
+        const verifyUrl = `${plexServer.protocol}://${plexServer.localAddress}:${plexServer.port}/identity`
+        try {        
+          logger.debug(`Verifying connectivity to PMS at ${verifyUrl}`)
+          await axios.get(verifyUrl, {
+            timeout: 3000
+          })
+                    
+          logger.info(`Successfully verified connectivity to PMS '${plexServer.name}@${verifyUrl}' - PMS is reachable and ready to be used in Squeeze Plex Hub.`)
+        } catch (error) {
+          if (axios.isAxiosError(error)) {
+            const axiosError: AxiosError = error
+            logger.warn(`Failed to verify connectivity to PMS at ${verifyUrl}. Squeeze Plex Hub won't be able to stream from this server.`, {
+              message: axiosError.message,
+              code: axiosError.code,
+            })
+          } else {
+            logger.warn(`Unexpected error while connecting to PMS, failed to verify connectivity to PMS at ${verifyUrl}:`, error)
+          }          
+        }
+        
         await storage.setItem(`plexServer`, plexServer)
         discoverySocket.close()
       }
