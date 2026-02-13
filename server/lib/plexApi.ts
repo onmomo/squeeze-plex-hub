@@ -33,6 +33,7 @@ export const responseHeaders = (playerId: string, playerName: string, contentTyp
   })
 
 export function getPlexApi(plexServer: PlexServer, path: string): string {
+  logger.debug(`Generating Plex API URL for path '${path}' on server '${plexServer.server.name}' (${plexServer.server.protocol}://${plexServer.server.localAddress}:${plexServer.server.port}) ..`)
   return `${plexServer.server.protocol}://${plexServer.server.localAddress}:${plexServer.server.port}${path}`
 }
 

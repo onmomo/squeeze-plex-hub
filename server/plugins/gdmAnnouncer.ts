@@ -4,8 +4,8 @@ import useLogger from '../composables/useLogger'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import { plexOptions } from '../lib/squeezePlexHub'
 
-// Needs to listen on this UDP port for discovery requests from plex clients in the local network
-const gdmAnnouncerPort = 32412
+// GDM network player discovery port
+const gdmPlayerAnnouncerPort = 32412
 const logger = useLogger('gdmAnnouncer')
 
 export default defineNitroPlugin(() => {
@@ -18,9 +18,10 @@ export default defineNitroPlugin(() => {
  * Announces LMS players to Plex clients using GDM.
  */
 export function runGdmAnnouncer() {
+  const storage = useStorage('DISCOVERY')
+  const decoder = new StringDecoder('utf8')
+  
   try {
-    const storage = useStorage('DISCOVERY')
-    const decoder = new StringDecoder('utf8')
     // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
     // Essential that we can run multiple Plex clients or server next to Squeeze Plex Hub on the same host
     const server = dgram.createSocket({ type: 'udp4', reuseAddr: true })
@@ -30,7 +31,7 @@ export function runGdmAnnouncer() {
         server.addMembership('239.255.255.250')
         server.setMulticastTTL(5)
         server.setTTL(64)
-        logger.info(`GDM Announcer is listening on port ${gdmAnnouncerPort} to announce LMS squeeze players ..`)
+        logger.info(`GDM Announcer is listening on port ${gdmPlayerAnnouncerPort} to announce LMS squeeze players ..`)
       } catch (error) {
         logger.warn('Error listening for gdm messages:', error)
       }
@@ -74,9 +75,10 @@ export function runGdmAnnouncer() {
       server.close()
     })
 
-    server.bind(gdmAnnouncerPort)
+    server.bind(gdmPlayerAnnouncerPort)
   } catch (error) {
-    logger.warn(`Error announcing squeeze players on port ${gdmAnnouncerPort}:`, error)
+    logger.error(`Failed to bind to GDM port ${gdmPlayerAnnouncerPort}. Squeeze Plex Hub cannot continue. Ensure the UDP port 32412 is available and not blocked by PMS itself or any other application. If PMS runs in Docker bridge mode, ensure that port 32412 is not mapped to PMS container, otherwise consider running Squeeze Plex Hub in host mode. Alternatively, move Squeeze Plex Hub to another host.`, error)
+    process.exit(1)
   }
 }
 

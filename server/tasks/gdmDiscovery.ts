@@ -1,10 +1,12 @@
 import dgram from 'dgram'
+import type { AxiosError } from 'axios'
+import axios from 'axios'
 import useLogger from '../composables/useLogger'
 
 const broadcastAddress = '239.255.255.250'
 const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
 // needs to broadcast on this port to receive a response from plex servers in the local network
-const discoveryPort = 32414
+const pmsDiscoveryPort = 32414
 
 /**
  * Task to discover Plex servers on the local network using GDM (Global Discovery and Management) protocol.
@@ -33,8 +35,8 @@ export interface PlexServerResponse {
   updatedAt?: number
   version?: string
   localAddress: string
-  relayAddress?: string
-  relayProtocol?: string
+  secureAddress?: string
+  secureProtocol?: string
 }
 
 /**
@@ -55,7 +57,7 @@ async function runGdmDiscovery() {
     })
 
     const messageBuffer = Buffer.from(discoveryMessage)
-    discoverySocket.send(messageBuffer, 0, messageBuffer.length, discoveryPort, broadcastAddress, (err) => {
+    discoverySocket.send(messageBuffer, 0, messageBuffer.length, pmsDiscoveryPort, broadcastAddress, (err) => {
       if (err) {
         logger.error('Error sending discovery packet:', err)
         discoverySocket.close()
@@ -74,8 +76,22 @@ async function runGdmDiscovery() {
         logger.info(
           `Discovered PLEX server '${plexServer.name}' at ${plexServer.localAddress}:${plexServer.port} (host: ${plexServer.host})`
         )
-        await storage.setItem(`plexServer`, plexServer)
-        discoverySocket.close()
+
+        // Verify connectivity to the Plex server
+        const verifyUrl = `${plexServer.protocol}://${plexServer.localAddress}:${plexServer.port}/identity`
+        // Plexamp will provide the secure address (192-168-1-5.ztea2cf712e03f2b540150acfe3a4b.plex.direct) along the squeeze player requests,
+        // so we need to ensure it is reachable as well to prevent connectivity issues later on when the secure address is used for streaming or talking to the Plex server API.
+        const verifySecureUrl = `${plexServer.secureProtocol}://${plexServer.secureAddress}:${plexServer.port}/identity`
+        try {
+          await verifyPlexServerConnectivity(verifyUrl)
+          await verifyPlexServerConnectivity(verifySecureUrl)
+          await storage.setItem(`plexServer`, plexServer)
+        } catch (error) {
+          // Skip storing this server since it does not appear to be reachable, but log the error for debugging purposes
+          logger.error(error)
+        } finally {
+          discoverySocket.close()
+        }
       }
     })
 
@@ -89,6 +105,33 @@ async function runGdmDiscovery() {
     }, 300000)
   } catch (error) {
     logger.error('Error during GDM Discovery:', error)
+  }
+}
+
+export async function verifyPlexServerConnectivity(verifyUrl: string): Promise<void> {
+  const logger = useLogger('gdmDiscovery')
+  try {
+    logger.debug(`Verifying connectivity to PMS at ${verifyUrl}`)
+    await axios.get(verifyUrl, {
+      timeout: 3000
+    })
+
+    logger.info(`Successfully verified connectivity to PMS@'${verifyUrl}' - PMS is reachable and ready to be used with Squeeze Plex Hub.`)
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError: AxiosError = error
+      logger.error(
+        `Failed to verify connectivity to PMS at ${verifyUrl}. Squeeze Plex Hub won't be able to stream. For *.plex.direct urls, ensure DNS resolution is working correctly: ${axiosError.message}`,
+        {
+          code: axiosError.code,
+          status: axiosError.response?.status,
+          statusText: axiosError.response?.statusText
+        }
+      )
+    } else {
+      logger.error(`Unexpected error while connecting to PMS, failed to verify connectivity to PMS at ${verifyUrl}:`, error)
+    }
+    throw error
   }
 }
 
@@ -110,8 +153,8 @@ export function parseServerResponse(response: string, localAddress: string): Ple
         break
       case 'Host':
         result.host = value
-        result.relayAddress = localAddress.replace(/\./g, '-') + '.' + value
-        result.relayProtocol = 'https'
+        result.secureAddress = localAddress.replace(/\./g, '-') + '.' + result.host
+        result.secureProtocol = 'https'
         break
       case 'Name':
         result.name = value
