@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.27.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.26.0...v1.27.0) (2026-02-13)
+
+
+### Bug Fixes
+
+* improve UDP port binding logic and add error handling for blocked ports ([78d9f2a](https://github.com/onmomo/squeeze-plex-hub/commit/78d9f2a443ea0278882942168a2ecaece6f55355))
+* update UDP port binding and improve logging for GDM discovery ([1efd2a0](https://github.com/onmomo/squeeze-plex-hub/commit/1efd2a01dade31cb6f760d7b3d8804f14b7e77d2))
+
 ## [1.26.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.25.0...v1.26.0) (2026-02-11)
 
 ## [1.25.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.24.0...v1.25.0) (2026-01-25)
