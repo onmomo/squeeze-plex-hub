@@ -2,6 +2,7 @@ import dgram from 'dgram'
 import type { AxiosError } from 'axios'
 import axios from 'axios'
 import useLogger from '../composables/useLogger'
+import { th, tr } from '@nuxt/ui/runtime/locale/index.js'
 
 const broadcastAddress = '239.255.255.250'
 const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
@@ -79,14 +80,19 @@ async function runGdmDiscovery() {
 
         // Verify connectivity to the Plex server
         const verifyUrl = `${plexServer.protocol}://${plexServer.localAddress}:${plexServer.port}/identity`
-        // Plexamp will provide the secure address (192-168-1-5.ztea2cf712e03fs2b5401s50acfe3a4m.plex.direct) along the squeeze player requests,
+        // Plexamp will provide the secure address (192-168-1-5.ztea2cf712e03f2b540150acfe3a4b.plex.direct) along the squeeze player requests,
         // so we need to ensure it is reachable as well to prevent connectivity issues later on when the secure address is used for streaming or talking to the Plex server API.
         const verifySecureUrl = `${plexServer.secureProtocol}://${plexServer.secureAddress}:${plexServer.port}/identity`
-
-        await verifyPlexServerConnectivity(verifyUrl)
-        await verifyPlexServerConnectivity(verifySecureUrl)
-        await storage.setItem(`plexServer`, plexServer)
-        discoverySocket.close()
+        try {
+          await verifyPlexServerConnectivity(verifyUrl)
+          await verifyPlexServerConnectivity(verifySecureUrl)
+          await storage.setItem(`plexServer`, plexServer)
+        } catch (error) {
+          // Skip storing this server since it does not appear to be reachable, but log the error for debugging purposes
+          logger.error(error)
+        } finally {
+          discoverySocket.close()
+        }
       }
     })
 
@@ -124,6 +130,7 @@ async function runGdmDiscovery() {
       } else {
         logger.error(`Unexpected error while connecting to PMS, failed to verify connectivity to PMS at ${verifyUrl}:`, error)
       }
+      throw error
     }
   }
 }
