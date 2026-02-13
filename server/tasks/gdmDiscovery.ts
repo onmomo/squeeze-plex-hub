@@ -106,31 +106,32 @@ async function runGdmDiscovery() {
   } catch (error) {
     logger.error('Error during GDM Discovery:', error)
   }
+}
 
-  async function verifyPlexServerConnectivity(verifyUrl: string): Promise<void> {
-    try {
-      logger.debug(`Verifying connectivity to PMS at ${verifyUrl}`)
-      await axios.get(verifyUrl, {
-        timeout: 3000
-      })
+export async function verifyPlexServerConnectivity(verifyUrl: string): Promise<void> {
+  const logger = useLogger('gdmDiscovery')
+  try {
+    logger.debug(`Verifying connectivity to PMS at ${verifyUrl}`)
+    await axios.get(verifyUrl, {
+      timeout: 3000
+    })
 
-      logger.info(`Successfully verified connectivity to PMS@'${verifyUrl}' - PMS is reachable and ready to be used with Squeeze Plex Hub.`)
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const axiosError: AxiosError = error
-        logger.error(
-          `Failed to verify connectivity to PMS at ${verifyUrl}. Squeeze Plex Hub won't be able to stream. For *.plex.direct urls, ensure DNS resolution is working correctly: ${axiosError.message}`,
-          {
-            code: axiosError.code,
-            status: axiosError.response?.status,
-            statusText: axiosError.response?.statusText
-          }
-        )
-      } else {
-        logger.error(`Unexpected error while connecting to PMS, failed to verify connectivity to PMS at ${verifyUrl}:`, error)
-      }
-      throw error
+    logger.info(`Successfully verified connectivity to PMS@'${verifyUrl}' - PMS is reachable and ready to be used with Squeeze Plex Hub.`)
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const axiosError: AxiosError = error
+      logger.error(
+        `Failed to verify connectivity to PMS at ${verifyUrl}. Squeeze Plex Hub won't be able to stream. For *.plex.direct urls, ensure DNS resolution is working correctly: ${axiosError.message}`,
+        {
+          code: axiosError.code,
+          status: axiosError.response?.status,
+          statusText: axiosError.response?.statusText
+        }
+      )
+    } else {
+      logger.error(`Unexpected error while connecting to PMS, failed to verify connectivity to PMS at ${verifyUrl}:`, error)
     }
+    throw error
   }
 }
 
