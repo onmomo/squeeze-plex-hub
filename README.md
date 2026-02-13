@@ -167,7 +167,7 @@ Alternatively, use the published multi-arch image: `onmomo/squeeze-plex-hub:late
 Squeeze Plex Hub listens for UDP broadcast on port `32412` from Plex clients and responds with the discovered players. Therefore, it is essential that it can receive these UDP requests on that specific port.
 - For best results, run the Plex Server container in either `host` or `bridge` network mode, and **always** run Squeeze Plex Hub in `host` network mode. This ensures Plexamp clients on mobile devices connected to your local network can discover Squeezebox players. Docker does not forward UDP packets from the host network (e.g. mobile devices) to the bridge network.
 - **Important:** If Plex Server is in `host` mode, always start Squeeze Plex Hub before Plex Server so it will always bind to UDP port `32412`. If Plex Server starts first and binds this port, Squeeze Plex Hub will eventually not work and crash.
-- In `bridge` mode, do **not** bind UDP port `32412` for Plex Server, then the startup order does not matter;
+- In `bridge` mode, do **not** bind UDP port `32412` for Plex Server, then the startup order does not matter.
 
 ## Disclaimer  
 
