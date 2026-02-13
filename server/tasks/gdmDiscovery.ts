@@ -2,7 +2,6 @@ import dgram from 'dgram'
 import type { AxiosError } from 'axios'
 import axios from 'axios'
 import useLogger from '../composables/useLogger'
-import { th, tr } from '@nuxt/ui/runtime/locale/index.js'
 
 const broadcastAddress = '239.255.255.250'
 const discoveryMessage = 'M-SEARCH * HTTP/1.1\r\n\r\n'
