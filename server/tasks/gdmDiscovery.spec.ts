@@ -81,7 +81,7 @@ describe('gdmDiscovery', () => {
         isAxiosError: true
       }
       ;(axios.get as Mock).mockRejectedValue(axiosError)
-      ;(axios.isAxiosError as Mock).mockReturnValue(true)
+      ;(axios.isAxiosError as unknown as Mock).mockReturnValue(true)
 
       await expect(verifyPlexServerConnectivity('http://192.168.1.10:32400/identity')).rejects.toEqual(axiosError)
 
@@ -97,7 +97,7 @@ describe('gdmDiscovery', () => {
         isAxiosError: true
       }
       ;(axios.get as Mock).mockRejectedValue(dnsError)
-      ;(axios.isAxiosError as Mock).mockReturnValue(true)
+      ;(axios.isAxiosError as unknown as Mock).mockReturnValue(true)
 
       await expect(
         verifyPlexServerConnectivity('https://192-168-1-10.ztea2cf712e03f2b540150acfe3a4b.plex.direct:32400/identity')
@@ -114,7 +114,7 @@ describe('gdmDiscovery', () => {
     it('should handle unexpected errors', async () => {
       const unexpectedError = new Error('Unexpected error')
       ;(axios.get as Mock).mockRejectedValue(unexpectedError)
-      ;(axios.isAxiosError as Mock).mockReturnValue(false)
+      ;(axios.isAxiosError as unknown as Mock).mockReturnValue(false)
 
       await expect(verifyPlexServerConnectivity('http://192.168.1.10:32400/identity')).rejects.toThrow('Unexpected error')
 
