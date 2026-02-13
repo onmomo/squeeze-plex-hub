@@ -84,7 +84,7 @@ On the device the project should be executed:
 ### Squeeze players not found in Plexamp:
   1. Verify any Squeezebox player is connected and available in Lyrion / LMS first.
   2. Check Squeeze Plex Hub (http://localhost:3000) dashboard and confirm both LMS and Squeezebox players are shown. If nothing is shown, ensure Squeeze Plex Hub can connect to Lyrion / LMS and that the Lyrion CLI is enabled.
-3. Check for port conflicts by reviewing the Squeeze Plex Hub startup logs for any discovery or network errors. This is especially important if both Squeeze Plex Hub and Plex Media Server are running on the same host. Squeeze Plex Hub requires exclusive access to UDP port 32412 to handle GDM network discovery requests from Plex clients. If Plex Media Server is also binding to this port, it may cause conflicts—Plex typically falls back to other ports in the range (32410, 32412, 32413, 32414). To resolve this, remove port 32412 from Plex Media Server if possible. If TCP port 3000 is already in use, you can publish a different host port (e.g., `docker run -p 8080:3000 ...`) and access the app at `http://localhost:8080`. For more details on proper container deployment and networking, refer to the Container Networking section below.
+3. Check for port conflicts by reviewing the Squeeze Plex Hub startup logs for any discovery or network errors. This is especially important if both Squeeze Plex Hub and Plex Media Server are running on the same host. Squeeze Plex Hub requires access to UDP port 32412 to handle GDM network player discovery requests from Plex clients. If PMS is running on the same host or docker host network, both services should be able to use UDP 32412. If PMS is running in Docker bridge mode, remove port 32412 from the port mapping. If TCP port 3000 is already in use, you can publish a different host port (e.g., `docker run -p 8080:3000 ...`) and access the app at `http://localhost:8080`. For more details on proper container deployment and networking, refer to the Container Networking section below.
   - Docker Desktop on **MacOS**: GDM network discovery may not work with Docker Desktop on MacOS due to limitations with containers receiving UDP broadcast requests from the host network even if the container is running in **host network mode**. For full functionality in a container, run Docker on Linux.
   4. Ensure no local firewall blocking UDP ports 32412
   4. If still not available, abort Plexamp app to trigger device re-discovery.
@@ -166,8 +166,8 @@ Alternatively, use the published multi-arch image: `onmomo/squeeze-plex-hub:late
 ### Container Networking
 Squeeze Plex Hub listens for UDP broadcast on port `32412` from Plex clients and responds with the discovered players. Therefore, it is essential that it can receive these UDP requests on that specific port.
 - For best results, run the Plex Server container in either `host` or `bridge` network mode, and **always** run Squeeze Plex Hub in `host` network mode. This ensures Plexamp clients on mobile devices connected to your local network can discover Squeezebox players. Docker does not forward UDP packets from the host network (e.g. mobile devices) to the bridge network.
-- **Important:** If Plex Server is in `host` mode, always start Squeeze Plex Hub before Plex Server so it can bind to UDP port `32412`. If Plex Server starts first and binds this port, Squeeze Plex Hub will not work.
-- In `bridge` mode, do **not** bind UDP port `32412` for Plex Server, then the startup order does not matter; it will automatically fallback to other available UDP ports.
+- **Important:** If Plex Server is in `host` mode, always start Squeeze Plex Hub before Plex Server so it will always bind to UDP port `32412`. If Plex Server starts first and binds this port, Squeeze Plex Hub will eventually not work and crash.
+- In `bridge` mode, do **not** bind UDP port `32412` for Plex Server, then the startup order does not matter;
 
 ## Disclaimer  
 
