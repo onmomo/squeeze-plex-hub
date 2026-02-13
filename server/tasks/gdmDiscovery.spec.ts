@@ -26,8 +26,8 @@ describe('parseServerResponse', () => {
       updatedAt: 1710000000,
       version: '1.32.0.0',
       localAddress: '192.168.1.10',
-      relayAddress: '192-168-1-10.192.168.1.10',
-      relayProtocol: 'https'
+      secureAddress: '192-168-1-10.192.168.1.10',
+      secureProtocol: 'https'
     })
   })
 
