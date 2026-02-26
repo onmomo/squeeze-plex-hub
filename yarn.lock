@@ -10875,9 +10875,9 @@ __metadata:
   linkType: hard
 
 "nanotar@npm:^0.2.0":
-  version: 0.2.0
-  resolution: "nanotar@npm:0.2.0"
-  checksum: 10c0/4a917e38b09ffddee19fa5f4762605ebb3c8eb3cb4d5d5c83a76d29789194e7b2a29d2f0a603be4d52acdad60f721570ba7e48285487e98f182efe1c9617694a
+  version: 0.2.1
+  resolution: "nanotar@npm:0.2.1"
+  checksum: 10c0/f262b921098f9aff9501108d617e691b0046179abd3781b7781338db449de49016e8a7c17ecde1ebe1dc45eb9fd20ff4ad1599bd1f6df922e036b6beb811c6bd
   languageName: node
   linkType: hard
 
