@@ -33,8 +33,7 @@ export function resolveNuxtServerPort(): string {
   const resolvedPort = portCandidates.find(isValidPort)
   logger.debug(`Resolved Squeeze Plex Hub server port: ${resolvedPort}`)
   
-  if (!resolvedPort) {
-    logger.warn(`No valid port found in candidates ${portCandidates.join(', ')}. Falling back to default port ${DefaultPort}.`)
+  if (!resolvedPort) {    
     return DefaultPort
   }
 
