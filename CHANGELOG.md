@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.33.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.32.0...v1.33.0) (2026-03-05)
+
+
+### Bug Fixes
+
+* reduce log noise ([f05bdac](https://github.com/onmomo/squeeze-plex-hub/commit/f05bdac930c3b439d782ebb9d745cf0f112d456b))
+
 ## [1.32.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.31.0...v1.32.0) (2026-03-05)
 
 ## [1.31.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.30.0...v1.31.0) (2026-03-05)
