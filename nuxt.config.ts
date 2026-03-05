@@ -4,8 +4,7 @@ export default {
     appVersion: process.env.APP_VERSION || 'latest'
   },
   devServer: {
-    host: '0.0.0.0' // required to allow plex server and players to connect and poll from squeeze plex hub players'
-    //port: 32500
+    host: '0.0.0.0' // required to allow plex server and players to connect and poll from squeeze plex hub players'    
   },
   vite: {
     middleware: {

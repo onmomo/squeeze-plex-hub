@@ -91,7 +91,7 @@ function announceMessage(player: IPlayerInfo) {
   appendParameter(sb, 'Content-Type', 'plex/media-player')
   appendParameter(sb, 'Device-Class', plexOptions.deviceClass)
   appendParameter(sb, 'Name', player.name)
-  appendParameter(sb, 'Port', plexOptions.port)
+  appendParameter(sb, 'Port', plexOptions.port.toString())
   appendParameter(sb, 'Product', plexOptions.product)
   appendParameter(sb, 'Version', plexOptions.version)
   appendParameter(sb, 'Protocol', plexOptions.protocol)
