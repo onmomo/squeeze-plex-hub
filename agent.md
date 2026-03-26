@@ -156,6 +156,11 @@ interface PlexTrack { ... }
 | `NITRO_LOG_LEVEL` | `info` | error / warn / info / debug |
 | `APP_VERSION` | from package.json | Reported to Plex clients |
 
+**There are no environment variables for Plex or LMS connection settings.** Both are discovered automatically — do not add any.
+
+- **LMS** is found via mDNS using `lms-discovery`.
+- **Plex clients** are found via GDM UDP broadcast on port 32412.
+
 ---
 
 ## Ports
@@ -165,7 +170,13 @@ interface PlexTrack { ... }
 | 3000 | TCP | HTTP API + frontend |
 | 32412 | UDP | Plex GDM device discovery |
 
-Host networking is required in Docker for UDP multicast and mDNS to work.
+### Network Layer Requirement
+
+The host must be on the **same broadcast/multicast domain** as the Plex clients and LMS servers:
+
+- **Docker:** `--network host` is required — bridge networking blocks UDP multicast and mDNS.
+- **Kubernetes / VMs:** multicast traffic must not be filtered at the network layer.
+- No static IPs, hostnames, or credentials need to be configured anywhere.
 
 ---
 
@@ -177,3 +188,4 @@ Host networking is required in Docker for UDP multicast and mDNS to work.
 4. **Tests must pass** before merging — run `yarn test`.
 5. **Plex tokens are secrets** — never log or expose them.
 6. **Lint before commit** — `yarn lint:fix && yarn format`.
+7. **Do not add Plex/LMS connection config** — there are no env vars for this and there should not be. Discovery is zero-config via UDP broadcast and mDNS. Adding such config would be incorrect.

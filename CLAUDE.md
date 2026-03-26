@@ -266,6 +266,21 @@ gdmDiscovery task (every minute)
 | `NITRO_LOG_LEVEL` | `info` | Log level (error/warn/info/debug) |
 | `APP_VERSION` | from `package.json` | Application version reported to Plex |
 
+**There are no environment variables for configuring connections to Plex or LMS.** Both are discovered automatically at runtime:
+
+- **LMS servers** are found via mDNS (multicast DNS) using the `lms-discovery` library.
+- **Plex clients** are found via GDM (Group Discovery Multicast) — Plex clients broadcast UDP M-SEARCH packets on port 32412, and the hub responds.
+
+No IP addresses, hostnames, ports, or credentials for Plex or LMS need to be configured. Do not attempt to add such configuration — the zero-config discovery model is intentional.
+
+### Network Layer Requirement
+
+For discovery to work, the host running Squeeze Plex Hub **must have access to the same broadcast/multicast domain** as the Plex clients and LMS servers. This means:
+
+- In Docker: use `--network host` (bridge networking will block UDP multicast and mDNS).
+- In Kubernetes or VMs: ensure multicast traffic is not filtered at the network layer.
+- On the same physical or VLAN network segment as Plex clients and LMS servers.
+
 ---
 
 ## Docker
@@ -323,3 +338,4 @@ Start here when onboarding:
 - Do not skip `yarn lint:fix && yarn format` before committing.
 - Do not log Plex tokens or user credentials.
 - Do not add complexity for hypothetical future features — keep it minimal.
+- Do not add environment variables or configuration for Plex or LMS connection details — discovery is fully automatic via UDP broadcast and mDNS, and no such config should exist.
