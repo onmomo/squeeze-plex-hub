@@ -19,10 +19,10 @@
   "dependencies": {
     "@nuxt/kit": "^4.4.6",
     "@nuxt/ui": "^4.1.0",
-    "axios": "^1.15.2",
+    "axios": "^1.18.1",
     "lms-discovery": "^1.1.0",
     "lms-squeeze-rpc-x": "1.1.0",
-    "nuxt": "^4.4.6",
+    "nuxt": "^4.4.7",
     "winston": "^3.17.0",
     "xml2js": "^0.6.2"
   },
@@ -41,7 +41,7 @@
     "happy-dom": "^20.8.9",
     "prettier": "^3.5.3",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4",
+    "vitest": "^3.2.6",
     "vue-tsc": "^3.1.8"
   },
   "packageManager": "yarn@4.4.0"
