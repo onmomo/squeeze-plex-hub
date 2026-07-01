@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.39.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.38.0...v1.39.0) (2026-07-01)
+
+
+### Bug Fixes
+
+* resolve TypeScript errors from noUncheckedIndexedAccess enabled by Nuxt 4.4.6 ([e9f40e1](https://github.com/onmomo/squeeze-plex-hub/commit/e9f40e1e2c9594d94eaed7a4c051bf94bed60668))
+
 ## [1.38.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.37.0...v1.38.0) (2026-05-22)
 
 ## [1.37.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.36.0...v1.37.0) (2026-04-13)
