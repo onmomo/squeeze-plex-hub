@@ -99,7 +99,10 @@ export default eventHandler(async (event) => {
 
     // Deleting of all the upcoming tracks is necessary if the user moved tracks around in the upcoming tracks to play in the playlist
     await syncPlaylistWithRefresh(playerStatus, player, playerInfo, loadedTracks, refreshedTracks)
-    const currentTrackIndex = refreshedTracks.findIndex((t) => currentTrackUrl?.includes(t?.Media[0]?.Part[0]?.$.key))
+    const currentTrackIndex = refreshedTracks.findIndex((t) => {
+      const key = t?.Media[0]?.Part[0]?.$.key
+      return !!key && !!currentTrackUrl?.includes(key)
+    })
     if (currentTrackIndex === -1) {
       logger.warn(`Could not find currently loaded track in refreshedTracks by remoteMeta.url (${currentTrackUrl})`)
     }

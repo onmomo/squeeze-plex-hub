@@ -39,7 +39,7 @@ export async function runPublishTimeline() {
     for (const key of serverKeys) {
       const playerInfos = await storage.getItem<IPlayerInfo[]>(key)
       logger.debug(`Found ${playerInfos?.length || 0} players for server '${key}'`)
-      const serverId = key.split(':')[1] // e.g. players:de443cee-943b-421a-8db3-575e5b4cddc6 where the later is the serverId
+      const serverId = key.split(':')[1]! // e.g. players:de443cee-943b-421a-8db3-575e5b4cddc6 where the later is the serverId
       if (playerInfos) {
         for (const player of playerInfos) {
           allPlayers.push([serverId, player])

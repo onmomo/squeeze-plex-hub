@@ -41,7 +41,10 @@ export default eventHandler(async (event) => {
       if (refreshedPlayerQueue) {
         // now skip to next track which should be available after play queue refresh
         const tracks = refreshedPlayerQueue.playQueue.MediaContainer.Track ?? []
-        const endedTrackIndex = tracks.findIndex((t) => status.remoteMeta?.url.includes(t?.Media[0]?.Part[0]?.$.key))
+        const endedTrackIndex = tracks.findIndex((t) => {
+          const key = t?.Media[0]?.Part[0]?.$.key
+          return !!key && !!status.remoteMeta?.url.includes(key)
+        })
         const nextTrackIndex = Math.min(endedTrackIndex + 1, tracks.length - 1)
         await player.selectTrackInPlaylist(nextTrackIndex)
         logger.info(`Player '${targetClientIdentifier}' (${playerInfo.name}) skipped to next track at playQueue index ${nextTrackIndex} after refreshing play queue`)

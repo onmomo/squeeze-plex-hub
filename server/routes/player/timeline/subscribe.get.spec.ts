@@ -56,7 +56,7 @@ describe('GET /server/routes/player/timeline/subscribe.get', () => {
     await handler(event)
 
     expect(event.respondWith).toHaveBeenCalledTimes(1)
-    const resp = (event.respondWith as Mock).mock.calls[0][0] as Response
+    const resp = (event.respondWith as Mock).mock.calls[0]![0] as Response
     expect(resp.status).toBe(400)
 
     expect(mockSetItem).not.toHaveBeenCalled()
@@ -88,7 +88,7 @@ describe('GET /server/routes/player/timeline/subscribe.get', () => {
     await handler(event)
 
     expect(mockSetItem).toHaveBeenCalledTimes(1)
-    const [key, value] = (mockSetItem as Mock).mock.calls[0]
+    const [key, value] = (mockSetItem as Mock).mock.calls[0]!
     expect(key).toBe('subscribers/player-123/client-456')
     expect(value).toMatchObject({
       clientIdentifier: 'client-456',
@@ -126,7 +126,7 @@ describe('GET /server/routes/player/timeline/subscribe.get', () => {
     await handler(event)
 
     expect(event.respondWith).toHaveBeenCalledTimes(1)
-    const resp = (event.respondWith as Mock).mock.calls[0][0] as Response
+    const resp = (event.respondWith as Mock).mock.calls[0]![0] as Response
     expect(resp.status).toBe(400)
 
     expect(mockSetItem).not.toHaveBeenCalled()

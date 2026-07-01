@@ -82,7 +82,10 @@ export default eventHandler(async (event) => {
       )
       // found that the PMS provided playQueueSelectedItemOffset and playQueueSelectedItemId can be out of sync with the already updated tracks in the playQueue on PMS
       // therefore we try to find the currently ended track by URL matching and select the next one
-      const endedTrackIndex = tracks.findIndex((t) => playerStatus?.remoteMeta?.url.includes(t?.Media[0]?.Part[0]?.$.key))
+      const endedTrackIndex = tracks.findIndex((t) => {
+        const key = t?.Media[0]?.Part[0]?.$.key
+        return !!key && !!playerStatus?.remoteMeta?.url.includes(key)
+      })
       let nextTrackIndex = endedTrackIndex + 1
       if (nextTrackIndex >= tracks.length) {
         // it can happen, that the refreshed playQueue already moved to the next track before we refreshed, so we need to handle that here
