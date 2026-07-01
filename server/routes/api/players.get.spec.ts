@@ -84,8 +84,8 @@ describe('players.get API handler', () => {
     expect(Array.isArray(result)).toBe(true)
     expect(result as PlayerServerInfo[]).toHaveLength(2)
     // Sorted by model
-    expect((result as PlayerServerInfo[])[0].playerInfo.model).toBe('A-Model')
-    expect((result as PlayerServerInfo[])[1].playerInfo.model).toBe('B-Model')
+    expect((result as PlayerServerInfo[])[0]!.playerInfo.model).toBe('A-Model')
+    expect((result as PlayerServerInfo[])[1]!.playerInfo.model).toBe('B-Model')
   })
 
   it('returns 404 and message if no LMS found, try/catch', async () => {

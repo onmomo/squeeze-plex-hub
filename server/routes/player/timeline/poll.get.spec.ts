@@ -56,7 +56,7 @@ function createEvent({
   // Lowercase all header keys
   const lowerCaseHeaders: Record<string, string> = {}
   for (const key in headers) {
-    lowerCaseHeaders[key.toLowerCase()] = headers[key]
+    lowerCaseHeaders[key.toLowerCase()] = headers[key]!
   }
 
   return {

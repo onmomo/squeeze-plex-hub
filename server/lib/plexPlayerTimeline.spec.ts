@@ -113,66 +113,67 @@ describe('timelineContainer', () => {
 
   it('generates timeline with metadata when includeMetadata is true', async () => {
     const result = await timelineResponse(playerStatus, mockSubscriber, mockPlayerQueue, true)
+    const timeline0 = result.MediaContainer.Timeline[0]!
     expect(result.MediaContainer.$.commandID).toBe(mockSubscriber.commandId)
-    expect(result.MediaContainer.Timeline[0].$.state).toBe('playing')
-    expect(result.MediaContainer.Timeline[0].$.duration).toBe('123456')
-    expect(result.MediaContainer.Timeline[0].$.time).toBe('12345')
-    expect(result.MediaContainer.Timeline[0].$.playQueueItemID).toBe('582408')
-    expect(result.MediaContainer.Timeline[0].$.key).toBe('/library/metadata/40900')
-    expect(result.MediaContainer.Timeline[0].$.playQueueID).toBe('7509')
-    expect(result.MediaContainer.Timeline[0].$.playQueueVersion).toBe('5')
-    expect(result.MediaContainer.Timeline[0].$.containerKey).toBe('/playQueues/7509')
-    expect(result.MediaContainer.Timeline[0].$.type).toBe('music')
-    expect(result.MediaContainer.Timeline[0].$.itemType).toBe('music')
-    expect(result.MediaContainer.Timeline[0].$.volume).toBe('80')
-    expect(result.MediaContainer.Timeline[0].$.mute).toBe('0')
-    expect(result.MediaContainer.Timeline[0].$.shuffle).toBe('1')
-    expect(result.MediaContainer.Timeline[0].$.repeat).toBe('2')
-    expect(result.MediaContainer.Timeline[0].$.controllable).toBe(plexOptions.controllable)
-    expect(result.MediaContainer.Timeline[0].$.machineIdentifier).toBe('server-uuid')
-    expect(result.MediaContainer.Timeline[0].$.protocol).toBe('https')
-    expect(result.MediaContainer.Timeline[0].$.address).toBe('127.0.0.1')
-    expect(result.MediaContainer.Timeline[0].$.port).toBe('32400')
-    expect(result.MediaContainer.Timeline[0].Track).toBeDefined()
-    expect(result.MediaContainer.Timeline[1].$.type).toBe('video')
-    expect(result.MediaContainer.Timeline[2].$.type).toBe('photo')
+    expect(timeline0.$.state).toBe('playing')
+    expect(timeline0.$.duration).toBe('123456')
+    expect(timeline0.$.time).toBe('12345')
+    expect(timeline0.$.playQueueItemID).toBe('582408')
+    expect(timeline0.$.key).toBe('/library/metadata/40900')
+    expect(timeline0.$.playQueueID).toBe('7509')
+    expect(timeline0.$.playQueueVersion).toBe('5')
+    expect(timeline0.$.containerKey).toBe('/playQueues/7509')
+    expect(timeline0.$.type).toBe('music')
+    expect(timeline0.$.itemType).toBe('music')
+    expect(timeline0.$.volume).toBe('80')
+    expect(timeline0.$.mute).toBe('0')
+    expect(timeline0.$.shuffle).toBe('1')
+    expect(timeline0.$.repeat).toBe('2')
+    expect(timeline0.$.controllable).toBe(plexOptions.controllable)
+    expect(timeline0.$.machineIdentifier).toBe('server-uuid')
+    expect(timeline0.$.protocol).toBe('https')
+    expect(timeline0.$.address).toBe('127.0.0.1')
+    expect(timeline0.$.port).toBe('32400')
+    expect(timeline0.Track).toBeDefined()
+    expect(result.MediaContainer.Timeline[1]!.$.type).toBe('video')
+    expect(result.MediaContainer.Timeline[2]!.$.type).toBe('photo')
   })
 
   it('generates timeline without metadata when includeMetadata is false', async () => {
     const result = await timelineResponse(playerStatus, mockSubscriber, mockPlayerQueue, false)
-    expect(result.MediaContainer.Timeline[0].Track).toBeUndefined()
+    expect(result.MediaContainer.Timeline[0]!.Track).toBeUndefined()
   })
 
   it('sets state to paused when playerStatus.mode is pause', async () => {
     playerStatus.mode = 'pause'
     const result = await timelineResponse(playerStatus, mockSubscriber, mockPlayerQueue, true)
-    expect(result.MediaContainer.Timeline[0].$.state).toBe('paused')
+    expect(result.MediaContainer.Timeline[0]!.$.state).toBe('paused')
   })
 
   it('sets state to stopped when playerStatus.mode is stop', async () => {
     playerStatus.mode = 'stop'
     const result = await timelineResponse(playerStatus, mockSubscriber, mockPlayerQueue, true)
-    expect(result.MediaContainer.Timeline[0].$.state).toBe('stopped')
+    expect(result.MediaContainer.Timeline[0]!.$.state).toBe('stopped')
   })
 
   it('sets mute to 1 and volume to 0 when playerStatus.volume is negative', async () => {
     playerStatus.volume = -1
     const result = await timelineResponse(playerStatus, mockSubscriber, mockPlayerQueue, true)
-    expect(result.MediaContainer.Timeline[0].$.mute).toBe('1')
-    expect(result.MediaContainer.Timeline[0].$.volume).toBe('0')
+    expect(result.MediaContainer.Timeline[0]!.$.mute).toBe('1')
+    expect(result.MediaContainer.Timeline[0]!.$.volume).toBe('0')
   })
 
   it('returns undefined keys if no playQueue is provided', async () => {
     const result = await timelineResponse(playerStatus, mockSubscriber, undefined, true)
-    expect(result.MediaContainer.Timeline[0].$.playQueueID).toBeUndefined()
-    expect(result.MediaContainer.Timeline[0].$.containerKey).toBeUndefined()
-    expect(result.MediaContainer.Timeline[0].Track).toBeUndefined()
+    expect(result.MediaContainer.Timeline[0]!.$.playQueueID).toBeUndefined()
+    expect(result.MediaContainer.Timeline[0]!.$.containerKey).toBeUndefined()
+    expect(result.MediaContainer.Timeline[0]!.Track).toBeUndefined()
   })
 
   it('returns undefined for playQueueItemID if playlist_cur_index is out of bounds', async () => {
     playerStatus.playlist_cur_index = 99
     const result = await timelineResponse(playerStatus, mockSubscriber, mockPlayerQueue, true)
-    expect(result.MediaContainer.Timeline[0].$.playQueueItemID).toBeUndefined()
-    expect(result.MediaContainer.Timeline[0].Track).toBeUndefined()
+    expect(result.MediaContainer.Timeline[0]!.$.playQueueItemID).toBeUndefined()
+    expect(result.MediaContainer.Timeline[0]!.Track).toBeUndefined()
   })
 })

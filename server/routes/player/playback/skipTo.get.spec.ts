@@ -83,7 +83,7 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
     await handler(event)
 
     expect(event.respondWith).toHaveBeenCalledTimes(1)
-    const resp = (event.respondWith as Mock).mock.calls[0][0] as Response
+    const resp = (event.respondWith as Mock).mock.calls[0]![0] as Response
     expect(resp.status).toBe(400)
     expect(selectTrackInPlaylist).not.toHaveBeenCalled()
     expect(h3.sendNoContent as Mock).not.toHaveBeenCalled()
@@ -156,7 +156,7 @@ describe('GET /server/routes/player/playback/skipTo.get', () => {
     await handler(event)
 
     expect(event.respondWith).toHaveBeenCalledTimes(1)
-    const resp = (event.respondWith as Mock).mock.calls[0][0] as Response
+    const resp = (event.respondWith as Mock).mock.calls[0]![0] as Response
     expect(resp.status).toBe(404)
     expect(selectTrackInPlaylist).not.toHaveBeenCalled()
     expect(h3.sendNoContent as Mock).not.toHaveBeenCalled()
