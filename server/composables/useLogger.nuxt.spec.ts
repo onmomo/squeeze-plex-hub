@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vite
 import useLogger from './useLogger'
 import * as winston from 'winston'
 
+vi.stubGlobal('useRuntimeConfig', () => ({ logLevel: 'info' }))
+
 vi.mock('winston', async () => {
   const actual = await vi.importActual<typeof winston>('winston')
   return {
