@@ -18,11 +18,11 @@
   },
   "dependencies": {
     "@nuxt/kit": "^4.4.6",
-    "@nuxt/ui": "^4.1.0",
-    "axios": "^1.15.2",
+    "@nuxt/ui": "^4.8.1",
+    "axios": "^1.18.0",
     "lms-discovery": "^1.1.0",
     "lms-squeeze-rpc-x": "1.1.0",
-    "nuxt": "^4.4.7",
+    "nuxt": "^4.5.1",
     "winston": "^3.17.0",
     "xml2js": "^0.6.2"
   },
