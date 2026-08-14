@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.40.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.39.0...v1.40.0) (2026-08-14)
+
 ## [1.39.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.38.0...v1.39.0) (2026-07-01)
 
 
