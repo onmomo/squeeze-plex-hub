@@ -47,9 +47,13 @@ export default eventHandler(async (event) => {
         })
         const nextTrackIndex = Math.min(endedTrackIndex + 1, tracks.length - 1)
         await player.selectTrackInPlaylist(nextTrackIndex)
-        logger.info(`Player '${targetClientIdentifier}' (${playerInfo.name}) skipped to next track at playQueue index ${nextTrackIndex} after refreshing play queue`)
+        logger.info(
+          `Player '${targetClientIdentifier}' (${playerInfo.name}) skipped to next track at playQueue index ${nextTrackIndex} after refreshing play queue`
+        )
       } else {
-        logger.warn(`Could not refresh play queue for player '${targetClientIdentifier}' (${playerInfo.name}): playQueue not loaded for player`)
+        logger.warn(
+          `Could not refresh play queue for player '${targetClientIdentifier}' (${playerInfo.name}): playQueue not loaded for player`
+        )
       }
     } else {
       // the normal case, just skip to next track since there are track left loaded on LMS playlist

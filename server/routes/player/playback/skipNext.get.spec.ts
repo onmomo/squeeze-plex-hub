@@ -160,7 +160,7 @@ describe('playback.skipNext route', () => {
         'X-Plex-Client-Identifier': 'client-1',
         'X-Plex-Device-Name': 'Device'
       }
-      return headers[name]  
+      return headers[name]
     })
 
     await handler(event)

@@ -177,23 +177,17 @@ describe('timeline.poll handler', () => {
       remoteMeta: { url: 'http://pms.local/track3url.flac' }
     })
     const subscriber = {
-        clientIdentifier: 'client1',
-        deviceName: 'dev1',
-        commandId: 'cmd1',
-        poll: true,
-        targetClientIdentifier: 'abc123',
-        subscribedAt: expect.any(Date)
-      }
+      clientIdentifier: 'client1',
+      deviceName: 'dev1',
+      commandId: 'cmd1',
+      poll: true,
+      targetClientIdentifier: 'abc123',
+      subscribedAt: expect.any(Date)
+    }
 
     await pollHandler(event)
     expect(mockSetItem).toHaveBeenCalledWith('subscribers/abc123/client1', subscriber)
-    expect(timelineResponse).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining(subscriber),
-      undefined,
-      false,
-      false
-    )
+    expect(timelineResponse).toHaveBeenCalledWith(expect.anything(), expect.objectContaining(subscriber), undefined, false, false)
     expect(timelineResponse).toHaveBeenCalledTimes(1)
     expect(respondWith).toHaveBeenCalledWith(
       expect.objectContaining({

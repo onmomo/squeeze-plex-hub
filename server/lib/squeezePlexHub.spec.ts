@@ -4,7 +4,7 @@ import { plexOptions, resolveNuxtServerPort } from './squeezePlexHub'
 describe('squeezePlexHub', () => {
   const originalEnv = {
     NITRO_PORT: process.env.NITRO_PORT,
-    PORT: process.env.PORT,
+    PORT: process.env.PORT
   }
 
   beforeEach(() => {

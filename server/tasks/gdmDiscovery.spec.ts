@@ -54,7 +54,13 @@ describe('gdmDiscovery', () => {
     })
 
     it('returns null for missing required fields', () => {
-      const missing = ['HTTP/1.0 200 OK', 'Content-Type: plex/media-server', 'Host: ztea2cf712e03f2b540150acfe3a4b.plex.direct', 'Port: 32400', ''].join('\n')
+      const missing = [
+        'HTTP/1.0 200 OK',
+        'Content-Type: plex/media-server',
+        'Host: ztea2cf712e03f2b540150acfe3a4b.plex.direct',
+        'Port: 32400',
+        ''
+      ].join('\n')
       expect(parseServerResponse(missing, '192.168.1.10')).toBeUndefined()
     })
   })
@@ -103,12 +109,9 @@ describe('gdmDiscovery', () => {
         verifyPlexServerConnectivity('https://192-168-1-10.ztea2cf712e03f2b540150acfe3a4b.plex.direct:32400/identity')
       ).rejects.toEqual(dnsError)
 
-      expect(axios.get).toHaveBeenCalledWith(
-        'https://192-168-1-10.ztea2cf712e03f2b540150acfe3a4b.plex.direct:32400/identity',
-        {
-          timeout: 3000
-        }
-      )
+      expect(axios.get).toHaveBeenCalledWith('https://192-168-1-10.ztea2cf712e03f2b540150acfe3a4b.plex.direct:32400/identity', {
+        timeout: 3000
+      })
     })
 
     it('should handle unexpected errors', async () => {

@@ -22,7 +22,7 @@ export interface PlayerStatus {
   /**
    * 0 = off, 1 = shuffle by song, 2 = shuffle by album
    */
-  shuffle: number,
+  shuffle: number
   remoteMeta?: RemoteMeta
 }
 

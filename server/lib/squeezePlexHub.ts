@@ -6,7 +6,7 @@ const DefaultPort = '3000'
 
 function isValidPort(port: string | undefined): boolean {
   if (!port) {
-    // no port ENV configured 
+    // no port ENV configured
     return false
   }
 
@@ -25,15 +25,12 @@ function isValidPort(port: string | undefined): boolean {
 }
 
 export function resolveNuxtServerPort(): string {
-  const portCandidates = [
-    process.env.NITRO_PORT,
-    process.env.PORT    
-  ]
+  const portCandidates = [process.env.NITRO_PORT, process.env.PORT]
 
   const resolvedPort = portCandidates.find(isValidPort)
   logger.debug(`Resolved Squeeze Plex Hub server port: ${resolvedPort}`)
-  
-  if (!resolvedPort) {    
+
+  if (!resolvedPort) {
     return DefaultPort
   }
 
