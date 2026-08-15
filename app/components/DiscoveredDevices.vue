@@ -27,12 +27,12 @@
               <p>
                 <strong>{{ player.playerInfo.name }}</strong>
               </p>
-                <img
+              <img
                 :src="`http://${player.serverInfo.ip}:${player.serverInfo.jsonPort}/html/images/Players/${player.playerInfo.model}_250x250.png`"
                 :alt="`Player Model: ${player.playerInfo.model}`"
                 class="player-image"
                 @error="onImageError"
-                >
+              />
               <div>
                 <p>🆔 {{ player.playerInfo.playerid }}</p>
                 <p>📶 {{ player.playerInfo.ip }}</p>

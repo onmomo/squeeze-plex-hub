@@ -77,9 +77,7 @@ export default eventHandler(async (event) => {
       }
 
       const tracks = refreshedPlayerQueue.playQueue.MediaContainer.Track ?? []
-      logger.debug(
-        `Refreshed playQueue for player '${playerInfo.name}' has ${tracks.length} tracks. Selecting next track ..`
-      )
+      logger.debug(`Refreshed playQueue for player '${playerInfo.name}' has ${tracks.length} tracks. Selecting next track ..`)
       // found that the PMS provided playQueueSelectedItemOffset and playQueueSelectedItemId can be out of sync with the already updated tracks in the playQueue on PMS
       // therefore we try to find the currently ended track by URL matching and select the next one
       const endedTrackIndex = tracks.findIndex((t) => {

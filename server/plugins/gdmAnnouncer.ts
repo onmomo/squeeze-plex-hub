@@ -20,7 +20,7 @@ export default defineNitroPlugin(() => {
 export function runGdmAnnouncer() {
   const storage = useStorage('DISCOVERY')
   const decoder = new StringDecoder('utf8')
-  
+
   try {
     // Enable SO_REUSEPORT for multiple instances of the same service to bind to the same port
     // Essential that we can run multiple Plex clients or server next to Squeeze Plex Hub on the same host
@@ -77,7 +77,10 @@ export function runGdmAnnouncer() {
 
     server.bind(gdmPlayerAnnouncerPort)
   } catch (error) {
-    logger.error(`Failed to bind to GDM port ${gdmPlayerAnnouncerPort}. Squeeze Plex Hub cannot continue. Ensure the UDP port 32412 is available and not blocked by PMS itself or any other application. If PMS runs in Docker bridge mode, ensure that port 32412 is not mapped to PMS container, otherwise consider running Squeeze Plex Hub in host mode. Alternatively, move Squeeze Plex Hub to another host.`, error)
+    logger.error(
+      `Failed to bind to GDM port ${gdmPlayerAnnouncerPort}. Squeeze Plex Hub cannot continue. Ensure the UDP port 32412 is available and not blocked by PMS itself or any other application. If PMS runs in Docker bridge mode, ensure that port 32412 is not mapped to PMS container, otherwise consider running Squeeze Plex Hub in host mode. Alternatively, move Squeeze Plex Hub to another host.`,
+      error
+    )
     process.exit(1)
   }
 }

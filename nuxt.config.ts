@@ -52,6 +52,15 @@ export default {
   },
   buildModules: ['@nuxt/typescript-build'],
   modules: ['@nuxt/ui'],
+  fonts: {
+    providers: {
+      google: false,
+      googleicons: false,
+      bunny: false,
+      fontsource: false,
+      fontshare: false
+    }
+  },
   nitro: {
     scheduledTasks: {
       '* * * * *': ['gdmDiscovery', 'squeezePlayersScanner'], // run every minute

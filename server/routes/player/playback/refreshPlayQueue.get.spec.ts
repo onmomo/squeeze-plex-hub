@@ -204,7 +204,7 @@ describe('playback.refreshPlayQueue route', () => {
     ;(h3.getRequestHeader as Mock).mockImplementation((_e, name: string) => {
       return mockHeaders[name]
     })
-    
+
     getItemMock.mockResolvedValueOnce(new Date())
 
     await handler(event)
