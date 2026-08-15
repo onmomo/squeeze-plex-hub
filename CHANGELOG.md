@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.41.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.40.0...v1.41.0) (2026-08-15)
+
+
+### Bug Fixes
+
+* replace nuxt:replace rolldown plugin with @rollup/plugin-replace for vitest compatibility ([61b28af](https://github.com/onmomo/squeeze-plex-hub/commit/61b28afa1b6c32c996055798672598840d89ad33))
+* upgrade to @nuxt/test-utils@4.x + vitest@4.x; remove rolldown workaround ([5b2ffb9](https://github.com/onmomo/squeeze-plex-hub/commit/5b2ffb917cf58c79fdb5893c5af622e66de17ac9))
+
 ## [1.40.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.39.0...v1.40.0) (2026-08-14)
 
 ## [1.39.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.38.0...v1.39.0) (2026-07-01)
