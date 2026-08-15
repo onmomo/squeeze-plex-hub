@@ -67,10 +67,12 @@ describe('squeezePlayersScanner plugin', () => {
     ]
     mockGetKeys.mockResolvedValueOnce(['servers/uuid-123'])
     mockGetItem.mockResolvedValueOnce(fakeServer)
-    ;(SqueezeServerStub as any).mockImplementation(() => ({}))
-    ;(SqueezeServer as any).mockImplementation(() => ({
-      getPlayerInfosAsync: vi.fn().mockResolvedValue(fakePlayerInfos)
-    }))
+    ;(SqueezeServerStub as any).mockImplementation(function () {
+      return {}
+    })
+    ;(SqueezeServer as any).mockImplementation(function () {
+      return { getPlayerInfosAsync: vi.fn().mockResolvedValue(fakePlayerInfos) }
+    })
 
     await runSqueezePlayersScanner()
 
