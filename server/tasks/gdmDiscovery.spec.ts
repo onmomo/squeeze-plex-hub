@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
+import { EventEmitter } from 'node:events'
 import axios from 'axios'
-import { parseServerResponse, verifyPlexServerConnectivity } from './gdmDiscovery'
+import { parseServerResponse, runGdmDiscovery, verifyPlexServerConnectivity } from './gdmDiscovery'
 
 vi.mock('axios')
 
@@ -12,6 +13,61 @@ vi.mock('../composables/useLogger', () => ({
     error: vi.fn()
   })
 }))
+
+/**
+ * Minimal dgram socket stub that reproduces the node behaviour we care about:
+ * closing an already closed socket throws ERR_SOCKET_DGRAM_NOT_RUNNING.
+ */
+class FakeSocket extends EventEmitter {
+  closed = false
+  bind = vi.fn((callback?: () => void) => callback?.())
+  setBroadcast = vi.fn()
+  send = vi.fn(
+    (_msg: Buffer, _offset: number, _length: number, _port: number, _address: string, callback?: (error: Error | null) => void) =>
+      callback?.(null)
+  )
+
+  close = vi.fn(() => {
+    if (this.closed) {
+      const error: NodeJS.ErrnoException = new Error('Not running')
+      error.code = 'ERR_SOCKET_DGRAM_NOT_RUNNING'
+      throw error
+    }
+    this.closed = true
+    this.emit('close')
+  })
+}
+
+let fakeSocket: FakeSocket
+
+vi.mock('dgram', () => ({
+  default: {
+    createSocket: vi.fn(() => fakeSocket)
+  }
+}))
+
+const storageMock = {
+  getKeys: vi.fn(),
+  getItem: vi.fn(),
+  setItem: vi.fn(),
+  removeItem: vi.fn()
+}
+vi.stubGlobal('useStorage', () => storageMock)
+
+const serverResponse = (name: string, resourceIdentifier: string, port = 32400) =>
+  [
+    'HTTP/1.0 200 OK',
+    'Content-Type: plex/media-server',
+    'Host: ztea2cf712e03f2b540150acfe3a4b.plex.direct',
+    `Name: ${name}`,
+    `Port: ${port}`,
+    `Resource-Identifier: ${resourceIdentifier}`,
+    'Updated-At: 1710000000',
+    'Version: 1.32.0.0',
+    ''
+  ].join('\n')
+
+const respond = (response: string, address: string) => fakeSocket.emit('message', Buffer.from(response), { address })
 
 describe('gdmDiscovery', () => {
   beforeEach(() => {
@@ -138,6 +194,102 @@ describe('gdmDiscovery', () => {
       expect(axios.get).toHaveBeenCalledWith(localUrl, { timeout: 3000 })
       expect(axios.get).toHaveBeenCalledWith(secureUrl, { timeout: 3000 })
       expect(axios.get).toHaveBeenCalledTimes(2)
+    })
+  })
+
+  describe('runGdmDiscovery', () => {
+    beforeEach(() => {
+      fakeSocket = new FakeSocket()
+      storageMock.getKeys.mockResolvedValue([])
+      storageMock.setItem.mockResolvedValue(undefined)
+      storageMock.removeItem.mockResolvedValue(undefined)
+      ;(axios.get as Mock).mockResolvedValue({ data: {} })
+      vi.useFakeTimers()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    const completeDiscovery = async (discovery: Promise<void>) => {
+      await vi.advanceTimersByTimeAsync(10000)
+      await discovery
+    }
+
+    it('stores every reachable Plex server that answers the broadcast', async () => {
+      const discovery = runGdmDiscovery()
+
+      respond(serverResponse('Server A', 'aaa111'), '192.168.1.10')
+      respond(serverResponse('Server B', 'bbb222'), '192.168.1.11')
+
+      await completeDiscovery(discovery)
+
+      expect(storageMock.setItem).toHaveBeenCalledTimes(2)
+      expect(storageMock.setItem).toHaveBeenCalledWith(
+        'plexServers/aaa111',
+        expect.objectContaining({ name: 'Server A', localAddress: '192.168.1.10' })
+      )
+      expect(storageMock.setItem).toHaveBeenCalledWith(
+        'plexServers/bbb222',
+        expect.objectContaining({ name: 'Server B', localAddress: '192.168.1.11' })
+      )
+    })
+
+    it('closes the discovery socket only once when multiple Plex servers respond', async () => {
+      const discovery = runGdmDiscovery()
+
+      respond(serverResponse('Server A', 'aaa111'), '192.168.1.10')
+      respond(serverResponse('Server B', 'bbb222'), '192.168.1.11')
+
+      await completeDiscovery(discovery)
+
+      expect(fakeSocket.close).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not close the socket a second time after an error', async () => {
+      const discovery = runGdmDiscovery()
+
+      fakeSocket.emit('error', new Error('network is unreachable'))
+
+      await completeDiscovery(discovery)
+
+      expect(fakeSocket.close).toHaveBeenCalledTimes(1)
+    })
+
+    it('ignores duplicate responses from the same Plex server', async () => {
+      const discovery = runGdmDiscovery()
+
+      respond(serverResponse('Server A', 'aaa111'), '192.168.1.10')
+      respond(serverResponse('Server A', 'aaa111'), '192.168.1.10')
+
+      await completeDiscovery(discovery)
+
+      expect(storageMock.setItem).toHaveBeenCalledTimes(1)
+    })
+
+    it('prunes Plex servers that no longer answer the broadcast', async () => {
+      storageMock.getKeys.mockResolvedValue(['plexServers:aaa111', 'plexServers:bbb222'])
+      const discovery = runGdmDiscovery()
+
+      respond(serverResponse('Server A', 'aaa111'), '192.168.1.10')
+
+      await completeDiscovery(discovery)
+
+      expect(storageMock.removeItem).toHaveBeenCalledWith('plexServers:bbb222')
+      expect(storageMock.removeItem).not.toHaveBeenCalledWith('plexServers:aaa111')
+    })
+
+    it('does not store Plex servers that are unreachable and removes stale entries', async () => {
+      ;(axios.get as Mock).mockRejectedValue(new Error('unreachable'))
+      storageMock.getKeys.mockResolvedValue(['plexServers:aaa111'])
+      const discovery = runGdmDiscovery()
+
+      respond(serverResponse('Server A', 'aaa111'), '192.168.1.10')
+
+      await completeDiscovery(discovery)
+
+      expect(storageMock.setItem).not.toHaveBeenCalled()
+      expect(storageMock.removeItem).toHaveBeenCalledWith('plexServers:aaa111')
     })
   })
 })

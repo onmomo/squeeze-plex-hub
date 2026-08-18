@@ -176,6 +176,7 @@ yarn test:coverage      # with LCOV coverage output
 | Key Pattern | Value Type | Purpose |
 |-------------|-----------|---------|
 | `servers/{serverId}` | `ServerInfo` | LMS server metadata |
+| `plexServers/{resourceIdentifier}` | `PlexServerResponse` | Reachable Plex Media Servers found via GDM (diagnostic only, not read at runtime) |
 | `players/{serverId}` | `IPlayerInfo[]` | Players per LMS server |
 | `subscribers/{playerId}/{clientId}` | `RemoteSubscriber` | Active Plex timeline subscribers |
 | `playerQueue/{playerId}` | `PlayerPlayQueue` | Current play queue |
@@ -284,8 +285,21 @@ lmsScanner plugin (on startup)
             └─ LMS JSON API → player list → store in DISCOVERY
 
 gdmDiscovery task (every minute)
-    └─ LMS JSON API → discover Plex servers → store in DISCOVERY
+    └─ UDP broadcast (port 32414) → every Plex server answers → verify reachability
+            └─ store each under plexServers/{resourceIdentifier}, prune the ones that no longer answer
 ```
+
+### Multiple Plex Media Servers
+
+Several PMS instances on the same network are supported and no server is ever "chosen":
+
+- The hub never picks a PMS itself. Every `createPlayQueue` / `playMedia` request carries the server it belongs to
+  (`protocol`, `address`, `port`, `machineIdentifier`, `token` query parameters), which is stored per player in
+  `playerQueue/{playerId}.plexServer` and reused for the play queue, timelines and stream URLs.
+- `gdmDiscovery` therefore only maintains a diagnostic list of reachable servers under `plexServers/{resourceIdentifier}`.
+  Nothing reads it at runtime — it exists to document GDM discovery and as a basis for future direct Plex API usage.
+- The discovery socket must be closed exactly once per run (all Plex servers answer the same broadcast); a second
+  `close()` throws `ERR_SOCKET_DGRAM_NOT_RUNNING` and crashes the process.
 
 ---
 
