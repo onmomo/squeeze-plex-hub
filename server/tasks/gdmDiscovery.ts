@@ -11,7 +11,7 @@ const pmsDiscoveryPort = 32414
 // so we must not stop at the first one. Stays well below the one minute task schedule so sockets never overlap.
 const discoveryWindowMs = 10000
 // one storage entry per Plex server, keyed by its resource identifier - see `servers/{serverId}` for the LMS equivalent
-const plexServersKeyPrefix = 'plexServers'
+const plexServersKeyPrefix = 'plexServers/'
 
 /**
  * Task to discover Plex servers on the local network using GDM (Global Discovery and Management) protocol.
@@ -151,7 +151,7 @@ export async function runGdmDiscovery(): Promise<void> {
       try {
         await verifyPlexServerConnectivity(verifyUrl)
         await verifyPlexServerConnectivity(verifySecureUrl)
-        await storage.setItem(`${plexServersKeyPrefix}/${plexServer.resourceIdentifier}`, plexServer)
+        await storage.setItem(`${plexServersKeyPrefix}${plexServer.resourceIdentifier}`, plexServer)
         reachableServerIds.add(plexServer.resourceIdentifier)
       } catch (error) {
         // Skip storing this server since it does not appear to be reachable, but log the error for debugging purposes

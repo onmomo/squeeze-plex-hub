@@ -275,6 +275,7 @@ describe('gdmDiscovery', () => {
 
       await completeDiscovery(discovery)
 
+      expect(storageMock.getKeys).toHaveBeenCalledWith('plexServers/')
       expect(storageMock.removeItem).toHaveBeenCalledWith('plexServers:bbb222')
       expect(storageMock.removeItem).not.toHaveBeenCalledWith('plexServers:aaa111')
     })
