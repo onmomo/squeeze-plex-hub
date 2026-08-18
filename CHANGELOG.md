@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.43.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.42.0...v1.43.0) (2026-08-18)
+
+
+### Bug Fixes
+
+* support multiple Plex servers in GDM discovery without crashing ([dbdadf4](https://github.com/onmomo/squeeze-plex-hub/commit/dbdadf4c979edcb2f92f8734bf32e6d98a30842a)), closes [#101](https://github.com/onmomo/squeeze-plex-hub/issues/101)
+* use trailing-slash prefix for plexServers getKeys, per review ([d974407](https://github.com/onmomo/squeeze-plex-hub/commit/d9744079d5c648fe752b76ce7b8203055012c8b3))
+
 ## [1.42.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.41.0...v1.42.0) (2026-08-15)
 
 ## [1.41.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.40.0...v1.41.0) (2026-08-15)
