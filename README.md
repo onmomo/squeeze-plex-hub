@@ -76,22 +76,11 @@ No Plex credentials are ever stored. The app discovers LMS and Plex services on 
 
 ## Dashboard
 
-The dashboard at `http://localhost:3000` shows every discovered Lyrion Music Server as a rack panel, with its players mounted in the panel's bay.
+Open `http://localhost:3000` to see your Lyrion Music Servers and their players. Each player has an **In Plexamp** key,
+lit while Plexamp can see the player. Press it to hide players you never play to from Plexamp, and press it again in
+*Hidden players* to bring them back. Every change can be undone right away.
 
-- **Status display** (top right): how many players are announced to Plexamp out of all discovered players, and the number of Lyrion servers.
-- **Light / dark mode**: the button in the top right corner of the header.
-- **Player modules**: model, name, IP address, player ID (MAC address) and firmware of each player.
-- **In Plexamp key**: the key is lit while a player is announced to Plex clients. Press it to stop announcing the player. All players are shown in
-  Plexamp by default. Useful to keep players you never play to from Plexamp out of its player list.
-- **Hidden players**: hidden players move into the collapsible *Hidden players* section of their server. Their key reads
-  *Show in Plexamp* and brings them back.
-- **Undo**: each change shows a confirmation message with an **Undo** button. A new change replaces the message, so Undo
-  always reverts the latest change.
-- **Options menu** (`⋮`): show or hide a player, copy its player ID.
-
-Plexamp caches discovered players for a while. If a hidden player is still listed, restart Plexamp.
-
-The dashboard refreshes every 5 seconds, so newly connected players show up without reloading the page.
+The dashboard refreshes on its own. If Plexamp still lists a hidden player, restart Plexamp.
 
 ### Persist settings
 
