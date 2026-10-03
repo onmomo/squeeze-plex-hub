@@ -45,11 +45,11 @@ export const demoServers: DemoServer[] = [
         ip: '192.168.1.43'
       },
       {
-        playerid: 'a4:77:33:c1:9e:04',
-        name: 'Living Room Chromecast',
-        model: 'squeezelite',
-        modelname: 'Chromecast Audio',
-        firmware: '1.56.281627',
+        playerid: '00:04:20:2a:11:04',
+        name: 'Living Room Transporter',
+        model: 'transporter',
+        modelname: 'Transporter',
+        firmware: '87',
         ip: '192.168.1.44'
       }
     ]

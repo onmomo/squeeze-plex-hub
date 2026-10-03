@@ -44,7 +44,7 @@ async function mountDashboard() {
 
 describe('PlayerDashboard', () => {
   beforeEach(() => {
-    players = [player('aa', 'Kitchen', false), player('bb', 'Chromecast', true)]
+    players = [player('aa', 'Kitchen', false), player('bb', 'Office', true)]
     playersStatus = 200
     patchStatus = 200
     patchBodies = []

@@ -16,7 +16,7 @@ vi.mock('../lib/hubConfig', () => ({ isPlayerHidden: vi.fn() }))
 vi.mock('h3', async () => ({ ...(await vi.importActual<typeof import('h3')>('h3')), sendNoContent: vi.fn() }))
 
 const kitchen = { playerid: '00:04:20:2a:11:02', name: 'Kitchen' } as IPlayerInfo
-const chromecast = { playerid: 'a4:77:33:c1:9e:04', name: 'Living Room Chromecast' } as IPlayerInfo
+const office = { playerid: 'b8:27:eb:5c:0f:03', name: 'Office' } as IPlayerInfo
 
 describe('hidden players', () => {
   let server: any
@@ -33,9 +33,9 @@ describe('hidden players', () => {
     vi.spyOn(dgram, 'createSocket').mockReturnValue(server)
     ;(usePlayers as Mock).mockResolvedValue([
       { serverId: 'lms-1', playerInfo: kitchen },
-      { serverId: 'lms-1', playerInfo: chromecast }
+      { serverId: 'lms-1', playerInfo: office }
     ])
-    ;(isPlayerHidden as Mock).mockImplementation(async (id: string) => id === chromecast.playerid)
+    ;(isPlayerHidden as Mock).mockImplementation(async (id: string) => id === office.playerid)
   })
 
   afterEach(() => {
@@ -49,8 +49,8 @@ describe('hidden players', () => {
     const messages: string[] = server.send.mock.calls.map((call: unknown[]) => call[0])
     expect(messages).toHaveLength(1)
     expect(messages[0]).toContain(`Resource-Identifier: ${kitchen.playerid}\r\n`)
-    expect(messages.join()).not.toContain(chromecast.playerid)
-    expect(messages.join()).not.toContain(chromecast.name)
+    expect(messages.join()).not.toContain(office.playerid)
+    expect(messages.join()).not.toContain(office.name)
   })
 
   it('are advertised again once visible', async () => {
@@ -59,7 +59,7 @@ describe('hidden players', () => {
     await messageHandler(Buffer.from('M-SEARCH * HTTP/1.1'), { address: '1.2.3.4', port: 12345 })
 
     expect(server.send).toHaveBeenCalledTimes(2)
-    expect(server.send.mock.calls.map((call: unknown[]) => call[0]).join()).toContain(`Resource-Identifier: ${chromecast.playerid}\r\n`)
+    expect(server.send.mock.calls.map((call: unknown[]) => call[0]).join()).toContain(`Resource-Identifier: ${office.playerid}\r\n`)
   })
 
   it('are not described to Plex clients via /resources', async () => {
@@ -72,7 +72,7 @@ describe('hidden players', () => {
         respondWith
       }) as any
 
-    const hiddenEvent = event(chromecast.playerid)
+    const hiddenEvent = event(office.playerid)
     await resourcesHandler(hiddenEvent)
     expect(sendNoContent).toHaveBeenCalledWith(hiddenEvent, 404)
     expect(respondWith).not.toHaveBeenCalled()

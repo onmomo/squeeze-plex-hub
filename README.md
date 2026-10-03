@@ -32,7 +32,7 @@ Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server
 - Discovers LMS instances and attached Squeeze players automatically
 - Advertises discovered Squeeze players to Plexamp so they appear as selectable targets with full Plexamp controls
 - Enables multi-room audio playback using Squeezebox players controlled by Plexamp
-- Dashboard to choose which players show up in Plexamp, e.g. to hide players that are already reachable as Chromecast
+- Dashboard to choose which players show up in Plexamp, e.g. to hide players you never play to from Plexamp
 - Shows player and server metadata
 - Simple Docker-based deployment
 - Full track metadata support on LMS in combination with the [LMS Squeeze Plex Hub Plugin](https://github.com/onmomo/lms-squeeze-plex-hub)
@@ -82,7 +82,7 @@ The dashboard at `http://localhost:3000` shows every discovered Lyrion Music Ser
 - **Light / dark mode**: the button in the top right corner of the header.
 - **Player modules**: model, name, IP address, player ID (MAC address) and firmware of each player.
 - **In Plexamp key**: the key is lit while a player is announced to Plex clients. Press it to stop announcing the player. All players are shown in
-  Plexamp by default. Useful when players are already reachable in Plexamp in another way, e.g. as Chromecast.
+  Plexamp by default. Useful to keep players you never play to from Plexamp out of its player list.
 - **Hidden players**: hidden players move into the collapsible *Hidden players* section of their server. Their key reads
   *Show in Plexamp* and brings them back.
 - **Undo**: each change shows a confirmation message with an **Undo** button. A new change replaces the message, so Undo
@@ -116,7 +116,7 @@ The file is plain JSON and can be edited by hand while Squeeze Plex Hub is stopp
 {
   "version": 1,
   "players": {
-    "a4:77:33:c1:9e:04": { "name": "Living Room Chromecast", "hidden": true }
+    "00:04:20:2a:11:04": { "name": "Living Room Transporter", "hidden": true }
   }
 }
 ```
