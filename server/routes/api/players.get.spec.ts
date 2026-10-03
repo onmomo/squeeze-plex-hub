@@ -5,6 +5,7 @@ import type { PlayerServerInfo } from './players.get'
 import playersGetHandler from './players.get'
 import usePlayers from '../../composables/usePlayers'
 import usePlayerInfo from '../../composables/usePlayerInfo'
+import { getPlayerSettings } from '../../lib/hubConfig'
 
 vi.mock('../../composables/useLogger', () => ({
   default: () => ({
@@ -49,6 +50,10 @@ vi.mock('../../composables/usePlayerInfo', () => ({
   default: vi.fn()
 }))
 
+vi.mock('../../lib/hubConfig', () => ({
+  getPlayerSettings: vi.fn()
+}))
+
 function createEventMock() {
   return {
     __is_event__: true,
@@ -62,6 +67,7 @@ function createEventMock() {
 describe('players.get API handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    ;(getPlayerSettings as Mock).mockImplementation(async (playerid: string) => ({ hidden: playerid === mockPlayerInfo2.playerid }))
   })
 
   it('returns sorted playerServerInfo array', async () => {
@@ -86,6 +92,9 @@ describe('players.get API handler', () => {
     // Sorted by model
     expect((result as PlayerServerInfo[])[0]!.playerInfo.model).toBe('A-Model')
     expect((result as PlayerServerInfo[])[1]!.playerInfo.model).toBe('B-Model')
+    // Hidden players are still listed, with their settings
+    expect((result as PlayerServerInfo[])[0]!.settings).toEqual({ hidden: false })
+    expect((result as PlayerServerInfo[])[1]!.settings).toEqual({ hidden: true })
   })
 
   it('returns 404 and message if no LMS found, try/catch', async () => {

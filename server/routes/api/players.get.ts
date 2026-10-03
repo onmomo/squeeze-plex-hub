@@ -4,10 +4,14 @@ import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import useLogger from '../../composables/useLogger'
 import usePlayerInfo from '../../composables/usePlayerInfo'
 import usePlayers from '../../composables/usePlayers'
+import { getPlayerSettings } from '../../lib/hubConfig'
 
 export type PlayerServerInfo = {
   playerInfo: IPlayerInfo
   serverInfo: ServerInfo
+  settings: {
+    hidden: boolean
+  }
 }
 
 export default defineEventHandler(async (event) => {
@@ -18,9 +22,11 @@ export default defineEventHandler(async (event) => {
     const playerServerInfo: PlayerServerInfo[] = await Promise.all(
       players.map(async (player) => {
         const playerResult = await usePlayerInfo(player.playerInfo.playerid)
+        const { hidden } = await getPlayerSettings(player.playerInfo.playerid)
         return {
           playerInfo: playerResult.playerInfo,
-          serverInfo: playerResult.serverInfo
+          serverInfo: playerResult.serverInfo,
+          settings: { hidden }
         }
       })
     )

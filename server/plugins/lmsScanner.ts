@@ -1,7 +1,11 @@
 import useLogger from '../composables/useLogger'
 import discovery from 'lms-discovery'
+import { isDemoMode } from '../lib/demoMode'
 
 export default defineNitroPlugin(() => {
+  if (isDemoMode()) {
+    return
+  }
   lmsScanner()
 })
 

@@ -1,0 +1,103 @@
+@import '@fontsource/michroma/400.css';
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/500.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/share-tech-mono/400.css';
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+/*
+ * Squeeze Plex Hub — "hi-fi rack" theme.
+ * Players are channel modules mounted in an 80s audio rack, readouts glow like a
+ * starship terminal. Brand colors: Plex amber (#ff9800) and Squeeze teal (#82c8be).
+ */
+
+@theme static {
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Michroma', 'IBM Plex Sans', ui-sans-serif, sans-serif;
+  --font-mono: 'Share Tech Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Plex amber */
+  --color-plex-50: #fff3e0;
+  --color-plex-100: #ffe0b2;
+  --color-plex-200: #ffcc80;
+  --color-plex-300: #ffb74d;
+  --color-plex-400: #ffa726;
+  --color-plex-500: #ff9800;
+  --color-plex-600: #fb8c00;
+  --color-plex-700: #f57c00;
+  --color-plex-800: #c45f00;
+  --color-plex-900: #8a4200;
+  --color-plex-950: #4a2300;
+
+  /* Squeeze teal */
+  --color-squeeze-50: #f1faf8;
+  --color-squeeze-100: #dcf2ee;
+  --color-squeeze-200: #bfe7e0;
+  --color-squeeze-300: #a1dacf;
+  --color-squeeze-400: #82c8be;
+  --color-squeeze-500: #5fb2a6;
+  --color-squeeze-600: #47968b;
+  --color-squeeze-700: #3a7871;
+  --color-squeeze-800: #315f5a;
+  --color-squeeze-900: #2b4f4b;
+  --color-squeeze-950: #152e2c;
+}
+
+:root {
+  /* Rack surfaces (light = brushed aluminium) */
+  --rack-bg: #c7cacb;
+  --rack-faceplate: #e3e5e5;
+  --rack-faceplate-sheen: linear-gradient(180deg, #eef0f0 0%, #dcdfdf 100%);
+  --rack-panel: #f4f4f3;
+  --rack-edge: #a9aeaf;
+  --rack-edge-highlight: rgba(255, 255, 255, 0.8);
+  --rack-engrave: #1b1d1d;
+  --rack-engrave-muted: #4f5555;
+  --rack-screw: radial-gradient(circle at 35% 35%, #fbfbfb 0%, #a7abac 55%, #6f7475 100%);
+
+  /* Readout windows are smoked glass in both modes, like real hardware displays */
+  --readout-bg: #0a0d0d;
+  --readout-edge: #000;
+  --readout-text: #82c8be;
+  --readout-dim: #5e8f88;
+  --readout-amber: #ffa726;
+
+  --led-on: #ff9800;
+  --led-off: #5b4a35;
+  --led-power: #5fdc8f;
+
+  --ui-radius: 0.375rem;
+}
+
+.dark {
+  /* Gunmetal with a teal cast, like a starship hull */
+  --rack-bg: #0d1211;
+  --rack-faceplate: #161d1c;
+  --rack-faceplate-sheen: linear-gradient(180deg, #1c2423 0%, #131918 100%);
+  --rack-panel: #1b2322;
+  --rack-edge: #2b3635;
+  --rack-edge-highlight: rgba(255, 255, 255, 0.06);
+  --rack-engrave: #efebeb;
+  --rack-engrave-muted: #a3aaa8;
+  --rack-screw: radial-gradient(circle at 35% 35%, #6d7272 0%, #2f3333 60%, #151717 100%);
+  --led-off: #3a2c1b;
+
+  --ui-bg: #0d1211;
+}
+
+body {
+  background: var(--rack-bg);
+  color: var(--rack-engrave);
+  font-family: var(--font-sans);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

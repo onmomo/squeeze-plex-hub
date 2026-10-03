@@ -1,6 +1,7 @@
 import useLogger from '../composables/useLogger'
 import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc-x'
 import type { ServerInfo } from 'lms-discovery'
+import { isDemoMode } from '../lib/demoMode'
 
 export default defineTask({
   meta: {
@@ -8,6 +9,9 @@ export default defineTask({
     description: 'Discovers Squeeze players on the local network'
   },
   async run(_event) {
+    if (isDemoMode()) {
+      return { result: 'skipped' }
+    }
     await runSqueezePlayersScanner()
     return { result: 'ok' }
   }

@@ -32,6 +32,7 @@ Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server
 - Discovers LMS instances and attached Squeeze players automatically
 - Advertises discovered Squeeze players to Plexamp so they appear as selectable targets with full Plexamp controls
 - Enables multi-room audio playback using Squeezebox players controlled by Plexamp
+- Dashboard to choose which players show up in Plexamp, e.g. to hide players that are already reachable as Chromecast
 - Shows player and server metadata
 - Simple Docker-based deployment
 - Full track metadata support on LMS in combination with the [LMS Squeeze Plex Hub Plugin](https://github.com/onmomo/lms-squeeze-plex-hub)
@@ -55,8 +56,11 @@ You can:
 docker run -d \
    --network host \
    --name squeeze-plex-hub \
+   -v /srv/squeeze-plex-hub/config:/app/config \
    onmomo/squeeze-plex-hub:latest
 ```
+
+The volume keeps your [settings](#persist-settings) when the container is recreated (e.g. on image updates).
 
 2. Or build and run locally for development or production (MacOS / Windows):
    - For development: `yarn install && yarn dev`
@@ -64,11 +68,56 @@ docker run -d \
 
 After start:
 
-1. Navigate to `http://localhost:3000` in your browser to access the Squeeze Plex Hub web interface.
-2. The application will display all discovered Squeezebox players and Lyrion Music Server (formerly Logitech Media Server), along with their metadata. Use the interface to confirm which Squeezebox players can be controlled via Plexamp.
+1. Open `http://localhost:3000` in your browser to access the [dashboard](#dashboard).
+2. Check that your Lyrion Music Server and its Squeezebox players are listed, and switch off players you don't want to see in Plexamp.
 3. Use Plexamp to target discovered Squeezebox players.
 
 No Plex credentials are ever stored. The app discovers LMS and Plex services on your local network only, and when initiating playback it forwards the Plex token so the Squeezebox player can stream directly from your Plex Media Server. The token is not persisted and expires after some time.
+
+## Dashboard
+
+The dashboard at `http://localhost:3000` shows every discovered Lyrion Music Server as a rack unit with its players.
+
+- **Status display** (top right): how many players are announced to Plexamp out of all discovered players, and the number of Lyrion servers.
+- **Player modules**: model, name, IP address, player ID (MAC address) and firmware of each player.
+- **In Plexamp key**: the key is lit while a player is announced to Plex clients. Press it to stop announcing the player. All players are shown in
+  Plexamp by default. Useful when players are already reachable in Plexamp in another way, e.g. as Chromecast.
+- **Hidden**: hidden players move into the collapsible *Hidden* section of their server, where you can press their key again to bring them back. The confirmation message has an **Undo** button.
+- **Options menu** (`⋮`): show or hide a player, copy its player ID.
+
+Plexamp caches discovered players for a while. If a hidden player is still listed, restart Plexamp.
+
+The dashboard refreshes every 5 seconds, so newly connected players show up without reloading the page.
+
+### Persist settings
+
+Your choices are stored in `config/settings.json` relative to the working directory (`/app/config/settings.json` in the
+Docker image). Without a volume or bind mount for `/app/config`, the settings are lost when the container is recreated.
+
+```yaml
+# docker-compose.yml
+services:
+  squeeze-plex-hub:
+    image: onmomo/squeeze-plex-hub:latest
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config
+```
+
+The file is plain JSON and can be edited by hand while Squeeze Plex Hub is stopped. Players are keyed by their player ID,
+`name` is only there for readability:
+
+```json
+{
+  "version": 1,
+  "players": {
+    "a4:77:33:c1:9e:04": { "name": "Living Room Chromecast", "hidden": true }
+  }
+}
+```
+
+Make sure the directory is writable for the container, otherwise the dashboard shows an error when you change a player.
 
 ## Troubleshooting
 
@@ -83,7 +132,7 @@ On the device the project should be executed:
 
 ### Squeeze players not found in Plexamp:
   1. Verify any Squeezebox player is connected and available in Lyrion / LMS first.
-  2. Check Squeeze Plex Hub (http://localhost:3000) dashboard and confirm both LMS and Squeezebox players are shown. If nothing is shown, ensure Squeeze Plex Hub can connect to Lyrion / LMS and that the Lyrion CLI is enabled.
+  2. Check Squeeze Plex Hub (http://localhost:3000) dashboard and confirm both LMS and Squeezebox players are shown, and that the player's In Plexamp key is lit (not in *Hidden*). If nothing is shown, ensure Squeeze Plex Hub can connect to Lyrion / LMS and that the Lyrion CLI is enabled.
 3. Check for port conflicts by reviewing the Squeeze Plex Hub startup logs for any discovery or network errors. This is especially important if both Squeeze Plex Hub and Plex Media Server are running on the same host. Squeeze Plex Hub requires access to UDP port 32412 to handle GDM network player discovery requests from Plex clients. If PMS is running on the same host or docker host network, both services should be able to use UDP 32412. If PMS is running in Docker bridge mode, remove port 32412 from its port mapping. If TCP port 3000 is already in use, you can publish a different host port (e.g., `docker run -p 8080:3000 ...`) and access the app at `http://localhost:8080`. For host networking, the announced HTTP port automatically follows Nuxt/Nitro port configuration in this order: `NITRO_PORT`, then `PORT`, then default `3000`. For more details on proper container deployment and networking, refer to the Container Networking section below.
   - Docker Desktop on **MacOS**: GDM network discovery may not work with Docker Desktop on MacOS due to limitations with containers receiving UDP broadcast requests from the host network even if the container is running in **host network mode**. For full functionality in a container, run Docker on Linux.
   4. Ensure no local firewall blocking UDP ports 32412
@@ -101,10 +150,15 @@ On the device the project should be executed:
 ```
 squeeze-plex-hub
 ├── app
-│   ├── components      # Vue components for application pages
-│   │   └── DiscoveredDevices.vue
+│   ├── assets/css      # Theme (fonts, colors, rack styling)
+│   ├── components      # Dashboard components
+│   │   ├── PlayerDashboard.vue  # Header, status display, server list
+│   │   ├── ServerSection.vue    # One LMS with its players and hidden section
+│   │   └── PlayerCard.vue       # One player with its In Plexamp switch
+│   ├── composables     # usePlayerDashboard: polling and player settings
 │   └── pages           # Application pages
 │       └── index.vue   # Main page of the application
+├── config              # User settings (created at runtime, not in git)
 ├── public              # Static files served directly
 ├── server              # Backend logic and API routes
 ├── middleware          # Middleware logic
@@ -140,6 +194,21 @@ squeeze-plex-hub
    yarn dev
    ```
 
+5. Or run the dashboard in demo mode with fake Lyrion servers and players, no hardware or network discovery needed
+   (settings go to `config/settings.demo.json`):
+   ```
+   yarn dev:demo
+   ```
+
+   The dashboard loads player images from Lyrion. To see the real model images in demo mode, start a Lyrion container
+   and point the demo at it (the images stay in Lyrion, the demo players keep their fake addresses otherwise):
+   ```
+   docker run -d --rm --name lyrion-demo -p 9000:9000 lmscommunity/lyrionmusicserver
+   NUXT_DEMO_LMS=localhost:9000 yarn dev:demo
+   ```
+   Lyrion has images for Squeezebox models (Touch, Radio, Boom, SqueezePlay, …). Players without one, like Squeezelite,
+   show a speaker icon. Stop the container with `docker stop lyrion-demo`.
+
 ## Container Build Instructions
 
 To build the application in a container using Docker:
@@ -154,7 +223,7 @@ To build the application in a container using Docker:
 
 2. Run the container:
    ```
-   docker run --rm --network host squeeze-plex-hub
+   docker run --rm --network host -v "$PWD/config:/app/config" squeeze-plex-hub
 
    > **Note:** For full functionality, Squeeze Plex Hub must be run with Docker's `host` network mode. Host networking allows all Plexamp devices on your local network to discover Squeeze Plex Hub players via UDP broadcasts. If you use Docker's default bridge network, only Plex players or Plex Server running within the same bridge network can discover Squeeze players.
    ```

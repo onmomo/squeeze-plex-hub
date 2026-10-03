@@ -1,26 +1,21 @@
 import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import IndexPage from './index.vue'
+import PlayerDashboard from '../components/PlayerDashboard.vue'
+
+registerEndpoint('/api/players', () => [])
 
 describe('IndexPage', () => {
-  it('renders logo image', () => {
-    const wrapper = mount(IndexPage)
-    const img = wrapper.find('header img')
-    expect(img.exists()).toBeTruthy()
-    expect(img.attributes('src')).toBe('/logo_512.png')
+  it('renders the player dashboard with logo', async () => {
+    const wrapper = await mountSuspended(IndexPage)
+    expect(wrapper.findComponent(PlayerDashboard).exists()).toBe(true)
+    expect(wrapper.find('header img').attributes('src')).toBe('/logo_512.png')
   })
 
-  it('renders DiscoveredDevices component', () => {
-    const wrapper = mount(IndexPage)
-    expect(wrapper.findComponent({ name: 'DiscoveredDevices' }).exists()).toBeTruthy()
-  })
-
-  it('renders footer with link', () => {
-    const wrapper = mount(IndexPage)
-    const footer = wrapper.find('footer')
-    expect(footer.exists()).toBe(true)
-    const link = footer.find('a')
-    expect(link.exists()).toBeTruthy()
+  it('renders footer with link', async () => {
+    const wrapper = await mountSuspended(IndexPage)
+    const link = wrapper.find('footer a')
+    expect(link.exists()).toBe(true)
     expect(link.attributes('href')).toBe('https://github.com/onmomo/squeeze-plex-hub')
   })
 })

@@ -1,6 +1,7 @@
 import dgram from 'dgram'
 import { describe, it, vi, beforeEach, afterEach, expect } from 'vitest'
-import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
+import type { Mock } from 'vitest'
+import { resolvePlexTargets, type PlexTarget } from '../lib/plexTargets'
 
 import { runGdmAnnouncer } from './gdmAnnouncer'
 
@@ -13,15 +14,9 @@ vi.mock('../composables/useLogger', () => ({
   })
 }))
 
-const mockGetKeys = vi.fn()
-const mockGetItem = vi.fn()
-function useStorage() {
-  return {
-    getKeys: mockGetKeys,
-    getItem: mockGetItem
-  }
-}
-vi.stubGlobal('useStorage', useStorage)
+vi.mock('../lib/plexTargets', () => ({
+  resolvePlexTargets: vi.fn()
+}))
 
 describe('gdmAnnouncer', () => {
   let server: any
@@ -69,24 +64,46 @@ describe('gdmAnnouncer', () => {
   })
 
   it('should respond to M-SEARCH discovery requests with player info', async () => {
-    const player: IPlayerInfo = { name: 'Player1', playerid: 'abc123' } as any
-    mockGetKeys.mockResolvedValue(['players/server1'])
-    mockGetItem.mockResolvedValue([player])
+    const target: PlexTarget = { id: 'abc123', name: 'Player1', kind: 'player', serverId: 'server1', memberIds: ['abc123'] }
+    ;(resolvePlexTargets as Mock).mockResolvedValue([target])
 
     runGdmAnnouncer()
     const msg = Buffer.from('M-SEARCH * HTTP/1.1')
     await messageHandler(msg, { address: '1.2.3.4', port: 12345 })
 
-    expect(mockGetKeys).toHaveBeenCalledWith('players/')
-    expect(mockGetItem).toHaveBeenCalledWith('players/server1')
-    expect(server.send).toHaveBeenCalledWith(expect.stringContaining('HTTP/1.1 200 OK'), 0, expect.any(Number), 12345, '1.2.3.4')
+    expect(server.send).toHaveBeenCalledTimes(1)
+    const [message, , , port, address] = server.send.mock.calls[0]
+    expect(message).toContain('HTTP/1.1 200 OK')
+    expect(message).toContain('Name: Player1\r\n')
+    expect(message).toContain('Resource-Identifier: abc123\r\n')
+    expect(port).toBe(12345)
+    expect(address).toBe('1.2.3.4')
+  })
+
+  it('should announce one message per target', async () => {
+    ;(resolvePlexTargets as Mock).mockResolvedValue([
+      { id: 'a', name: 'A', kind: 'player', serverId: 's', memberIds: ['a'] },
+      { id: 'b', name: 'B', kind: 'player', serverId: 's', memberIds: ['b'] }
+    ])
+
+    runGdmAnnouncer()
+    await messageHandler(Buffer.from('M-SEARCH * HTTP/1.1'), { address: '1.2.3.4', port: 12345 })
+
+    expect(server.send).toHaveBeenCalledTimes(2)
   })
 
   it('should not respond if no players found', async () => {
-    mockGetKeys.mockResolvedValue([])
+    ;(resolvePlexTargets as Mock).mockResolvedValue([])
     runGdmAnnouncer()
     const msg = Buffer.from('M-SEARCH * HTTP/1.1')
     await messageHandler(msg, { address: '1.2.3.4', port: 12345 })
+    expect(server.send).not.toHaveBeenCalled()
+  })
+
+  it('should not respond if no LMS is known yet', async () => {
+    ;(resolvePlexTargets as Mock).mockRejectedValue(new Error('No LMS found in storage, skipping'))
+    runGdmAnnouncer()
+    await messageHandler(Buffer.from('M-SEARCH * HTTP/1.1'), { address: '1.2.3.4', port: 12345 })
     expect(server.send).not.toHaveBeenCalled()
   })
 

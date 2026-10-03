@@ -1,10 +1,9 @@
 import { defineEventHandler, getRequestHeader, sendNoContent, setResponseHeaders } from 'h3'
 import { Builder } from 'xml2js'
 import useLogger from '../composables/useLogger'
-import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import { responseHeaders } from '../lib/plexApi'
 import { plexOptions } from '../lib/squeezePlexHub'
-import usePlayerInfo from '../composables/usePlayerInfo'
+import { findPlexTarget, type PlexTarget } from '../lib/plexTargets'
 
 export default defineEventHandler(async (event) => {
   const logger = useLogger('resources')
@@ -16,11 +15,11 @@ export default defineEventHandler(async (event) => {
   }
 
   /**
-   * Generates the resources XML based on the provided player
-   * @param player The player to generate the XML for
+   * Generates the resources XML based on the provided Plex target
+   * @param target The announced player to generate the XML for
    * @returns The XML string
    */
-  function resourcesXml(player: IPlayerInfo): string {
+  function resourcesXml(target: PlexTarget): string {
     const mediaContainer = {
       MediaContainer: {
         $: {
@@ -28,8 +27,8 @@ export default defineEventHandler(async (event) => {
         },
         Player: {
           $: {
-            machineIdentifier: player.playerid,
-            title: player.name,
+            machineIdentifier: target.id,
+            title: target.name,
             platform: plexOptions.platform,
             platformVersion: plexOptions.platformVersion,
             product: plexOptions.product,
@@ -50,15 +49,15 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const xmlResponse = await usePlayerInfo(targetClientIdentifier).then(async ({ playerInfo }) => {
-      setResponseHeaders(event, Object.fromEntries(responseHeaders(playerInfo.playerid, playerInfo.name, 'text/xml').entries()))
-      logger.info(`Responding with player '${playerInfo.name}' to /resources consumer ..`)
-      return resourcesXml(playerInfo)
-    })
-
-    if (!xmlResponse) {
+    const target = await findPlexTarget(targetClientIdentifier)
+    if (!target) {
+      logger.info(`Player '${targetClientIdentifier}' is unknown or hidden from Plex, not responding to /resources consumer`)
       return sendNoContent(event, 404)
     }
+
+    setResponseHeaders(event, Object.fromEntries(responseHeaders(target.id, target.name, 'text/xml').entries()))
+    logger.info(`Responding with player '${target.name}' to /resources consumer ..`)
+    const xmlResponse = resourcesXml(target)
 
     event.respondWith(new Response(xmlResponse, { status: 200, headers: { 'Content-Type': 'text/xml' } }))
   } catch (error) {
