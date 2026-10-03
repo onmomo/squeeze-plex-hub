@@ -9,23 +9,21 @@
         </div>
       </div>
 
-      <div class="master-controls">
-        <UColorModeButton color="neutral" variant="ghost" class="color-mode size-11 justify-center" />
-        <div class="vfd" role="status" aria-live="polite">
-          <template v-if="loading">
-            <span class="vfd-scan">Scanning for Lyrion servers</span>
-            <span class="vfd-cursor" aria-hidden="true" />
-          </template>
-          <template v-else>
-            <span class="vfd-main"
-              >{{ pad(stats.players - stats.hidden) }}<span class="vfd-of">/{{ pad(stats.players) }}</span></span
-            >
-            <span class="vfd-caption">
-              <span>Players in Plexamp</span>
-              <span class="vfd-sub">{{ stats.servers }} {{ stats.servers === 1 ? 'server' : 'servers' }}</span>
-            </span>
-          </template>
-        </div>
+      <UColorModeButton color="neutral" variant="ghost" class="color-mode size-11 justify-center" />
+      <div class="vfd" role="status" aria-live="polite">
+        <template v-if="loading">
+          <span class="vfd-scan">Scanning for Lyrion servers</span>
+          <span class="vfd-cursor" aria-hidden="true" />
+        </template>
+        <template v-else>
+          <span class="vfd-main"
+            >{{ pad(stats.players - stats.hidden) }}<span class="vfd-of">/{{ pad(stats.players) }}</span></span
+          >
+          <span class="vfd-caption">
+            <span>Players in Plexamp</span>
+            <span class="vfd-sub">{{ stats.servers }} {{ stats.servers === 1 ? 'server' : 'servers' }}</span>
+          </span>
+        </template>
       </div>
     </header>
 
@@ -65,12 +63,14 @@ const pad = (value: number) => value.toString().padStart(2, '0')
 }
 
 .master-unit {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
+  /* Color mode in the top right corner, the readout below it */
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    'brand mode'
+    'brand vfd';
   align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem 2rem;
+  gap: 0.25rem 2rem;
   margin-bottom: 2rem;
   /* Same side padding as the rack units, so the readouts line up on the right */
   padding: 1.25rem 1.75rem;
@@ -83,6 +83,7 @@ const pad = (value: number) => value.toString().padStart(2, '0')
 }
 
 .brand {
+  grid-area: brand;
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -108,16 +109,17 @@ const pad = (value: number) => value.toString().padStart(2, '0')
   color: var(--rack-engrave-muted);
 }
 
-.master-controls {
-  /* Stays on the right when the header wraps on narrow screens */
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
+.color-mode {
+  grid-area: mode;
+  justify-self: end;
+  /* Sit in the corner, not on the readout's padding line */
+  margin: -0.75rem -1.25rem 0 0;
 }
 
 /* Vacuum fluorescent display: amber digits on smoked glass */
 .vfd {
+  grid-area: vfd;
+  justify-self: end;
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -229,15 +231,21 @@ const pad = (value: number) => value.toString().padStart(2, '0')
     padding: 1rem;
   }
 
-  /* Phones: color mode in the top right corner, the readout gets its own row */
+  /* Phones: the readout gets its own row below the brand */
+  .master-unit {
+    grid-template-areas:
+      'brand mode'
+      'vfd vfd';
+    gap: 1rem 0.5rem;
+  }
+
   .brand {
-    padding-right: 2.5rem;
+    align-self: start;
   }
 
   .color-mode {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
+    align-self: start;
+    margin: -0.5rem -0.5rem 0 0;
   }
 
   .vfd {

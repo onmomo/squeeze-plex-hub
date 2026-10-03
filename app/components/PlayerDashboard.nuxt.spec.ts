@@ -90,6 +90,13 @@ describe('PlayerDashboard', () => {
     undo?.onClick?.(new MouseEvent('click'))
     await flushPromises()
     expect(patchBodies).toEqual([{ hidden: true }, { hidden: false }])
+
+    // The undo replaces the message instead of stacking a second one
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const openToasts = useToast().toasts.value.filter((t) => t.open)
+    expect(openToasts).toHaveLength(1)
+    expect(openToasts[0]?.title).toBe('Kitchen in Plexamp')
     wrapper.unmount()
   })
 

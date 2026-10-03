@@ -97,6 +97,15 @@ export function usePlayerDashboard() {
     }
   })
 
+  // One message for visibility changes: a new change closes the previous one, so Undo always reverts the latest change
+  let visibilityToastId: string | number | undefined
+  function showVisibilityToast(message: Parameters<typeof toast.add>[0]) {
+    if (visibilityToastId !== undefined) {
+      toast.remove(visibilityToastId)
+    }
+    visibilityToastId = toast.add(message).id
+  }
+
   async function setHidden(player: DashboardPlayer, hidden: boolean) {
     savingHidden.set(player.id, hidden)
     try {
@@ -105,7 +114,7 @@ export function usePlayerDashboard() {
       if (entry) {
         entry.settings = { hidden }
       }
-      toast.add({
+      showVisibilityToast({
         title: hidden ? `${player.name} hidden` : `${player.name} in Plexamp`,
         description: hidden ? 'Plexamp no longer lists it. Restart Plexamp if it still does.' : undefined,
         icon: hidden ? 'i-lucide-eye-off' : 'i-lucide-radio',
@@ -114,7 +123,7 @@ export function usePlayerDashboard() {
       })
     } catch (err) {
       console.error(`Error saving settings of player '${player.name}':`, err)
-      toast.add({
+      showVisibilityToast({
         title: `Couldn't save ${player.name}`,
         description: 'Check that the config directory of Squeeze Plex Hub is writable, then try again.',
         icon: 'i-lucide-triangle-alert',
