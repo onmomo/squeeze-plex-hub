@@ -43,9 +43,15 @@ This is the single source of truth for AI assistants working on this repository.
 
 ```
 squeeze-plex-hub/
-├── app/                          # Vue 3 frontend (Nuxt app dir)
+├── app/                          # Vue 3 frontend (Nuxt app dir, @nuxt/ui 4 + Tailwind 4)
+│   ├── app.vue / app.config.ts   # <UApp> root, brand colors (primary = plex amber, secondary = squeeze teal)
+│   ├── assets/css/main.css       # Theme tokens, self-hosted fonts (no Google Fonts, hub runs offline)
 │   ├── components/
-│   │   └── DiscoveredDevices.vue # Displays discovered LMS servers + players
+│   │   ├── PlayerDashboard.vue   # Header, status display, scanning/error states, server list
+│   │   ├── ServerSection.vue     # One LMS ("rack unit") with player bay + collapsible "Hidden players" section
+│   │   └── PlayerCard.vue        # One player ("channel module") with In Plexamp latching key + options menu
+│   ├── composables/
+│   │   └── usePlayerDashboard.ts # Polls /api/players, groups into sections, optimistic hide/show
 │   └── pages/
 │       └── index.vue             # Single-page entry point
 ├── server/                       # Nitro backend
@@ -56,6 +62,9 @@ squeeze-plex-hub/
 │   │   ├── useSqueezePlayer.ts   # Creates ExtendedSqueezePlayer instances
 │   │   └── useXmlBuilder.ts      # Builds Plex-protocol XML responses
 │   ├── lib/                      # Core business logic
+│   │   ├── hubConfig.ts          # Persisted user settings (config/settings.json)
+│   │   ├── plexTargets.ts        # Which devices are announced to Plex (GDM + /resources)
+│   │   ├── demoMode.ts / demoData.ts # NUXT_DEMO=true: fake LMS + players, discovery disabled
 │   │   ├── squeezePlexHub.ts     # Port resolution, Plex config constants
 │   │   ├── squeezePlayer.ts      # ExtendedSqueezePlayer class
 │   │   ├── plexApi.ts            # Plex server API communication
@@ -63,12 +72,14 @@ squeeze-plex-hub/
 │   ├── middleware/
 │   │   └── catchAll.ts           # Request logger middleware
 │   ├── plugins/                  # Nitro startup plugins (run on server start)
+│   │   ├── 00.demoMode.ts        # Seeds demo data when NUXT_DEMO=true
 │   │   ├── gdmAnnouncer.ts       # UDP multicast listener (port 32412)
 │   │   ├── lmsScanner.ts         # LMS mDNS discovery & monitoring
 │   │   └── timelinePublisher.ts  # Publishes player timeline every 1000ms
 │   ├── routes/                   # H3 route handlers
 │   │   ├── api/
-│   │   │   └── players.get.ts    # GET /api/players
+│   │   │   ├── players.get.ts    # GET /api/players
+│   │   │   └── players/[playerId]/settings.patch.ts # PATCH player settings (hide from Plex)
 │   │   └── player/
 │   │       ├── playback/         # Playback control endpoints
 │   │       └── timeline/         # Timeline poll/subscribe endpoints
@@ -76,7 +87,8 @@ squeeze-plex-hub/
 │       ├── gdmDiscovery.ts       # Plex server GDM discovery (every minute)
 │       ├── squeezePlayersScanner.ts # Squeeze player scan (every minute)
 │       └── playQueueRefresher.ts # Refreshes queue on track end
-├── public/                       # Static assets (logos, favicons)
+├── config/                       # Runtime user settings (gitignored, Docker volume /app/config)
+├── public/                       # Static assets (logos, favicons, README GIFs in docs/)
 ├── .github/workflows/            # CI/CD (lint, build, test, Docker publish)
 ├── nuxt.config.ts                # Nuxt + Nitro configuration
 ├── vitest.config.ts              # Test runner configuration
@@ -105,6 +117,7 @@ yarn dev
 | Command | Purpose |
 |---------|---------|
 | `yarn dev` | Start development server |
+| `yarn dev:demo` | Start development server with fake LMS servers/players (no discovery); add `NUXT_DEMO_LMS=localhost:9000` + a Lyrion container for real player images |
 | `yarn build` | Production build |
 | `yarn start` | Run production build |
 | `yarn lint` | Run ESLint checks |
@@ -185,6 +198,15 @@ forwards to the fake Plex server on the test host. Reproduce LMS-facing bugs her
 - Auto-imported within `server/` — no import needed in route files.
 - Keep composables focused and single-purpose.
 
+### User Settings (config/)
+
+- Runtime discovery state lives in `useStorage('DISCOVERY')`; user choices that must survive restarts live in
+  `config/settings.json`, read and written only through `server/lib/hubConfig.ts` (cached, serialized atomic writes).
+- Schema is versioned and keyed per player: `{ "version": 1, "players": { "<playerId>": { "hidden": true } } }`.
+  Do not store player names or other LMS data here, LMS owns them.
+  Add new settings as optional fields (or a sibling top-level key, e.g. `groups`), never break existing files.
+- Demo mode writes to `config/settings.demo.json` instead.
+
 ### Logging
 
 - Use `useLogger('ServiceName')` to create a logger per module.
@@ -253,7 +275,8 @@ Every Plex client request includes these headers (read them from the event):
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/api/players` | List all discovered players + server info |
+| GET | `/api/players` | List all discovered players + server info + `settings.hidden` (hidden players included) |
+| PATCH | `/api/players/{playerId}/settings` | Body `{ "hidden": boolean }`, persists to `config/settings.json` (400 / 404 / 500) |
 | GET | `/resources` | Device resource info (Plex registration) |
 | GET | `/player/{playerId}/playback/play` | Resume playback |
 | GET | `/player/{playerId}/playback/pause` | Pause playback |
@@ -310,6 +333,16 @@ gdmDiscovery task (every minute)
             └─ store each under plexServers/{resourceIdentifier}, prune the ones that no longer answer
 ```
 
+### Plex Targets (what Plex clients see)
+
+`server/lib/plexTargets.ts` decides what is announced: `resolvePlexTargets()` returns one `PlexTarget` per **visible**
+player (`{ id, name, kind: 'player', serverId, memberIds }`). Both the GDM announcer and `/resources` go through it, so a
+hidden player is neither announced nor described. Playback routes still accept hidden players (a running session may finish).
+
+Planned player groups (room groups, stereo pairs) plug in here: a group becomes one target (`kind: 'group'`, one
+`Resource-Identifier`, several `memberIds`), and the dashboard renders it as another `DashboardItem` kind in
+`usePlayerDashboard`. Do not announce players directly from storage.
+
 ### Multiple Plex Media Servers
 
 Several PMS instances on the same network are supported and no server is ever "chosen":
@@ -331,6 +364,8 @@ Several PMS instances on the same network are supported and no server is ever "c
 | `NITRO_PORT` / `PORT` | `3000` | HTTP server port |
 | `NITRO_LOG_LEVEL` | `info` | Log level (error/warn/info/debug) |
 | `APP_VERSION` | from `package.json` | Application version reported to Plex |
+| `NUXT_DEMO` | `false` | Demo mode: fake LMS servers/players, mDNS/GDM/player scan disabled |
+| `NUXT_DEMO_LMS` | – | Demo mode only: `host[:port]` of a Lyrion the dashboard loads real player images from (e.g. a local `lmscommunity/lyrionmusicserver` container). The hub never connects to it |
 
 **There are no environment variables for configuring connections to Plex or LMS.** Both are discovered automatically at runtime:
 
@@ -355,8 +390,8 @@ For discovery to work, the host running Squeeze Plex Hub **must have access to t
 # Build
 docker build -t squeeze-plex-hub .
 
-# Run (host networking required for UDP multicast + mDNS)
-docker run --network host squeeze-plex-hub
+# Run (host networking required for UDP multicast + mDNS), volume persists user settings
+docker run --network host -v "$PWD/config:/app/config" squeeze-plex-hub
 ```
 
 Ports exposed:
@@ -392,7 +427,8 @@ Start here when onboarding:
 5. `server/lib/plexApi.ts` — Plex server communication
 6. `server/lib/plexPlayerTimeline.ts` — timeline types and response building
 7. `server/routes/player/timeline/poll.get.ts` — main Plex interaction endpoint
-8. `app/components/DiscoveredDevices.vue` — frontend UI
+8. `server/lib/plexTargets.ts` / `server/lib/hubConfig.ts` — what is announced to Plex, persisted settings
+9. `app/composables/usePlayerDashboard.ts` + `app/components/` — frontend UI
 
 ---
 
@@ -404,4 +440,5 @@ Start here when onboarding:
 - Do not skip `yarn lint:fix && yarn format` before committing.
 - Do not log Plex tokens or user credentials.
 - Do not add complexity for hypothetical future features — keep it minimal.
+- Do not commit Lyrion player images, they are loaded from LMS at runtime (`NUXT_DEMO_LMS` for the demo).
 - Do not add environment variables or configuration for Plex or LMS connection details — discovery is fully automatic via UDP broadcast and mDNS, and no such config should exist.

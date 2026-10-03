@@ -1,5 +1,5 @@
 import { describe, it, vi, expect, afterEach, type Mock } from 'vitest'
-import { lmsScanner } from './lmsScanner'
+import lmsScannerPlugin, { lmsScanner } from './lmsScanner'
 import discovery from 'lms-discovery'
 
 vi.mock('../composables/useLogger', () => ({
@@ -76,5 +76,17 @@ describe('lmsScanner', () => {
 
     expect(mockSetItem).not.toHaveBeenCalled()
     expect(mockRemoveItem).not.toHaveBeenCalled()
+  })
+
+  it('starts LMS discovery on startup', () => {
+    ;(lmsScannerPlugin as any)()
+    expect(discovery.start).toHaveBeenCalled()
+  })
+
+  it('does not discover LMS in demo mode', () => {
+    vi.stubGlobal('useRuntimeConfig', () => ({ demo: true }))
+    ;(lmsScannerPlugin as any)()
+    expect(discovery.start).not.toHaveBeenCalled()
+    vi.stubGlobal('useRuntimeConfig', () => ({ appVersion: '1.2.3-test' }))
   })
 })

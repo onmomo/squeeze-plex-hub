@@ -28,3 +28,5 @@ test-report.junit.xml
 .vscode/
 .idea/
 .DS_Store
+# User settings (player visibility)
+config/

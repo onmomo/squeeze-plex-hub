@@ -1,7 +1,11 @@
 export default {
   runtimeConfig: {
     logLevel: 'info',
-    appVersion: process.env.APP_VERSION || 'latest'
+    appVersion: process.env.APP_VERSION || 'latest',
+    // Serve fake LMS servers and players without network discovery, enable with NUXT_DEMO=true
+    demo: false,
+    // Demo mode only: 'host:port' of a Lyrion Music Server to load the real player model images from, e.g. NUXT_DEMO_LMS=localhost:9000
+    demoLms: ''
   },
   devServer: {
     host: '0.0.0.0' // required to allow plex server and players to connect and poll from squeeze plex hub players'    
@@ -44,6 +48,7 @@ export default {
       ]
     }
   },
+  css: ['~/assets/css/main.css'],
   plugins: [],
   components: true,
   typescript: {
@@ -52,6 +57,18 @@ export default {
   },
   buildModules: ['@nuxt/typescript-build'],
   modules: ['@nuxt/ui'],
+  colorMode: {
+    preference: 'dark'
+  },
+  icon: {
+    // The hub runs offline on the LAN: bundle icons instead of fetching them from the Iconify API
+    serverBundle: { collections: ['lucide'] },
+    clientBundle: {
+      scan: true,
+      // Icons chosen at runtime (color mode button, toasts) are not found by the scan
+      icons: ['lucide:sun', 'lucide:moon', 'lucide:eye-off', 'lucide:radio', 'lucide:triangle-alert', 'lucide:copy', 'lucide:x']
+    }
+  },
   fonts: {
     providers: {
       google: false,

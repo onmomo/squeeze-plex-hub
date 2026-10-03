@@ -38,6 +38,9 @@ WORKDIR /app
 # Copy the output from the build stage to the working directory
 COPY --from=build /app/.output ./
 
+# Settings (e.g. players hidden from Plex) are stored here, mount a volume to persist them
+RUN mkdir -p /app/config
+
 # Define environment variables
 ENV NODE_ENV=production \
     APP_VERSION=${APP_VERSION}

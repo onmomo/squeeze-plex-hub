@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, type Mock } from 'vitest'
-import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
+import type { PlexTarget } from '../lib/plexTargets'
 import resourcesHandler from './resources.get'
 import { sendNoContent } from 'h3'
-import usePlayerInfo from '../composables/usePlayerInfo'
+import { findPlexTarget } from '../lib/plexTargets'
 
 vi.mock('xml2js', () => ({
   Builder: class {
@@ -19,8 +19,8 @@ vi.mock('../composables/useLogger', () => ({
     error: (msg: string) => console.log(msg)
   })
 }))
-vi.mock('../composables/usePlayerInfo', () => ({
-  default: vi.fn()
+vi.mock('../lib/plexTargets', () => ({
+  findPlexTarget: vi.fn()
 }))
 
 vi.mock('h3', async () => {
@@ -31,10 +31,13 @@ vi.mock('h3', async () => {
   }
 })
 
-const mockPlayerInfo: IPlayerInfo = {
-  playerid: 'abc123',
-  name: 'Test Player'
-} as IPlayerInfo
+const mockTarget: PlexTarget = {
+  id: 'abc123',
+  name: 'Test Player',
+  kind: 'player',
+  serverId: 'server-1',
+  memberIds: ['abc123']
+}
 
 function createEventMock() {
   return {
@@ -65,10 +68,18 @@ describe('resources.get', () => {
     expect(event.respondWith).toHaveBeenCalledWith(expect.objectContaining({ status: 400 } as Response))
   })
 
-  it('returns 404 if usePlayerInfo throws', async () => {
+  it('returns 404 if resolving the target throws', async () => {
     const event = createEventMock()
     event.node.req.headers = { 'x-plex-target-client-identifier': 'abc123' }
-    ;(usePlayerInfo as Mock).mockRejectedValue(new Error('not found'))
+    ;(findPlexTarget as Mock).mockRejectedValue(new Error('No LMS'))
+    await resourcesHandler(event)
+    expect(sendNoContent).toHaveBeenCalledWith(event, 404)
+  })
+
+  it('returns 404 if player is unknown or hidden from Plex', async () => {
+    const event = createEventMock()
+    event.node.req.headers = { 'x-plex-target-client-identifier': 'abc123' }
+    ;(findPlexTarget as Mock).mockResolvedValue(undefined)
     await resourcesHandler(event)
     expect(sendNoContent).toHaveBeenCalledWith(event, 404)
   })
@@ -76,7 +87,7 @@ describe('resources.get', () => {
   it('returns XML if player found', async () => {
     const event = createEventMock()
     event.node.req.headers = { 'x-plex-target-client-identifier': 'abc123' }
-    ;(usePlayerInfo as Mock).mockResolvedValue({ playerInfo: mockPlayerInfo })
+    ;(findPlexTarget as Mock).mockResolvedValue(mockTarget)
     await resourcesHandler(event)
 
     expect(event.respondWith).toHaveBeenCalledWith(expect.objectContaining({ status: 200 } as Response))

@@ -1430,6 +1430,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@fontsource/ibm-plex-sans@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "@fontsource/ibm-plex-sans@npm:5.3.0"
+  checksum: 10c0/8e4c7a849e8167c8de1905282a62ff312a4266e364e3c436fa6d89d650bbb30b3386157ae31af3783e00f85fa64fd7e26bee7ca232db7d22fdc082f6b531edb5
+  languageName: node
+  linkType: hard
+
+"@fontsource/michroma@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "@fontsource/michroma@npm:5.3.0"
+  checksum: 10c0/9ba5df4bc08f01dc973bb994f6bfed4a5ebeeb9f798c29db0a05ceed39df500ce2b4289537f035d815170296c23092f572fc9b47b8668cf7d0d7bd0eef185d17
+  languageName: node
+  linkType: hard
+
+"@fontsource/share-tech-mono@npm:^5.3.0":
+  version: 5.3.0
+  resolution: "@fontsource/share-tech-mono@npm:5.3.0"
+  checksum: 10c0/0f6b6b6fa56cdcdf76287f82a1ff06bb713e693ee610372283140a28acda0c831b058fbfb1de4dd29ef2ca9a20424767e2663ba7d71a9d498c422a531972b124
+  languageName: node
+  linkType: hard
+
 "@grpc/grpc-js@npm:^1.11.1":
   version: 1.14.5
   resolution: "@grpc/grpc-js@npm:1.14.5"
@@ -1513,6 +1534,15 @@ __metadata:
   version: 0.4.2
   resolution: "@humanwhocodes/retry@npm:0.4.2"
   checksum: 10c0/0235525d38f243bee3bf8b25ed395fbf957fb51c08adae52787e1325673071abe856c7e18e530922ed2dd3ce12ed82ba01b8cee0279ac52a3315fcdc3a69ef0c
+  languageName: node
+  linkType: hard
+
+"@iconify-json/lucide@npm:^1.2.139":
+  version: 1.2.139
+  resolution: "@iconify-json/lucide@npm:1.2.139"
+  dependencies:
+    "@iconify/types": "npm:*"
+  checksum: 10c0/08013df7cc1e82b1233759c7beada9c9df86d3a1a5c6e58f8029b6c8631031d306996203577f8fd21d66524068857d4676da85909e3faa2ebc62800a36800b7a
   languageName: node
   linkType: hard
 
@@ -5292,7 +5322,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@vueuse/core@npm:14.4.0, @vueuse/core@npm:^14.1.0, @vueuse/core@npm:^14.3.0":
+"@vueuse/core@npm:14.4.0, @vueuse/core@npm:^14.1.0, @vueuse/core@npm:^14.3.0, @vueuse/core@npm:^14.4.0":
   version: 14.4.0
   resolution: "@vueuse/core@npm:14.4.0"
   dependencies:
@@ -13052,6 +13082,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "squeeze-plex-hub@workspace:."
   dependencies:
+    "@fontsource/ibm-plex-sans": "npm:^5.3.0"
+    "@fontsource/michroma": "npm:^5.3.0"
+    "@fontsource/share-tech-mono": "npm:^5.3.0"
+    "@iconify-json/lucide": "npm:^1.2.139"
     "@nuxt/eslint-config": "npm:^1.9.0"
     "@nuxt/kit": "npm:^4.4.6"
     "@nuxt/test-utils": "npm:^4.3.3"
@@ -13062,6 +13096,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^8.39.1"
     "@vitest/coverage-v8": "npm:^5.0.3"
     "@vue/test-utils": "npm:^2.4.6"
+    "@vueuse/core": "npm:^14.4.0"
     axios: "npm:^1.20.0"
     eslint: "npm:^9.33.0"
     eslint-plugin-nuxt: "npm:^4.0.0"
