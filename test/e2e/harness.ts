@@ -149,7 +149,7 @@ export function useE2eStack() {
    * Returns the play queue id once LMS plays the track.
    */
   async function playAlbumFrom(trackNumber: number): Promise<number> {
-    const track = plex.album.tracks[trackNumber - 1]!
+    const track = plex.tracks[trackNumber - 1]!
     const playQueueId = plex.createPlayQueue(track.ratingKey)
     const response = await hubRequest('/player/playback/playMedia', {
       ...plexServerQuery(),
@@ -195,7 +195,9 @@ export function useE2eStack() {
     playAlbumFrom,
     playQueueParts,
     playQueueItemIdOf,
-    /** Part id of the album track with the given (1-based) number */
-    partOf: (trackNumber: number) => plex.album.tracks[trackNumber - 1]!.partId
+    /** Track with the given (1-based) number */
+    track: (trackNumber: number) => plex.tracks[trackNumber - 1]!,
+    /** Part id of the track with the given (1-based) number */
+    partOf: (trackNumber: number) => plex.tracks[trackNumber - 1]!.partId
   }
 }

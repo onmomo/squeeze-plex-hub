@@ -21,25 +21,15 @@ describe('e2e: hub -> LMS play queue refresh', () => {
   describe('refreshPlayQueue', () => {
     it('appends tracks added to the play queue and keeps playing the current track', async () => {
       const playQueueId = await playAlbumFrom(1)
-      const [extra1, extra2] = e2e.plex.extraTracks
-      e2e.plex.addToPlayQueue(playQueueId, extra1!.ratingKey)
-      e2e.plex.addToPlayQueue(playQueueId, extra2!.ratingKey)
+      e2e.plex.addToPlayQueue(playQueueId, e2e.track(7).ratingKey)
+      e2e.plex.addToPlayQueue(playQueueId, e2e.track(8).ratingKey)
       const before = await lmsStatus()
 
       const response = await refreshPlayQueue(playQueueId)
       expect(response.status).toBe(200)
 
       expect(await lmsPlaylistParts()).toEqual(playQueueParts(playQueueId))
-      expect(await lmsPlaylistParts()).toEqual([
-        partOf(1),
-        partOf(2),
-        partOf(3),
-        partOf(4),
-        partOf(5),
-        partOf(6),
-        extra1!.partId,
-        extra2!.partId
-      ])
+      expect(await lmsPlaylistParts()).toEqual([partOf(1), partOf(2), partOf(3), partOf(4), partOf(5), partOf(6), partOf(7), partOf(8)])
       expect((await lmsStatus()).index).toBe(0)
       await expectStillPlaying(partOf(1), before.time)
     })
@@ -74,13 +64,12 @@ describe('e2e: hub -> LMS play queue refresh', () => {
 
     it('plays the refreshed tracks once the current track was skipped', async () => {
       const playQueueId = await playAlbumFrom(1)
-      const extra = e2e.plex.extraTracks[0]!
-      e2e.plex.addToPlayQueue(playQueueId, extra.ratingKey, playQueueItemIdOf(playQueueId, partOf(1)))
+      e2e.plex.addToPlayQueue(playQueueId, e2e.track(7).ratingKey, playQueueItemIdOf(playQueueId, partOf(1)))
       expect((await refreshPlayQueue(playQueueId)).status).toBe(200)
 
       expect((await hubRequest('/player/playback/skipNext', { commandID: '6' })).status).toBe(200)
 
-      const status = await waitUntilPlaying(extra.partId)
+      const status = await waitUntilPlaying(partOf(7))
       expect(status).toMatchObject({ index: 1, tracks: 7 })
     })
 
@@ -94,13 +83,12 @@ describe('e2e: hub -> LMS play queue refresh', () => {
   describe('playQueueRefresher fallback', () => {
     it('skipTo loads an item that was added to the play queue after it was loaded', async () => {
       const playQueueId = await playAlbumFrom(1)
-      const extra = e2e.plex.extraTracks[0]!
-      const playQueueItemID = e2e.plex.addToPlayQueue(playQueueId, extra.ratingKey)
+      const playQueueItemID = e2e.plex.addToPlayQueue(playQueueId, e2e.track(7).ratingKey)
 
       const response = await hubRequest('/player/playback/skipTo', { playQueueItemID: String(playQueueItemID), commandID: '6' })
       expect(response.status).toBe(200)
 
-      const status = await waitUntilPlaying(extra.partId)
+      const status = await waitUntilPlaying(partOf(7))
       expect(status).toMatchObject({ index: 6, tracks: 7 })
       expect(await lmsPlaylistParts()).toEqual(playQueueParts(playQueueId))
     })
@@ -117,27 +105,25 @@ describe('e2e: hub -> LMS play queue refresh', () => {
 
     it('skipNext on the last track plays tracks that were added to the play queue meanwhile', async () => {
       const playQueueId = await playAlbumFrom(6)
-      const [extra1, extra2] = e2e.plex.extraTracks
-      e2e.plex.addToPlayQueue(playQueueId, extra1!.ratingKey)
-      e2e.plex.addToPlayQueue(playQueueId, extra2!.ratingKey)
+      e2e.plex.addToPlayQueue(playQueueId, e2e.track(7).ratingKey)
+      e2e.plex.addToPlayQueue(playQueueId, e2e.track(8).ratingKey)
 
       const response = await hubRequest('/player/playback/skipNext', { commandID: '6' })
       expect(response.status).toBe(200)
 
-      const status = await waitUntilPlaying(extra1!.partId)
+      const status = await waitUntilPlaying(partOf(7))
       expect(status).toMatchObject({ index: 6, tracks: 8 })
       expect(await lmsPlaylistParts()).toEqual(playQueueParts(playQueueId))
     })
 
     it('skipPrevious on the first track plays a track that was moved before it meanwhile', async () => {
       const playQueueId = await playAlbumFrom(1)
-      const extra = e2e.plex.extraTracks[0]!
-      e2e.plex.moveInPlayQueue(playQueueId, e2e.plex.addToPlayQueue(playQueueId, extra.ratingKey))
+      e2e.plex.moveInPlayQueue(playQueueId, e2e.plex.addToPlayQueue(playQueueId, e2e.track(7).ratingKey))
 
       const response = await hubRequest('/player/playback/skipPrevious', { commandID: '6' })
       expect(response.status).toBe(200)
 
-      const status = await waitUntilPlaying(extra.partId)
+      const status = await waitUntilPlaying(partOf(7))
       expect(status).toMatchObject({ index: 0, tracks: 7 })
       expect(await lmsPlaylistParts()).toEqual(playQueueParts(playQueueId))
     })

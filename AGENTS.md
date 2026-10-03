@@ -137,7 +137,7 @@ Lyrion Music Server with a real headless squeezelite player, started with [testc
   network. No discovery: squeezelite connects to LMS by alias and the test registers LMS in storage the way `lmsScanner` would.
 - `fakePlexServer.ts` — stands in for PMS: play queues (`POST /playQueues` honours `key`, `GET /playQueues/:id`) and silent WAV
   tracks streamed in real-time (with `Range` support for seeking). Tests change play queues like a Plex client does on PMS
-  (`addToPlayQueue`, `moveInPlayQueue`, `removeFromPlayQueue`, `extraTracks` for radio-like additions). It records requests, so
+  (`addToPlayQueue`, `moveInPlayQueue`, `removeFromPlayQueue`). Play queues start with the album (tracks 1–6), tracks 7–10 can be added. It records requests, so
   tests can assert which tracks LMS actually streamed.
 - `hub.ts` — mounts the real player route handlers (playback + `timeline/poll`) on an h3 server with in-memory `useStorage` and a
   `runTask` shim. Nitro plugins (mDNS, GDM, timeline publisher) do not run.

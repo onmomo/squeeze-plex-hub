@@ -28,9 +28,10 @@ export interface FakePlayQueueItem {
 
 export interface FakePlexServer {
   port: number
+  /** All tracks of the library, `Track 1` to `Track 10`. Play queues start with the album, the others can be added later. */
+  tracks: FakeTrack[]
+  /** The container play queues are created for, it holds the first 6 tracks */
   album: { ratingKey: string; title: string; artist: string; tracks: FakeTrack[] }
-  /** Tracks that are not part of the album, e.g. what Plexamp adds to a radio play queue while it plays */
-  extraTracks: FakeTrack[]
   requests: string[]
   /** Part ids LMS (or the player) fetched audio for, in request order */
   streamedParts(): string[]
@@ -105,27 +106,18 @@ interface PlayQueueState {
 
 export async function startFakePlexServer(): Promise<FakePlexServer> {
   const wav = silentWav(TRACK_SECONDS)
-  const album = {
-    ratingKey: '1000',
-    title: 'E2E Album',
-    artist: 'E2E Artist',
-    tracks: Array.from({ length: 6 }, (_, i) => ({
-      ratingKey: String(1001 + i),
-      title: `Track ${i + 1}`,
-      partId: String(2001 + i)
-    }))
-  }
-  const extraTracks = Array.from({ length: 4 }, (_, i) => ({
-    ratingKey: String(1101 + i),
-    title: `Extra Track ${i + 1}`,
-    partId: String(2101 + i)
+  const tracks = Array.from({ length: 10 }, (_, i) => ({
+    ratingKey: String(1001 + i),
+    title: `Track ${i + 1}`,
+    partId: String(2001 + i)
   }))
+  const album = { ratingKey: '1000', title: 'E2E Album', artist: 'E2E Artist', tracks: tracks.slice(0, 6) }
   const playQueues = new Map<number, PlayQueueState>()
   const requests: string[] = []
   let nextPlayQueueId = 1
 
   function findTrack(ratingKey: string) {
-    const track = [...album.tracks, ...extraTracks].find((t) => t.ratingKey === ratingKey)
+    const track = tracks.find((t) => t.ratingKey === ratingKey)
     if (!track) throw new Error(`Unknown track '${ratingKey}'`)
     return track
   }
@@ -248,8 +240,8 @@ export async function startFakePlexServer(): Promise<FakePlexServer> {
 
   return {
     port: (server.address() as AddressInfo).port,
+    tracks,
     album,
-    extraTracks,
     requests,
     streamedParts: () => requests.map((r) => r.match(/^GET \/library\/parts\/(\d+)\//)?.[1]).filter((partId): partId is string => !!partId),
     createPlayQueue,

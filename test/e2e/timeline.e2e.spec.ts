@@ -45,7 +45,7 @@ describe('e2e: hub -> LMS timeline', () => {
     const timeline = await pollMusicTimeline()
     const after = await lmsStatus()
 
-    const track3 = e2e.plex.album.tracks[2]!
+    const track3 = e2e.track(3)
     expect(timeline.$).toMatchObject({
       state: 'playing',
       playQueueID: String(playQueueId),

@@ -10,7 +10,7 @@ describe('e2e: hub -> LMS playback', () => {
   const { hubRequest, lmsStatus, partOf, waitForStatus, waitUntilPlaying, waitUntilPlayedPast, playAlbumFrom } = e2e
 
   it('createPlayQueue starts an album at the selected track (#106)', async () => {
-    const track5 = e2e.plex.album.tracks[4]!
+    const track5 = e2e.track(5)
     const response = await hubRequest('/player/playback/createPlayQueue', {
       ...e2e.plexServerQuery(),
       uri: `server://fake-pms/com.plexapp.plugins.library/library/metadata/${e2e.plex.album.ratingKey}`,
@@ -28,7 +28,7 @@ describe('e2e: hub -> LMS playback', () => {
   })
 
   it('playMedia starts an existing play queue at the selected track', async () => {
-    const track4 = e2e.plex.album.tracks[3]!
+    const track4 = e2e.track(4)
     const playQueueId = e2e.plex.createPlayQueue(track4.ratingKey)
     const response = await hubRequest('/player/playback/playMedia', {
       ...e2e.plexServerQuery(),
