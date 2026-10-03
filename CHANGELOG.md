@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.49.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.48.0...v1.49.0) (2026-10-03)
+
+
+### Bug Fixes
+
+* **deps:** patch high-severity transitive vulnerabilities via resolutions ([3e8a69b](https://github.com/onmomo/squeeze-plex-hub/commit/3e8a69b36e6bfa9384735c9403eb5e2af910aaac))
+
 ## [1.48.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.47.0...v1.48.0) (2026-10-03)
 
 
