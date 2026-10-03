@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.45.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.44.0...v1.45.0) (2026-10-03)
+
+
+### Bug Fixes
+
+* **playback:** start album play queue at the selected track ([#106](https://github.com/onmomo/squeeze-plex-hub/issues/106)) ([c701456](https://github.com/onmomo/squeeze-plex-hub/commit/c70145669957e9559af9273e4a5aca57de0deba1))
+
 ## [1.44.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.43.0...v1.44.0) (2026-10-03)
 
 ## [1.43.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.42.0...v1.43.0) (2026-08-18)
