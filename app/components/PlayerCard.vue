@@ -1,8 +1,8 @@
 <template>
-  <article class="channel" :class="{ 'is-standby': player.hidden }" :aria-label="`${player.name}, ${player.modelName}`">
+  <article class="channel" :class="{ 'is-standby': player.hidden }" :aria-label="`${player.name}, ${modelLabel}`">
     <header class="channel-head">
       <span class="channel-model">
-        <span class="channel-model-name" :title="player.modelName">{{ player.modelName }}</span>
+        <span class="channel-model-name" :title="modelLabel">{{ modelLabel }}</span>
         <span v-if="player.hidden" class="channel-state">Hidden</span>
       </span>
       <UDropdownMenu :items="menuItems" :content="{ align: 'end' }">
@@ -22,7 +22,7 @@
         v-if="!imageFailed"
         v-show="imageLoaded"
         :src="player.imageUrl"
-        :alt="`${player.modelName} player`"
+        :alt="`${modelLabel} player`"
         class="bezel-image"
         @load="imageLoaded = true"
         @error="imageFailed = true"
@@ -31,7 +31,17 @@
 
     <h3 class="channel-name" :title="player.name">{{ player.name }}</h3>
 
-    <dl class="readout">
+    <dl v-if="pair" class="readout">
+      <div>
+        <dt>L</dt>
+        <dd>{{ pair.leftName }}</dd>
+      </div>
+      <div>
+        <dt>R</dt>
+        <dd>{{ pair.right.name }}</dd>
+      </div>
+    </dl>
+    <dl v-else class="readout">
       <div>
         <dt>IP</dt>
         <dd>{{ player.ip }}</dd>
@@ -68,10 +78,12 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { useClipboard } from '@vueuse/core'
-import type { DashboardPlayer } from '../composables/usePlayerDashboard'
+import type { DashboardPair, DashboardPlayer } from '../composables/usePlayerDashboard'
 
-const props = defineProps<{ player: DashboardPlayer }>()
-const emit = defineEmits<{ 'update:hidden': [hidden: boolean] }>()
+const props = defineProps<{ player: DashboardPlayer; pair?: DashboardPair }>()
+const emit = defineEmits<{ 'update:hidden': [hidden: boolean]; pair: []; dissolve: [] }>()
+
+const modelLabel = computed(() => (props.pair ? 'Stereo pair' : props.player.modelName))
 
 // The model image comes from LMS, show a speaker icon until it loaded or if it is missing
 const imageLoaded = ref(false)
@@ -79,8 +91,10 @@ const imageFailed = ref(false)
 const { copy } = useClipboard({ legacy: true })
 const toast = useToast()
 
-// Extension point: "Add to group…" will live here once player groups exist
 const menuItems = computed<DropdownMenuItem[]>(() => [
+  props.pair
+    ? { label: 'Dissolve stereo pair', icon: 'i-lucide-unlink', disabled: props.player.saving, onSelect: () => emit('dissolve') }
+    : { label: 'Pair as stereo…', icon: 'i-lucide-audio-lines', disabled: props.player.saving, onSelect: () => emit('pair') },
   {
     label: props.player.hidden ? 'Show in Plexamp' : 'Hide from Plexamp',
     icon: props.player.hidden ? 'i-lucide-radio' : 'i-lucide-eye-off',

@@ -17,10 +17,22 @@ export interface DashboardPlayer {
 }
 
 /**
- * Something rendered inside a server section. Player groups (rooms, stereo pairs) will join this union later,
- * sections render items, never raw players.
+ * Two players acting as one stereo speaker. It is rendered as one card for the left player, which is the pair's
+ * Plex target: its `player` carries the pair name and the visibility.
  */
-export type DashboardItem = { kind: 'player'; id: string; player: DashboardPlayer }
+export interface DashboardPair {
+  // Right player, with its own LMS name
+  right: DashboardPlayer
+  // The left player's own LMS name, `player.name` is the pair name
+  leftName: string
+}
+
+/**
+ * Something rendered inside a server section, sections render items, never raw players.
+ */
+export type DashboardItem =
+  | { kind: 'player'; id: string; player: DashboardPlayer }
+  | { kind: 'pair'; id: string; player: DashboardPlayer; pair: DashboardPair }
 
 export interface ServerSection {
   server: ServerInfo
@@ -77,8 +89,20 @@ export function usePlayerDashboard() {
       const section = byServer.get(entry.serverInfo.uuid) ?? { server: entry.serverInfo, items: [], hiddenItems: [] }
       byServer.set(entry.serverInfo.uuid, section)
 
+      // The right player of a pair is shown on the card of the left one
+      if (entry.pair?.role === 'right') continue
+
       const player = toDashboardPlayer(entry, savingHidden.get(entry.playerInfo.playerid))
-      const item: DashboardItem = { kind: 'player', id: player.id, player }
+      const partner = entry.pair && players.value.find((candidate) => candidate.playerInfo.playerid === entry.pair!.partnerId)
+      const item: DashboardItem =
+        entry.pair && partner
+          ? {
+              kind: 'pair',
+              id: player.id,
+              player: { ...player, name: entry.pair.name },
+              pair: { right: toDashboardPlayer(partner), leftName: player.name }
+            }
+          : { kind: 'player', id: player.id, player }
       ;(player.hidden ? section.hiddenItems : section.items).push(item)
     }
 
@@ -96,6 +120,57 @@ export function usePlayerDashboard() {
       hidden: all.filter((item) => item.player.hidden).length
     }
   })
+
+  /** Players of the same server that can still become the partner of the given player */
+  function pairCandidates(player: DashboardPlayer): DashboardPlayer[] {
+    const serverId = players.value.find((entry) => entry.playerInfo.playerid === player.id)?.serverInfo.uuid
+    return players.value
+      .filter((entry) => entry.serverInfo.uuid === serverId && entry.playerInfo.playerid !== player.id && !entry.pair)
+      .map((entry) => toDashboardPlayer(entry))
+      .sort((a, b) => a.name.localeCompare(b.name))
+  }
+
+  async function createPair(name: string, left: DashboardPlayer, right: DashboardPlayer): Promise<boolean> {
+    try {
+      await $fetch('/api/pairs', { method: 'POST', body: { name, leftId: left.id, rightId: right.id } })
+      await refresh()
+      toast.add({
+        title: `${name} is a stereo pair`,
+        description: `${left.name} plays left, ${right.name} right.`,
+        icon: 'i-lucide-audio-lines',
+        color: 'primary'
+      })
+      return true
+    } catch (err) {
+      console.error(`Error creating stereo pair '${name}':`, err)
+      toast.add({
+        title: `Couldn't create ${name}`,
+        description:
+          err instanceof FetchError && err.statusMessage
+            ? err.statusMessage
+            : 'Check that both players are connected to Lyrion, then try again.',
+        icon: 'i-lucide-triangle-alert',
+        color: 'error'
+      })
+      return false
+    }
+  }
+
+  async function dissolvePair(left: DashboardPlayer) {
+    try {
+      await $fetch(`/api/pairs/${encodeURIComponent(left.id)}`, { method: 'DELETE' })
+      await refresh()
+      toast.add({
+        title: `${left.name} dissolved`,
+        description: 'Both players play stereo again.',
+        icon: 'i-lucide-unlink',
+        color: 'neutral'
+      })
+    } catch (err) {
+      console.error(`Error dissolving stereo pair '${left.name}':`, err)
+      toast.add({ title: `Couldn't dissolve ${left.name}`, icon: 'i-lucide-triangle-alert', color: 'error' })
+    }
+  }
 
   // One message for visibility changes: a new change closes the previous one, so Undo always reverts the latest change
   let visibilityToastId: string | number | undefined
@@ -145,5 +220,5 @@ export function usePlayerDashboard() {
     }
   })
 
-  return { sections, stats, loading, error, refresh, setHidden }
+  return { sections, stats, loading, error, refresh, setHidden, pairCandidates, createPair, dissolvePair }
 }

@@ -21,9 +21,11 @@
     <div v-if="section.items.length > 0" class="channel-grid">
       <template v-for="item in section.items" :key="item.id">
         <PlayerCard
-          v-if="item.kind === 'player'"
           :player="item.player"
+          :pair="item.kind === 'pair' ? item.pair : undefined"
           @update:hidden="(hidden) => emit('update:hidden', item.player, hidden)"
+          @pair="emit('pair', item.player)"
+          @dissolve="emit('dissolve', item.player)"
         />
       </template>
     </div>
@@ -43,9 +45,11 @@
         <div class="channel-grid standby-grid">
           <template v-for="item in section.hiddenItems" :key="item.id">
             <PlayerCard
-              v-if="item.kind === 'player'"
               :player="item.player"
+              :pair="item.kind === 'pair' ? item.pair : undefined"
               @update:hidden="(hidden) => emit('update:hidden', item.player, hidden)"
+              @pair="emit('pair', item.player)"
+              @dissolve="emit('dissolve', item.player)"
             />
           </template>
         </div>
@@ -58,7 +62,11 @@
 import type { DashboardPlayer, ServerSection } from '../composables/usePlayerDashboard'
 
 const props = defineProps<{ section: ServerSection }>()
-const emit = defineEmits<{ 'update:hidden': [player: DashboardPlayer, hidden: boolean] }>()
+const emit = defineEmits<{
+  'update:hidden': [player: DashboardPlayer, hidden: boolean]
+  pair: [player: DashboardPlayer]
+  dissolve: [player: DashboardPlayer]
+}>()
 
 const headingId = computed(() => `lms-${props.section.server.uuid}`)
 const playerCount = computed(() => props.section.items.length + props.section.hiddenItems.length)
