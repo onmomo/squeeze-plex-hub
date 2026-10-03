@@ -65,5 +65,7 @@ jobs:
         run: corepack enable && corepack prepare yarn@4.4.0 --activate
       - name: Install dependencies
         run: yarn install --immutable
+      - name: Generate Nuxt types (tsconfig used by the tests)
+        run: yarn nuxt prepare
       - name: Run e2e tests
         run: yarn test:e2e
