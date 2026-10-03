@@ -8,6 +8,8 @@ import { PLEX_HOST, waitFor } from './lmsStack'
 /**
  * The timeline Plexamp polls to show what the player does has to reflect the real LMS state.
  */
+const TIME_TOLERANCE_MS = 250
+
 describe('e2e: hub -> LMS timeline', () => {
   const e2e = useE2eStack()
   const { hubRequest, lmsStatus, partOf, playAlbumFrom, playQueueItemIdOf, waitForStatus, waitUntilPlaying } = e2e
@@ -61,8 +63,9 @@ describe('e2e: hub -> LMS timeline', () => {
       port: String(e2e.plex.port)
     })
     const time = Number(timeline.$.time)
-    expect(time).toBeGreaterThanOrEqual(Math.floor(before.time * 1000))
-    expect(time).toBeLessThanOrEqual(Math.ceil(after.time * 1000))
+    // LMS corrects its interpolated time with every player report, it may step back slightly
+    expect(time).toBeGreaterThanOrEqual(Math.floor(before.time * 1000) - TIME_TOLERANCE_MS)
+    expect(time).toBeLessThanOrEqual(Math.ceil(after.time * 1000) + TIME_TOLERANCE_MS)
     expect(Number(timeline.$.duration)).toBeCloseTo(TRACK_SECONDS * 1000, -2)
     expect(timeline.Track).toBeDefined()
     const track = Array.isArray(timeline.Track) ? timeline.Track[0] : timeline.Track
@@ -92,7 +95,8 @@ describe('e2e: hub -> LMS timeline', () => {
     await waitForStatus('did not pause', (s) => s.mode === 'pause')
     const paused = await waitForTimeline((t) => t.$.state === 'paused')
     expect(paused.$.playQueueItemID).toBe(String(playQueueItemIdOf(playQueueId, partOf(5))))
-    expect(Number(paused.$.time)).toBe(Math.round((await lmsStatus()).time * 1000))
+    // the player may still report its final elapsed time after LMS switched to paused
+    expect(Math.abs(Number(paused.$.time) - (await lmsStatus()).time * 1000)).toBeLessThanOrEqual(TIME_TOLERANCE_MS)
 
     await hubRequest('/player/playback/stop', { type: 'music', commandID: '14' })
     await waitForStatus('did not stop', (s) => s.mode === 'stop')

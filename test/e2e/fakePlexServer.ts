@@ -216,7 +216,7 @@ export async function startFakePlexServer(): Promise<FakePlexServer> {
     if (/^\/library\/parts\/\d+\/file\.wav$/.test(url.pathname)) {
       const rangeMatch = range?.match(/^bytes=(\d+)-(\d*)$/)
       const start = rangeMatch ? Number(rangeMatch[1]) : 0
-      const end = rangeMatch?.[2] ? Number(rangeMatch[2]) : wav.length - 1
+      const end = Math.min(rangeMatch?.[2] ? Number(rangeMatch[2]) : Infinity, wav.length - 1)
       if (start >= wav.length || end < start) {
         res.writeHead(416, { 'Content-Range': `bytes */${wav.length}` })
         return res.end()
