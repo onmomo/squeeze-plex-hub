@@ -54,7 +54,7 @@ describe('PlayerDashboard', () => {
     const wrapper = await mountDashboard()
     expect(wrapper.text()).toContain('Lyrion NAS')
     expect(wrapper.findAllComponents(PlayerCard)).toHaveLength(1)
-    expect(wrapper.text()).toContain('Hidden (1)')
+    expect(wrapper.text()).toContain('Hidden players (1)')
     expect(wrapper.find('.vfd').text()).toContain('01/02')
     wrapper.unmount()
   })
@@ -80,7 +80,7 @@ describe('PlayerDashboard', () => {
     await flushPromises()
     expect(patchBodies).toEqual([{ hidden: true }])
     expect(wrapper.findAllComponents(PlayerCard)).toHaveLength(0)
-    expect(wrapper.text()).toContain('Hidden (2)')
+    expect(wrapper.text()).toContain('Hidden players (2)')
 
     // The confirmation offers to undo the change
     await new Promise((resolve) => setTimeout(resolve, 0))
@@ -100,7 +100,7 @@ describe('PlayerDashboard', () => {
     await flushPromises()
     await new Promise((resolve) => setTimeout(resolve, 20))
     expect(wrapper.findAllComponents(PlayerCard)).toHaveLength(1)
-    expect(wrapper.text()).toContain('Hidden (1)')
+    expect(wrapper.text()).toContain('Hidden players (1)')
     wrapper.unmount()
   })
 })

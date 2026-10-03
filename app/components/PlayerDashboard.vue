@@ -10,6 +10,7 @@
       </div>
 
       <div class="master-controls">
+        <UColorModeButton color="neutral" variant="ghost" class="size-11 justify-center" />
         <div class="vfd" role="status" aria-live="polite">
           <template v-if="loading">
             <span class="vfd-scan">Scanning for Lyrion servers</span>
@@ -25,7 +26,6 @@
             </span>
           </template>
         </div>
-        <UColorModeButton color="neutral" variant="ghost" class="size-11 justify-center" />
       </div>
     </header>
 
@@ -71,7 +71,8 @@ const pad = (value: number) => value.toString().padStart(2, '0')
   justify-content: space-between;
   gap: 1.25rem 2rem;
   margin-bottom: 2rem;
-  padding: 1.25rem 1.5rem;
+  /* Same side padding as the rack units, so the readouts line up on the right */
+  padding: 1.25rem 1.75rem;
   background: var(--rack-faceplate-sheen), var(--rack-faceplate);
   border: 1px solid var(--rack-edge);
   border-radius: 0.5rem;
@@ -107,6 +108,8 @@ const pad = (value: number) => value.toString().padStart(2, '0')
 }
 
 .master-controls {
+  /* Stays on the right when the header wraps on narrow screens */
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 0.75rem;

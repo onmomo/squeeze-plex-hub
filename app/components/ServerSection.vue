@@ -30,18 +30,14 @@
     <p v-else class="unit-empty">All players of this server are hidden from Plexamp.</p>
 
     <UCollapsible v-if="section.hiddenItems.length > 0" v-model:open="standbyOpen" class="standby">
-      <UButton
-        color="neutral"
-        variant="ghost"
-        block
-        class="standby-toggle"
-        :trailing-icon="standbyOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'"
-        :ui="{ base: 'justify-between' }"
-      >
-        <span class="standby-label">
-          <span class="standby-kind">Hidden ({{ section.hiddenItems.length }})</span>
-          Not shown in Plexamp
-        </span>
+      <UButton color="neutral" variant="ghost" block class="standby-toggle" :ui="{ base: 'justify-between' }">
+        <span class="standby-kind">Hidden players ({{ section.hiddenItems.length }})</span>
+        <template #trailing>
+          <span class="standby-action">
+            {{ standbyOpen ? 'Hide' : 'Show' }}
+            <UIcon :name="standbyOpen ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'" class="size-5" aria-hidden="true" />
+          </span>
+        </template>
       </UButton>
       <template #content>
         <div class="channel-grid standby-grid">
@@ -191,10 +187,10 @@ const standbyOpen = ref(false)
   min-height: 2.75rem;
 }
 
-.standby-label {
+.standby-action {
   display: inline-flex;
-  align-items: baseline;
-  gap: 0.75rem;
+  align-items: center;
+  gap: 0.375rem;
   font-size: 0.9rem;
   color: var(--rack-engrave-muted);
 }

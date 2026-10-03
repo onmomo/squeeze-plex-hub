@@ -2,7 +2,7 @@
   <article class="channel" :class="{ 'is-standby': player.hidden }" :aria-label="`${player.name}, ${player.modelName}`">
     <header class="channel-head">
       <span class="channel-model">
-        {{ player.modelName }}
+        <span class="channel-model-name" :title="player.modelName">{{ player.modelName }}</span>
         <span v-if="player.hidden" class="channel-state">Hidden</span>
       </span>
       <UDropdownMenu :items="menuItems" :content="{ align: 'end' }">
@@ -59,7 +59,7 @@
         @click="emit('update:hidden', !player.hidden)"
       >
         <span class="key-lamp" aria-hidden="true" />
-        <span class="key-label">In Plexamp</span>
+        <span class="key-label">{{ player.hidden ? 'Show in Plexamp' : 'In Plexamp' }}</span>
       </button>
     </footer>
   </article>
@@ -135,10 +135,20 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--rack-engrave-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.channel-model-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .channel-state {
-  margin-left: 0.5rem;
+  flex: none;
   padding: 0.05rem 0.4rem;
   color: var(--rack-engrave);
   border: 1px solid var(--rack-edge);
@@ -237,7 +247,8 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
   --key-face: linear-gradient(180deg, #313a39 0%, #222928 100%);
   --key-text: var(--rack-engrave-muted);
   display: grid;
-  grid-template-columns: auto 1fr;
+  /* Lamp on the left, label centered across the whole key */
+  grid-template-columns: 0.5rem 1fr 0.5rem;
   align-items: center;
   gap: 0.625rem;
   width: 100%;
@@ -247,7 +258,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
   font-size: 0.8rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  text-align: left;
+  text-align: center;
   white-space: nowrap;
   color: var(--key-text);
   background: var(--key-face);

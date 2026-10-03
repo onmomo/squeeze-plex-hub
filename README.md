@@ -82,7 +82,7 @@ The dashboard at `http://localhost:3000` shows every discovered Lyrion Music Ser
 - **Player modules**: model, name, IP address, player ID (MAC address) and firmware of each player.
 - **In Plexamp key**: the key is lit while a player is announced to Plex clients. Press it to stop announcing the player. All players are shown in
   Plexamp by default. Useful when players are already reachable in Plexamp in another way, e.g. as Chromecast.
-- **Hidden**: hidden players move into the collapsible *Hidden* section of their server, where you can press their key again to bring them back. The confirmation message has an **Undo** button.
+- **Hidden**: hidden players move into the collapsible *Hidden* section of their server, where *Show in Plexamp* brings them back. The confirmation message has an **Undo** button.
 - **Options menu** (`⋮`): show or hide a player, copy its player ID.
 
 Plexamp caches discovered players for a while. If a hidden player is still listed, restart Plexamp.

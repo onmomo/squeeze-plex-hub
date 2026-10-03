@@ -36,6 +36,7 @@ describe('PlayerCard', () => {
     const wrapper = await mountSuspended(PlayerCard, { props: { player: { ...player, hidden: true } } })
     expect(wrapper.find('.channel').classes()).toContain('is-standby')
     expect(wrapper.find('.channel-state').text()).toBe('Hidden')
+    expect(wrapper.find('button[role="switch"]').text()).toBe('Show in Plexamp')
     expect(wrapper.find('button[role="switch"]').attributes('aria-checked')).toBe('false')
   })
 
