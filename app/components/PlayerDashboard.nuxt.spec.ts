@@ -184,4 +184,22 @@ describe('PlayerDashboard', () => {
     ).toEqual(['cc'])
     wrapper.unmount()
   })
+
+  it('only offers players of the same Lyrion server as stereo partners', async () => {
+    const otherServer = { ...server, uuid: 'server-2', name: 'Lyrion Attic', ip: '192.168.1.30' }
+    players = [player('aa', 'Kitchen', false), player('bb', 'Office', false), { ...player('cc', 'Attic', false), serverInfo: otherServer }]
+    const wrapper = await mountDashboard()
+    wrapper
+      .findAllComponents(PlayerCard)
+      .find((card) => card.props('player').id === 'aa')!
+      .vm.$emit('pair')
+    await flushPromises()
+    expect(
+      wrapper
+        .findComponent(PairDialog)
+        .props('candidates')
+        .map((candidate: { id: string }) => candidate.id)
+    ).toEqual(['bb'])
+    wrapper.unmount()
+  })
 })
