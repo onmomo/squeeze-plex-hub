@@ -98,14 +98,14 @@ services:
       - ./config:/app/config
 ```
 
-The file is plain JSON and can be edited by hand while Squeeze Plex Hub is stopped. Players are keyed by their player ID,
-`name` is only there for readability:
+The file is plain JSON and can be edited by hand while Squeeze Plex Hub is stopped. Players are keyed by their player ID
+(the MAC address shown on the dashboard), names are managed in LMS:
 
 ```json
 {
   "version": 1,
   "players": {
-    "00:04:20:2a:11:04": { "name": "Living Room Transporter", "hidden": true }
+    "00:04:20:2a:11:04": { "hidden": true }
   }
 }
 ```

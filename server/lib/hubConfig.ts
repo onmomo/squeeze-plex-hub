@@ -9,9 +9,7 @@ export const HUB_CONFIG_VERSION = 1
  * User settings of a single squeeze player, keyed by its player id in `HubConfig.players`.
  */
 export interface PlayerSettings {
-  // Informational only, makes the config file readable when edited by hand
-  name?: string
-  // Hidden players are not announced to Plex clients
+  // Hidden players are not announced to Plex clients. Player names belong to LMS and are not stored here
   hidden: boolean
 }
 
@@ -52,10 +50,7 @@ function normalize(raw: unknown): HubConfig {
   if (players && typeof players === 'object') {
     for (const [playerId, settings] of Object.entries(players)) {
       if (settings && typeof settings === 'object') {
-        config.players[playerId] = {
-          ...(typeof settings.name === 'string' ? { name: settings.name } : {}),
-          hidden: settings.hidden === true
-        }
+        config.players[playerId] = { hidden: settings.hidden === true }
       }
     }
   }
@@ -119,7 +114,7 @@ export async function setPlayerSettings(playerId: string, settings: PlayerSettin
     await rename(tmpFile, file)
 
     cachedConfig = Promise.resolve(next)
-    useLogger('hubConfig').info(`Player '${settings.name ?? playerId}' is now ${settings.hidden ? 'hidden from' : 'visible in'} Plex`)
+    useLogger('hubConfig').debug(`Saved settings of player '${playerId}' to '${file}'`)
     return settings
   })
   pendingWrite = write.catch(() => undefined)

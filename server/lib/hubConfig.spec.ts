@@ -45,21 +45,26 @@ describe('hubConfig', () => {
     expect(await loadHubConfig()).toEqual({ version: 1, players: {} })
   })
 
+  it('ignores fields it does not know, e.g. names written by older versions', async () => {
+    await writeFile(join(dir, 'settings.json'), JSON.stringify({ version: 1, players: { a: { name: 'Kitchen', hidden: true } } }))
+    expect(await loadHubConfig()).toEqual({ version: 1, players: { a: { hidden: true } } })
+  })
+
   it('ignores malformed player entries', async () => {
     await writeFile(join(dir, 'settings.json'), JSON.stringify({ players: { a: { hidden: true }, b: 'nope', c: { hidden: 'yes' } } }))
     expect(await loadHubConfig()).toEqual({ version: 1, players: { a: { hidden: true }, c: { hidden: false } } })
   })
 
   it('persists player settings as readable json', async () => {
-    await setPlayerSettings('00:04:20:aa:bb:cc', { name: 'Kitchen', hidden: true })
+    await setPlayerSettings('00:04:20:aa:bb:cc', { hidden: true })
 
     expect(await isPlayerHidden('00:04:20:aa:bb:cc')).toBe(true)
     const file = JSON.parse(await readFile(join(dir, 'settings.json'), 'utf8'))
-    expect(file).toEqual({ version: 1, players: { '00:04:20:aa:bb:cc': { name: 'Kitchen', hidden: true } } })
+    expect(file).toEqual({ version: 1, players: { '00:04:20:aa:bb:cc': { hidden: true } } })
 
     // Survives a restart
     setConfigDir(dir)
-    expect(await getPlayerSettings('00:04:20:aa:bb:cc')).toEqual({ name: 'Kitchen', hidden: true })
+    expect(await getPlayerSettings('00:04:20:aa:bb:cc')).toEqual({ hidden: true })
   })
 
   it('keeps all concurrent updates', async () => {

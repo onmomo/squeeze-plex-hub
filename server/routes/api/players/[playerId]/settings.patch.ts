@@ -26,7 +26,9 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    return await setPlayerSettings(playerId, { name: player.playerInfo.name, hidden: body.hidden })
+    const settings = await setPlayerSettings(playerId, { hidden: body.hidden })
+    logger.info(`Player '${player.playerInfo.name}' is now ${settings.hidden ? 'hidden from' : 'visible in'} Plex`)
+    return settings
   } catch (error) {
     logger.error(`Failed to save settings for player '${player.playerInfo.name}':`, error)
     throw createError({ statusCode: 500, statusMessage: 'Failed to save settings, check that the config directory is writable' })

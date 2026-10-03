@@ -27,11 +27,11 @@ describe('PATCH /api/players/:playerId/settings', () => {
     ;(setPlayerSettings as Mock).mockImplementation(async (_id, settings) => settings)
   })
 
-  it('hides a player and stores its name for readability', async () => {
+  it('hides a player', async () => {
     ;(readBody as Mock).mockResolvedValue({ hidden: true })
     const result = await settingsPatchHandler(createEventMock())
-    expect(setPlayerSettings).toHaveBeenCalledWith(playerId, { name: 'Kitchen', hidden: true })
-    expect(result).toEqual({ name: 'Kitchen', hidden: true })
+    expect(setPlayerSettings).toHaveBeenCalledWith(playerId, { hidden: true })
+    expect(result).toEqual({ hidden: true })
   })
 
   it('rejects a body without boolean hidden flag', async () => {

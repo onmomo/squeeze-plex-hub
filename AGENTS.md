@@ -202,7 +202,8 @@ forwards to the fake Plex server on the test host. Reproduce LMS-facing bugs her
 
 - Runtime discovery state lives in `useStorage('DISCOVERY')`; user choices that must survive restarts live in
   `config/settings.json`, read and written only through `server/lib/hubConfig.ts` (cached, serialized atomic writes).
-- Schema is versioned and keyed per player: `{ "version": 1, "players": { "<playerId>": { "name": "…", "hidden": true } } }`.
+- Schema is versioned and keyed per player: `{ "version": 1, "players": { "<playerId>": { "hidden": true } } }`.
+  Do not store player names or other LMS data here, LMS owns them.
   Add new settings as optional fields (or a sibling top-level key, e.g. `groups`), never break existing files.
 - Demo mode writes to `config/settings.demo.json` instead.
 
