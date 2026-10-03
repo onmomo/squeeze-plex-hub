@@ -7,7 +7,9 @@ import type { AddressInfo } from 'node:net'
  * It serves exactly what Squeeze Plex Hub and LMS need from a PMS:
  * - `POST /playQueues` creates a play queue for an album, honouring the `key` parameter as selected item (like PMS does)
  * - `GET /playQueues/:id` returns a previously created play queue
- * - `GET /library/parts/:id/file.wav` streams a silent WAV file (the audio LMS fetches for a track)
+ * - `GET /library/parts/:id/file.wav` streams a silent WAV file (the audio LMS fetches for a track) at real-time rate.
+ *   squeezelite's ALSA null output consumes audio as fast as it gets it, so throttling the stream is what keeps a track
+ *   playing for its duration instead of finishing within moments.
  *
  * Every request is recorded so tests can assert which tracks LMS actually streamed.
  */
@@ -49,6 +51,25 @@ function silentWav(seconds: number): Buffer {
   header.write('data', 36)
   header.writeUInt32LE(dataSize, 40)
   return Buffer.concat([header, Buffer.alloc(dataSize)])
+}
+
+const BYTES_PER_SECOND = SAMPLE_RATE * 2
+const CHUNK_INTERVAL_MS = 100
+
+function streamRealtime(res: http.ServerResponse, wav: Buffer) {
+  // one second ahead so the player can start right away, afterwards as fast as it plays
+  let offset = 44 + BYTES_PER_SECOND
+  res.write(wav.subarray(0, offset))
+  const timer = setInterval(() => {
+    const end = Math.min(offset + (BYTES_PER_SECOND * CHUNK_INTERVAL_MS) / 1000, wav.length)
+    res.write(wav.subarray(offset, end))
+    offset = end
+    if (offset >= wav.length) {
+      clearInterval(timer)
+      res.end()
+    }
+  }, CHUNK_INTERVAL_MS)
+  res.on('close', () => clearInterval(timer))
 }
 
 const escapeXml = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;')
@@ -119,7 +140,8 @@ export async function startFakePlexServer(): Promise<FakePlexServer> {
 
     if (/^\/library\/parts\/\d+\/file\.wav$/.test(url.pathname)) {
       res.writeHead(200, { 'Content-Type': 'audio/x-wav', 'Content-Length': wav.length })
-      return req.method === 'HEAD' ? res.end() : res.end(wav)
+      if (req.method === 'HEAD') return res.end()
+      return streamRealtime(res, wav)
     }
 
     res.writeHead(404)
