@@ -2,7 +2,7 @@ import dns from 'node:dns'
 import axios from 'axios'
 import { afterAll, beforeAll, beforeEach } from 'vitest'
 import { startFakePlexServer, type FakePlexServer } from './fakePlexServer'
-import { PLEX_HOST, PLAYER_MAC, startLmsStack, waitFor, type LmsStack } from './lmsStack'
+import { PLEX_HOST, PLAYER_MAC, PLAYER2_MAC, startLmsStack, waitFor, type LmsStack } from './lmsStack'
 import { registerLms, startHub, type Hub } from './hub'
 
 /**
@@ -12,6 +12,7 @@ import { registerLms, startHub, type Hub } from './hub'
  */
 
 export const PLAYER_ID = PLAYER_MAC
+export const PLAYER2_ID = PLAYER2_MAC
 export const DEFAULT_VOLUME = 50
 
 export interface LmsStatus {
@@ -31,7 +32,7 @@ export interface LmsStatus {
 
 const partIdOf = (url: string | undefined) => url?.match(/\/library\/parts\/(\d+)\//)?.[1]
 
-export function useE2eStack() {
+export function useE2eStack(options: { secondPlayer?: boolean } = {}) {
   let plex: FakePlexServer
   let lms: LmsStack
   let hub: Hub
@@ -44,7 +45,7 @@ export function useE2eStack() {
     axios.defaults.lookup = (hostname: string, options: any, callback: any) =>
       dns.lookup(hostname === PLEX_HOST ? '127.0.0.1' : hostname, options, callback)
     plex = await startFakePlexServer()
-    lms = await startLmsStack(plex.port)
+    lms = await startLmsStack(plex.port, options)
     hub = await startHub()
     await registerLms(hub.storage, lms.host, lms.port)
   }, 300_000)
@@ -57,6 +58,11 @@ export function useE2eStack() {
   })
 
   beforeEach(async () => {
+    if (options.secondPlayer) {
+      await lmsCommand('sync', '-')
+      await lms.stub.requestAsync([PLAYER2_ID, ['sync', '-']])
+      await lms.stub.requestAsync([PLAYER2_ID, ['playlist', 'clear']])
+    }
     await lmsCommand('playlist', 'clear')
     await lmsCommand('playlist', 'repeat', '0')
     await lmsCommand('playlist', 'shuffle', '0')
@@ -74,10 +80,10 @@ export function useE2eStack() {
   })
 
   /** Sends a request to the hub like Plexamp does to the player it controls */
-  async function hubRequest(path: string, query: Record<string, string> = {}) {
+  async function hubRequest(path: string, query: Record<string, string> = {}, targetPlayerId = PLAYER_ID) {
     return fetch(`${hub.url}${path}?${new URLSearchParams(query)}`, {
       headers: {
-        'X-Plex-Target-Client-Identifier': PLAYER_ID,
+        'X-Plex-Target-Client-Identifier': targetPlayerId,
         'X-Plex-Client-Identifier': 'e2e-plexamp',
         'X-Plex-Device-Name': 'E2E Plexamp'
       }
