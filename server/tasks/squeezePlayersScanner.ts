@@ -1,6 +1,8 @@
 import useLogger from '../composables/useLogger'
 import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc-x'
 import type { ServerInfo } from 'lms-discovery'
+import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
+import { playerCapabilitiesKey, reconcileStereoPairs, supportsStereoPair } from '../lib/stereoPair'
 import { isDemoMode } from '../lib/demoMode'
 
 export default defineTask({
@@ -44,9 +46,33 @@ export async function runSqueezePlayersScanner() {
         } else {
           logger.info(`Discovered ${playerInfos.length} player(s) on LMS '${server.name}' at ${server.ip}, storing player info`)
           await storage.setItem(`players/${server.uuid}`, playerInfos)
+          await storePlayerCapabilities(server, playerInfos)
           logger.debug(`Stored player infos for LMS '${server.name}' (${server.ip})`)
         }
       }
     }
   })
+
+  // Restore stereo pairs that LMS lost (restart, player reboot, sync group changed), after the players are up to date
+  try {
+    await reconcileStereoPairs()
+  } catch (error) {
+    logger.warn('Failed to check stereo pairs:', error)
+  }
+}
+
+/**
+ * Remembers which players offer the output channel setting that stereo pairs need. A player that does not answer keeps its
+ * last known capabilities.
+ */
+async function storePlayerCapabilities(server: ServerInfo, playerInfos: IPlayerInfo[]) {
+  const storage = useStorage('DISCOVERY')
+  const stub = new SqueezeServerStub(`http://${server.ip}:${server.jsonPort || '9000'}`)
+  for (const { playerid } of playerInfos) {
+    try {
+      await storage.setItem(playerCapabilitiesKey(playerid), { outputChannels: await supportsStereoPair(stub, playerid) })
+    } catch (error) {
+      useLogger('squeezePlayersScanner').debug(`Could not read the capabilities of player '${playerid}':`, error)
+    }
+  }
 }

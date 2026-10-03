@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { readBody } from 'h3'
 import usePlayers from '../../composables/usePlayers'
 import { findStereoPair, saveStereoPair } from '../../lib/hubConfig'
-import { formStereoPair } from '../../lib/stereoPair'
+import usePlayerInfo from '../../composables/usePlayerInfo'
+import { formStereoPair, supportsStereoPair } from '../../lib/stereoPair'
 import pairsPostHandler from './pairs.post'
 
 vi.mock('../../composables/useLogger', () => ({
@@ -10,7 +11,8 @@ vi.mock('../../composables/useLogger', () => ({
 }))
 vi.mock('../../composables/usePlayers', () => ({ default: vi.fn() }))
 vi.mock('../../lib/hubConfig', () => ({ findStereoPair: vi.fn(), saveStereoPair: vi.fn() }))
-vi.mock('../../lib/stereoPair', () => ({ formStereoPair: vi.fn() }))
+vi.mock('../../composables/usePlayerInfo', () => ({ default: vi.fn() }))
+vi.mock('../../lib/stereoPair', () => ({ formStereoPair: vi.fn(), supportsStereoPair: vi.fn() }))
 vi.mock('h3', async () => {
   const actual = await vi.importActual<typeof import('h3')>('h3')
   return { ...actual, readBody: vi.fn() }
@@ -29,6 +31,8 @@ describe('POST /api/pairs', () => {
     ])
     ;(findStereoPair as Mock).mockResolvedValue(undefined)
     ;(formStereoPair as Mock).mockResolvedValue(undefined)
+    ;(supportsStereoPair as Mock).mockResolvedValue(true)
+    ;(usePlayerInfo as Mock).mockImplementation(async (id: string) => ({ playerInfo: { playerid: id, name: id }, serverStub: {} }))
     ;(saveStereoPair as Mock).mockImplementation(async (pair) => pair)
   })
 
@@ -42,6 +46,12 @@ describe('POST /api/pairs', () => {
     ['with the same player twice', { name: 'x', leftId: 'aa', rightId: 'aa' }]
   ])('rejects a body %s', async (_name, invalid) => {
     ;(readBody as Mock).mockResolvedValue(invalid)
+    await expect(pairsPostHandler(event)).rejects.toMatchObject({ statusCode: 400 })
+    expect(formStereoPair).not.toHaveBeenCalled()
+  })
+
+  it('rejects a player without output channel setting', async () => {
+    ;(supportsStereoPair as Mock).mockImplementation(async (_stub, id: string) => id !== 'bb')
     await expect(pairsPostHandler(event)).rejects.toMatchObject({ statusCode: 400 })
     expect(formStereoPair).not.toHaveBeenCalled()
   })

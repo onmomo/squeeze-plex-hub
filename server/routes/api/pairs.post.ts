@@ -2,7 +2,8 @@ import { createError, defineEventHandler, readBody } from 'h3'
 import useLogger from '../../composables/useLogger'
 import usePlayers from '../../composables/usePlayers'
 import { findStereoPair, saveStereoPair, type StereoPair } from '../../lib/hubConfig'
-import { formStereoPair } from '../../lib/stereoPair'
+import usePlayerInfo from '../../composables/usePlayerInfo'
+import { formStereoPair, supportsStereoPair } from '../../lib/stereoPair'
 
 /**
  * Creates a stereo pair of two players of the same LMS, e.g. `{ "name": "Kitchen", "leftId": "<mac>", "rightId": "<mac>" }`.
@@ -36,6 +37,15 @@ export default defineEventHandler(async (event) => {
   for (const playerId of [leftId, rightId]) {
     if (await findStereoPair(playerId)) {
       throw createError({ statusCode: 409, statusMessage: `Player '${playerId}' is already part of a stereo pair` })
+    }
+  }
+
+  for (const { playerInfo, serverStub } of await Promise.all([leftId, rightId].map((id) => usePlayerInfo(id)))) {
+    if (!(await supportsStereoPair(serverStub, playerInfo.playerid).catch(() => false))) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: `Player '${playerInfo.name}' cannot output a single channel, Lyrion offers no output channel setting for it`
+      })
     }
   }
 

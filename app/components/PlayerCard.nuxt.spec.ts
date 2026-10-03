@@ -12,7 +12,8 @@ const player: DashboardPlayer = {
   firmware: '8.0.1',
   imageUrl: 'http://192.168.1.20:9000/html/images/Players/baby_250x250.png',
   hidden: false,
-  saving: false
+  saving: false,
+  canPair: true
 }
 
 describe('PlayerCard', () => {

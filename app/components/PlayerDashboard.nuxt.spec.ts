@@ -170,4 +170,18 @@ describe('PlayerDashboard', () => {
     ).toEqual(['bb'])
     wrapper.unmount()
   })
+
+  it('only offers players with output channel setting as stereo partners', async () => {
+    players = [player('aa', 'Kitchen', false), { ...player('bb', 'Old Squeezebox', false), canPair: false }, player('cc', 'Office', false)]
+    const wrapper = await mountDashboard()
+    wrapper.findAllComponents(PlayerCard)[0]!.vm.$emit('pair')
+    await flushPromises()
+    expect(
+      wrapper
+        .findComponent(PairDialog)
+        .props('candidates')
+        .map((candidate: { id: string }) => candidate.id)
+    ).toEqual(['cc'])
+    wrapper.unmount()
+  })
 })

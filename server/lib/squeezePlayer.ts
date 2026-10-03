@@ -29,6 +29,7 @@ export interface PlayerStatus {
 /** Values of the LMS player pref `outputChannels` */
 const OUTPUT_CHANNELS = { stereo: 0, left: 1, right: 2 } as const
 export type OutputChannels = keyof typeof OUTPUT_CHANNELS
+const OUTPUT_CHANNEL_NAMES: Record<number, OutputChannels | 'combined'> = { 0: 'stereo', 1: 'left', 2: 'right', 3: 'combined' }
 
 /**
  * @see https://github.com/elParaguayo/LMS-CLI-Documentation
@@ -114,6 +115,23 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
    */
   async setOutputChannels(channels: OutputChannels) {
     return this.stub.requestAsync([this.id, ['playerpref', 'outputChannels', OUTPUT_CHANNELS[channels].toString()]])
+  }
+
+  /**
+   * Reads the player pref `outputChannels`. Undefined if the player has none: LMS only offers it to players of the Squeezebox 2
+   * family (`hasOutputChannels`), the others have no such pref.
+   */
+  async getOutputChannels(): Promise<OutputChannels | 'combined' | undefined> {
+    const response: any = await this.stub.requestAsync([this.id, ['playerpref', 'outputChannels', '?']])
+    return OUTPUT_CHANNEL_NAMES[Number.parseInt(response?._p2)]
+  }
+
+  /**
+   * Whether the player is connected to LMS right now.
+   */
+  async isConnected(): Promise<boolean> {
+    const response: any = await this.stub.requestAsync([this.id, ['connected', '?']])
+    return Number.parseInt(response?._connected) === 1
   }
 
   async status() {

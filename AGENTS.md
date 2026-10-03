@@ -346,6 +346,11 @@ A **stereo pair** is one target (`kind: 'stereoPair'`) under the id of its left 
 Creating a pair (`server/lib/stereoPair.ts`) only issues LMS commands: the right player is synced to the left one and the
 players get the pref `outputChannels` 1 (left) / 2 (right), 0 = stereo. LMS applies the channel only while the player is
 synced, and playback commands to the left player apply to the whole sync group (verified in `test/e2e/stereoPair.e2e.spec.ts`).
+The scanner (every minute) records which players have the `outputChannels` pref (`playerCapabilities/{id}`; LMS only has it for
+the Squeezebox 2 family, `hasOutputChannels`), only those can be paired (`canPair` in `/api/players`, checked live by
+`POST /api/pairs`). It also calls `reconcileStereoPairs()`: an intact pair is left alone, a lost sync group or output channel is
+restored, a pair with a disconnected member is reported `offline` (`pairStatus/{leftId}`, shown on the card). Which member is
+the sync master does not matter, LMS applies playback commands of either member to the group (e2e covered).
 The hub never touches audio. The dashboard renders a pair as a `DashboardItem` of kind `'pair'` (one card for the left player).
 Do not announce players directly from storage.
 

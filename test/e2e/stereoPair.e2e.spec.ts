@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dissolveStereoPair, formStereoPair } from '../../server/lib/stereoPair'
+import { dissolveStereoPair, formStereoPair, reconcileStereoPair, supportsStereoPair } from '../../server/lib/stereoPair'
 import { PLAYER2_ID, PLAYER_ID, useE2eStack } from './harness'
 import { waitFor } from './lmsStack'
 
@@ -94,5 +94,36 @@ describe('e2e: hub -> LMS synced stereo pair', () => {
     expect(dissolved.syncgroups_loop ?? []).toHaveLength(0)
     expect(await pref(PLAYER_ID)).toBe('0')
     expect(await pref(PLAYER2_ID)).toBe('0')
+  })
+
+  it('detects players that offer the output channel setting', async () => {
+    expect(await supportsStereoPair(e2e.lms.stub, PLAYER_ID)).toBe(true)
+    expect(await supportsStereoPair(e2e.lms.stub, PLAYER2_ID)).toBe(true)
+  })
+
+  it('works no matter which member is the sync master', async () => {
+    // Left synced to right: the right player is the master of the group
+    await e2e.lms.stub.requestAsync([PLAYER_ID, ['sync', PLAYER2_ID]])
+    await playOn(PLAYER_ID, 2)
+    await waitUntilPlaying()
+    await waitFor(async () => (await status2()).mode === 'play', 15_000)
+    expect((await hubRequest('/player/playback/pause', { commandID: '2' }, PLAYER_ID)).status).toBe(200)
+    await waitFor(async () => (await lmsStatus()).mode === 'pause' && (await status2()).mode === 'pause', 15_000)
+  })
+
+  it('reconcile restores a pair that lost its sync and output channels', async () => {
+    const pair = { name: 'E2E', leftId: PLAYER_ID, rightId: PLAYER2_ID }
+    await formStereoPair(PLAYER_ID, PLAYER2_ID)
+    expect(await reconcileStereoPair(pair)).toBe('ok')
+
+    // Somebody ungroups the players in LMS and resets the output of the right one
+    await e2e.lms.stub.requestAsync([PLAYER2_ID, ['sync', '-']])
+    await e2e.lms.stub.requestAsync([PLAYER2_ID, ['playerpref', 'outputChannels', '0']])
+    expect(await reconcileStereoPair(pair)).toBe('repaired')
+
+    const groups: any = await e2e.lms.stub.requestAsync(['', ['syncgroups', '?']])
+    expect(groups.syncgroups_loop[0].sync_members.split(',').sort()).toEqual([PLAYER_ID, PLAYER2_ID].sort())
+    expect(await pref(PLAYER2_ID)).toBe('2')
+    expect(await reconcileStereoPair(pair)).toBe('ok')
   })
 })

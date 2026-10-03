@@ -3,7 +3,8 @@
     <header class="channel-head">
       <span class="channel-model">
         <span class="channel-model-name" :title="modelLabel">{{ modelLabel }}</span>
-        <span v-if="player.hidden" class="channel-state">Hidden</span>
+        <span v-if="pair?.problem" class="channel-state">{{ pair.problem === 'offline' ? 'Offline' : 'Not in sync' }}</span>
+        <span v-else-if="player.hidden" class="channel-state">Hidden</span>
       </span>
       <UDropdownMenu :items="menuItems" :content="{ align: 'end' }">
         <UButton
@@ -94,7 +95,12 @@ const toast = useToast()
 const menuItems = computed<DropdownMenuItem[]>(() => [
   props.pair
     ? { label: 'Dissolve stereo pair', icon: 'i-lucide-unlink', disabled: props.player.saving, onSelect: () => emit('dissolve') }
-    : { label: 'Pair as stereo…', icon: 'i-lucide-audio-lines', disabled: props.player.saving, onSelect: () => emit('pair') },
+    : {
+        label: 'Pair as stereo…',
+        icon: 'i-lucide-audio-lines',
+        disabled: props.player.saving || !props.player.canPair,
+        onSelect: () => emit('pair')
+      },
   {
     label: props.player.hidden ? 'Show in Plexamp' : 'Hide from Plexamp',
     icon: props.player.hidden ? 'i-lucide-radio' : 'i-lucide-eye-off',

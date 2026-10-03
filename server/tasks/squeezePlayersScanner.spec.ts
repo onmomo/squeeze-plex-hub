@@ -1,8 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc-x'
 import type { ServerInfo } from 'lms-discovery'
 import squeezePlayersScannerTask, { runSqueezePlayersScanner } from './squeezePlayersScanner'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
+import { reconcileStereoPairs } from '../lib/stereoPair'
 
 // Mocks
 vi.mock('../composables/useLogger', () => ({
@@ -22,6 +23,8 @@ vi.stubGlobal('useStorage', () => ({
   getKeys: mockGetKeys,
   getItem: mockGetItem
 }))
+
+vi.mock('../lib/stereoPair', () => ({ reconcileStereoPairs: vi.fn() }))
 
 // Mock composables
 vi.mock('lms-squeeze-rpc-x', async () => {
@@ -90,5 +93,18 @@ describe('squeezePlayersScanner plugin', () => {
     expect(await (squeezePlayersScannerTask as any).run({})).toEqual({ result: 'skipped' })
     expect(mockGetKeys).not.toHaveBeenCalled()
     vi.stubGlobal('useRuntimeConfig', () => ({ appVersion: '1.2.3-test' }))
+  })
+
+  it('restores stereo pairs after storing the players, even if that fails', async () => {
+    const fakeServer = { name: 'Test LMS', ip: '192.168.1.2', uuid: 'uuid-123', jsonPort: '9001' } as ServerInfo
+    mockGetKeys.mockResolvedValue(['servers/uuid-123'])
+    mockGetItem.mockResolvedValue(fakeServer)
+    ;(SqueezeServer as unknown as Mock).mockImplementation(function () {
+      return { getPlayerInfosAsync: vi.fn().mockResolvedValue([]) }
+    })
+    ;(reconcileStereoPairs as Mock).mockRejectedValue(new Error('boom'))
+
+    await expect(runSqueezePlayersScanner()).resolves.toBeUndefined()
+    expect(reconcileStereoPairs).toHaveBeenCalledTimes(1)
   })
 })

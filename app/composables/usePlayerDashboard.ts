@@ -14,6 +14,8 @@ export interface DashboardPlayer {
   hidden: boolean
   // A settings change is being saved
   saving: boolean
+  // Lyrion offers the output channel setting of this player, needed for stereo pairs. Unknown counts as yes
+  canPair: boolean
 }
 
 /**
@@ -25,6 +27,8 @@ export interface DashboardPair {
   right: DashboardPlayer
   // The left player's own LMS name, `player.name` is the pair name
   leftName: string
+  // `offline`: a member is not connected, `error`: the hub could not restore the pair. Both are checked every minute
+  problem?: 'offline' | 'error'
 }
 
 /**
@@ -42,7 +46,7 @@ export interface ServerSection {
 
 const POLL_INTERVAL_MS = 5000
 
-function toDashboardPlayer({ playerInfo, serverInfo, settings }: PlayerServerInfo, savingHidden?: boolean): DashboardPlayer {
+function toDashboardPlayer({ playerInfo, serverInfo, settings, canPair }: PlayerServerInfo, savingHidden?: boolean): DashboardPlayer {
   return {
     id: playerInfo.playerid,
     name: playerInfo.name,
@@ -52,7 +56,8 @@ function toDashboardPlayer({ playerInfo, serverInfo, settings }: PlayerServerInf
     firmware: playerInfo.firmware,
     imageUrl: `http://${serverInfo.ip}:${serverInfo.jsonPort}/html/images/Players/${playerInfo.model}_250x250.png`,
     hidden: savingHidden ?? settings?.hidden ?? false,
-    saving: savingHidden !== undefined
+    saving: savingHidden !== undefined,
+    canPair: canPair !== false
   }
 }
 
@@ -100,7 +105,11 @@ export function usePlayerDashboard() {
               kind: 'pair',
               id: player.id,
               player: { ...player, name: entry.pair.name },
-              pair: { right: toDashboardPlayer(partner), leftName: player.name }
+              pair: {
+                right: toDashboardPlayer(partner),
+                leftName: player.name,
+                problem: entry.pair.state === 'offline' || entry.pair.state === 'error' ? entry.pair.state : undefined
+              }
             }
           : { kind: 'player', id: player.id, player }
       ;(player.hidden ? section.hiddenItems : section.items).push(item)
@@ -125,7 +134,9 @@ export function usePlayerDashboard() {
   function pairCandidates(player: DashboardPlayer): DashboardPlayer[] {
     const serverId = players.value.find((entry) => entry.playerInfo.playerid === player.id)?.serverInfo.uuid
     return players.value
-      .filter((entry) => entry.serverInfo.uuid === serverId && entry.playerInfo.playerid !== player.id && !entry.pair)
+      .filter(
+        (entry) => entry.serverInfo.uuid === serverId && entry.playerInfo.playerid !== player.id && !entry.pair && entry.canPair !== false
+      )
       .map((entry) => toDashboardPlayer(entry))
       .sort((a, b) => a.name.localeCompare(b.name))
   }
