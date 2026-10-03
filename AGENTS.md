@@ -136,9 +136,14 @@ Lyrion Music Server with a real headless squeezelite player, started with [testc
 - `lmsStack.ts` — LMS (`lmscommunity/lyrionmusicserver`) + squeezelite (`giof71/squeezelite`, ALSA `null` output) on a Docker
   network. No discovery: squeezelite connects to LMS by alias and the test registers LMS in storage the way `lmsScanner` would.
 - `fakePlexServer.ts` — stands in for PMS: play queues (`POST /playQueues` honours `key`, `GET /playQueues/:id`) and silent WAV
-  tracks. It records requests, so tests can assert which tracks LMS actually streamed.
-- `hub.ts` — mounts the real route handlers on an h3 server with in-memory `useStorage` and a `runTask` shim. Nitro plugins
-  (mDNS, GDM, timeline publisher) do not run.
+  tracks streamed in real-time (with `Range` support for seeking). Tests change play queues like a Plex client does on PMS
+  (`addToPlayQueue`, `moveInPlayQueue`, `removeFromPlayQueue`, `extraTracks` for radio-like additions). It records requests, so
+  tests can assert which tracks LMS actually streamed.
+- `hub.ts` — mounts the real player route handlers (playback + `timeline/poll`) on an h3 server with in-memory `useStorage` and a
+  `runTask` shim. Nitro plugins (mDNS, GDM, timeline publisher) do not run.
+- `harness.ts` — `useE2eStack()` starts the stack per spec file, resets the player before each test and provides helpers
+  (`playAlbumFrom`, `hubRequest`, `lmsStatus`, `lmsPlaylistParts`, `waitFor*`). Assert LMS state via JSON-RPC `status`, never sleep.
+  A track only really plays once LMS reports no `waitingToPlay`: while buffering, `time` is stale and `pause` is ignored.
 
 LMS resolves hostnames with its own DNS client that ignores `/etc/hosts`, so a socat relay joins the network as `plex` and
 forwards to the fake Plex server on the test host. Reproduce LMS-facing bugs here before fixing them.
