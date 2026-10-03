@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { demoServers } from '../lib/demoData'
-import { seedDemoData } from './00.demoMode'
+import demoModePlugin, { seedDemoData } from './00.demoMode'
 
 vi.mock('../composables/useLogger', () => ({
   default: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })
@@ -27,6 +27,12 @@ describe('demoMode plugin', () => {
       expect(setItem).toHaveBeenCalledWith(`servers/${server.uuid}`, server)
       expect(setItem).toHaveBeenCalledWith(`players/${server.uuid}`, players)
     }
+  })
+
+  it('seeds demo data on startup', async () => {
+    vi.stubGlobal('useRuntimeConfig', () => ({ demo: true }))
+    await (demoModePlugin as any)()
+    expect(setItem).toHaveBeenCalledTimes(demoServers.length * 2)
   })
 
   it('points the demo servers to a real LMS for player images', async () => {

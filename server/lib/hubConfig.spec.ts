@@ -24,6 +24,12 @@ describe('hubConfig', () => {
     expect(configFilePath()).toBe(join(dir, 'settings.json'))
   })
 
+  it('keeps demo settings in a separate file', () => {
+    vi.stubGlobal('useRuntimeConfig', () => ({ demo: true }))
+    expect(configFilePath()).toBe(join(dir, 'settings.demo.json'))
+    vi.stubGlobal('useRuntimeConfig', () => ({ appVersion: '1.2.3-test' }))
+  })
+
   it('makes all players visible when no settings file exists', async () => {
     expect(await loadHubConfig()).toEqual({ version: 1, players: {} })
     expect(await isPlayerHidden('00:04:20:aa:bb:cc')).toBe(false)
@@ -31,6 +37,11 @@ describe('hubConfig', () => {
 
   it('falls back to defaults if the settings file is invalid', async () => {
     await writeFile(join(dir, 'settings.json'), '{ not json')
+    expect(await loadHubConfig()).toEqual({ version: 1, players: {} })
+  })
+
+  it('falls back to defaults if the settings file has no players', async () => {
+    await writeFile(join(dir, 'settings.json'), 'null')
     expect(await loadHubConfig()).toEqual({ version: 1, players: {} })
   })
 

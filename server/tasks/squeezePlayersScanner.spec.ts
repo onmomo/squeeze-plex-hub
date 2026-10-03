@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc-x'
 import type { ServerInfo } from 'lms-discovery'
-import { runSqueezePlayersScanner } from './squeezePlayersScanner'
+import squeezePlayersScannerTask, { runSqueezePlayersScanner } from './squeezePlayersScanner'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 
 // Mocks
@@ -77,5 +77,18 @@ describe('squeezePlayersScanner plugin', () => {
     await runSqueezePlayersScanner()
 
     expect(mockSetItem).toHaveBeenCalledWith('players/uuid-123', fakePlayerInfos)
+  })
+
+  it('scans for players when run as task', async () => {
+    mockGetKeys.mockResolvedValue([])
+    expect(await (squeezePlayersScannerTask as any).run({})).toEqual({ result: 'ok' })
+    expect(mockGetKeys).toHaveBeenCalledWith('servers/')
+  })
+
+  it('skips scanning in demo mode', async () => {
+    vi.stubGlobal('useRuntimeConfig', () => ({ demo: true }))
+    expect(await (squeezePlayersScannerTask as any).run({})).toEqual({ result: 'skipped' })
+    expect(mockGetKeys).not.toHaveBeenCalled()
+    vi.stubGlobal('useRuntimeConfig', () => ({ appVersion: '1.2.3-test' }))
   })
 })

@@ -3,7 +3,7 @@ import { describe, it, vi, beforeEach, afterEach, expect } from 'vitest'
 import type { Mock } from 'vitest'
 import { resolvePlexTargets, type PlexTarget } from '../lib/plexTargets'
 
-import { runGdmAnnouncer } from './gdmAnnouncer'
+import gdmAnnouncerPlugin, { runGdmAnnouncer } from './gdmAnnouncer'
 
 vi.mock('../composables/useLogger', () => ({
   default: () => ({
@@ -131,5 +131,17 @@ describe('gdmAnnouncer', () => {
     runGdmAnnouncer()
     errorHandler(new Error('test error'))
     expect(server.close).toHaveBeenCalled()
+  })
+
+  it('starts the announcer on startup', () => {
+    ;(gdmAnnouncerPlugin as any)()
+    expect(server.bind).toHaveBeenCalledWith(32412)
+  })
+
+  it('does not announce players in demo mode', () => {
+    vi.stubGlobal('useRuntimeConfig', () => ({ demo: true }))
+    ;(gdmAnnouncerPlugin as any)()
+    expect(dgram.createSocket).not.toHaveBeenCalled()
+    vi.stubGlobal('useRuntimeConfig', () => ({ appVersion: '1.2.3-test' }))
   })
 })
