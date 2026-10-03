@@ -50,6 +50,8 @@
   --rack-faceplate: #e3e5e5;
   --rack-faceplate-sheen: linear-gradient(180deg, #eef0f0 0%, #dcdfdf 100%);
   --rack-panel: #f4f4f3;
+  /* Recessed bay in a rack plate that holds the player modules */
+  --rack-bay: #c3c7c8;
   --rack-edge: #a9aeaf;
   --rack-edge-highlight: rgba(255, 255, 255, 0.8);
   --rack-engrave: #1b1d1d;
@@ -75,7 +77,8 @@
   --rack-bg: #0d1211;
   --rack-faceplate: #161d1c;
   --rack-faceplate-sheen: linear-gradient(180deg, #1c2423 0%, #131918 100%);
-  --rack-panel: #1b2322;
+  --rack-panel: #222b2a;
+  --rack-bay: #0a0e0e;
   --rack-edge: #2b3635;
   --rack-edge-highlight: rgba(255, 255, 255, 0.06);
   --rack-engrave: #efebeb;

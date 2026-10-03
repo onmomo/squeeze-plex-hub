@@ -172,6 +172,14 @@ const standbyOpen = ref(false)
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
   gap: 1rem;
+  /* Recessed bay: the players are modules mounted in this server's plate */
+  padding: 0.75rem;
+  background: var(--rack-bay);
+  border-radius: 0.375rem;
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 1px 0 var(--rack-edge-highlight);
 }
 
 .unit-empty {
@@ -206,7 +214,7 @@ const standbyOpen = ref(false)
 }
 
 .standby-grid {
-  padding-top: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 @media (max-width: 640px) {
@@ -217,6 +225,7 @@ const standbyOpen = ref(false)
 
   .channel-grid {
     grid-template-columns: 1fr;
+    padding: 0.5rem;
   }
 }
 </style>
