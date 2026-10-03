@@ -28,7 +28,7 @@ jobs:
         run: yarn build
       - name: Run tests with coverage
         run: yarn test:coverage
-      - name: Run e2e tests (real LMS + squeezelite in Docker, see test/e2e)
+      - name: Run e2e tests
         run: yarn test:e2e
       - name: Upload coverage to Codecov
         if: ${{ !cancelled() }}
