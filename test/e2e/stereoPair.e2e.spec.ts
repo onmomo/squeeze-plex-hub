@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { dissolveStereoPair, formStereoPair } from '../../server/lib/stereoPair'
 import { PLAYER2_ID, PLAYER_ID, useE2eStack } from './harness'
 import { waitFor } from './lmsStack'
 
@@ -69,10 +70,29 @@ describe('e2e: hub -> LMS synced stereo pair', () => {
     await waitFor(async () => (await status2()).mode === 'play', 15_000)
   })
 
-  it('output channel pref can be set via LMS CLI', async () => {
-    await e2e.lms.stub.requestAsync([PLAYER_ID, ['playerpref', 'outputChannels', '1']])
-    const left: any = await e2e.lms.stub.requestAsync([PLAYER_ID, ['playerpref', 'outputChannels', '?']])
-    expect(left._p2).toBe('1')
-    await e2e.lms.stub.requestAsync([PLAYER_ID, ['playerpref', 'outputChannels', '0']])
+  const pref = async (playerId: string) => {
+    const response: any = await e2e.lms.stub.requestAsync([playerId, ['playerpref', 'outputChannels', '?']])
+    return response._p2
+  }
+
+  it('formStereoPair syncs the players and sets left and right output, dissolveStereoPair resets them', async () => {
+    await formStereoPair(PLAYER_ID, PLAYER2_ID)
+
+    const groups: any = await e2e.lms.stub.requestAsync(['', ['syncgroups', '?']])
+    expect(groups.syncgroups_loop).toHaveLength(1)
+    expect(groups.syncgroups_loop[0].sync_members.split(',').sort()).toEqual([PLAYER_ID, PLAYER2_ID].sort())
+    expect(await pref(PLAYER_ID)).toBe('1')
+    expect(await pref(PLAYER2_ID)).toBe('2')
+
+    // Playing on the left player (the pair's Plex target) reaches the right one
+    await playOn(PLAYER_ID, 1)
+    await waitUntilPlaying()
+    await waitFor(async () => (await status2()).mode === 'play', 15_000)
+
+    await dissolveStereoPair(PLAYER_ID, PLAYER2_ID)
+    const dissolved: any = await e2e.lms.stub.requestAsync(['', ['syncgroups', '?']])
+    expect(dissolved.syncgroups_loop ?? []).toHaveLength(0)
+    expect(await pref(PLAYER_ID)).toBe('0')
+    expect(await pref(PLAYER2_ID)).toBe('0')
   })
 })

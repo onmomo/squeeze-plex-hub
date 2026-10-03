@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vite
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import { sendNoContent } from 'h3'
 import usePlayers from '../composables/usePlayers'
-import { isPlayerHidden } from '../lib/hubConfig'
+import { getStereoPairs, isPlayerHidden } from '../lib/hubConfig'
 import resourcesHandler from '../routes/resources.get'
 import { runGdmAnnouncer } from './gdmAnnouncer'
 
@@ -12,7 +12,7 @@ vi.mock('../composables/useLogger', () => ({
   default: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })
 }))
 vi.mock('../composables/usePlayers', () => ({ default: vi.fn() }))
-vi.mock('../lib/hubConfig', () => ({ isPlayerHidden: vi.fn() }))
+vi.mock('../lib/hubConfig', () => ({ isPlayerHidden: vi.fn(), getStereoPairs: vi.fn() }))
 vi.mock('h3', async () => ({ ...(await vi.importActual<typeof import('h3')>('h3')), sendNoContent: vi.fn() }))
 
 const kitchen = { playerid: '00:04:20:2a:11:02', name: 'Kitchen' } as IPlayerInfo
@@ -36,6 +36,7 @@ describe('hidden players', () => {
       { serverId: 'lms-1', playerInfo: office }
     ])
     ;(isPlayerHidden as Mock).mockImplementation(async (id: string) => id === office.playerid)
+    ;(getStereoPairs as Mock).mockResolvedValue([])
   })
 
   afterEach(() => {

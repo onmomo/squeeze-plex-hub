@@ -26,6 +26,10 @@ export interface PlayerStatus {
   remoteMeta?: RemoteMeta
 }
 
+/** Values of the LMS player pref `outputChannels` */
+const OUTPUT_CHANNELS = { stereo: 0, left: 1, right: 2 } as const
+export type OutputChannels = keyof typeof OUTPUT_CHANNELS
+
 /**
  * @see https://github.com/elParaguayo/LMS-CLI-Documentation
  */
@@ -88,6 +92,28 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
    */
   async seekTo(offset: number) {
     return this.stub.requestAsync([this.id, ['time', offset.toString()]])
+  }
+
+  /**
+   * Syncs this player to another player, both play the same stream in sync afterwards.
+   * @param otherPlayerId player id (MAC) of the player to sync with
+   */
+  async syncTo(otherPlayerId: string) {
+    return this.stub.requestAsync([this.id, ['sync', otherPlayerId]])
+  }
+
+  /**
+   * Removes this player from its sync group.
+   */
+  async unsync() {
+    return this.stub.requestAsync([this.id, ['sync', '-']])
+  }
+
+  /**
+   * Sets which channels the player outputs. LMS only applies left and right while the player is synced to another active player.
+   */
+  async setOutputChannels(channels: OutputChannels) {
+    return this.stub.requestAsync([this.id, ['playerpref', 'outputChannels', OUTPUT_CHANNELS[channels].toString()]])
   }
 
   async status() {

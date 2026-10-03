@@ -4,13 +4,19 @@ import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import useLogger from '../../composables/useLogger'
 import usePlayerInfo from '../../composables/usePlayerInfo'
 import usePlayers from '../../composables/usePlayers'
-import { getPlayerSettings } from '../../lib/hubConfig'
+import { findStereoPair, getPlayerSettings } from '../../lib/hubConfig'
 
 export type PlayerServerInfo = {
   playerInfo: IPlayerInfo
   serverInfo: ServerInfo
   settings: {
     hidden: boolean
+  }
+  // Set if the player is a member of a stereo pair
+  pair?: {
+    name: string
+    role: 'left' | 'right'
+    partnerId: string
   }
 }
 
@@ -23,10 +29,18 @@ export default defineEventHandler(async (event) => {
       players.map(async (player) => {
         const playerResult = await usePlayerInfo(player.playerInfo.playerid)
         const { hidden } = await getPlayerSettings(player.playerInfo.playerid)
+        const membership = await findStereoPair(player.playerInfo.playerid)
         return {
           playerInfo: playerResult.playerInfo,
           serverInfo: playerResult.serverInfo,
-          settings: { hidden }
+          settings: { hidden },
+          ...(membership && {
+            pair: {
+              name: membership.pair.name,
+              role: membership.role,
+              partnerId: membership.role === 'left' ? membership.pair.rightId : membership.pair.leftId
+            }
+          })
         }
       })
     )

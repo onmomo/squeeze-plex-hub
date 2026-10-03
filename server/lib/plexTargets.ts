@@ -1,22 +1,22 @@
 import usePlayers from '../composables/usePlayers'
-import { isPlayerHidden } from './hubConfig'
+import { getStereoPairs, isPlayerHidden } from './hubConfig'
 
 /**
  * A device announced to Plex clients via GDM and described by `/resources`.
  *
- * Today every visible squeeze player is its own target. Player groups (e.g. a room or a stereo pair) will become a
- * single target with several `memberIds`: one GDM announcement, one `Resource-Identifier`, while playback commands
- * fan out to the members.
+ * Every visible squeeze player is its own target, except the members of a stereo pair: the pair is one target
+ * (one GDM announcement, one `Resource-Identifier`) under the id of its left player. LMS syncs the members, so playback
+ * commands to the left player apply to both.
  */
 export interface PlexTarget {
   // Resource identifier announced to Plex, the player id for single players
   id: string
   // Name shown in Plexamp
   name: string
-  kind: 'player'
+  kind: 'player' | 'stereoPair'
   // LMS server the target belongs to
   serverId: string
-  // Squeeze player ids controlled by this target
+  // Squeeze player ids belonging to this target, the first one receives the playback commands
   memberIds: string[]
 }
 
@@ -27,11 +27,20 @@ export interface PlexTarget {
  */
 export async function resolvePlexTargets(): Promise<PlexTarget[]> {
   const players = await usePlayers()
+  const pairs = await getStereoPairs()
+  const rightIds = new Set(pairs.map((pair) => pair.rightId))
   const targets: PlexTarget[] = []
   for (const { serverId, playerInfo } of players) {
-    if (!(await isPlayerHidden(playerInfo.playerid))) {
-      targets.push({ id: playerInfo.playerid, name: playerInfo.name, kind: 'player', serverId, memberIds: [playerInfo.playerid] })
+    const id = playerInfo.playerid
+    if (rightIds.has(id) || (await isPlayerHidden(id))) {
+      continue
     }
+    const pair = pairs.find((candidate) => candidate.leftId === id)
+    targets.push(
+      pair
+        ? { id, name: pair.name, kind: 'stereoPair', serverId, memberIds: [pair.leftId, pair.rightId] }
+        : { id, name: playerInfo.name, kind: 'player', serverId, memberIds: [id] }
+    )
   }
   return targets
 }
