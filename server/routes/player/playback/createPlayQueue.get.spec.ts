@@ -94,8 +94,8 @@ vi.mock('h3', async (orig) => {
     getQuery: vi.fn().mockImplementation(() => ({
       source: 'plex',
       shuffle: '0',
-      uri: '/library/metadata/123',
-      key: '/library/metadata/123',
+      uri: 'server://machine-xyz/com.plexapp.plugins.library/library/metadata/100',
+      key: '/library/metadata/105',
       token: 'token-abc',
       includeExternalMedia: '0',
       type: 'audio',
@@ -151,7 +151,7 @@ describe('playback.createPlayQueue route', () => {
     expect(setItemMock).toHaveBeenCalledWith('playerQueue/123', expect.anything())
     expect(mockPlayer.clearPlaylist).toHaveBeenCalled()
     expect(axios.post).toHaveBeenCalledWith(
-      'http://10.10.1.1/playQueues?includeLoudnessRamps=1&includeFields=thumbBlurHash&type=audio&shuffle=0&includeExternalMedia=0&repeat=0&uri=%2Flibrary%2Fmetadata%2F123',
+      'http://10.10.1.1/playQueues?includeLoudnessRamps=1&includeFields=thumbBlurHash&type=audio&shuffle=0&includeExternalMedia=0&repeat=0&uri=server%3A%2F%2Fmachine-xyz%2Fcom.plexapp.plugins.library%2Flibrary%2Fmetadata%2F100&key=%2Flibrary%2Fmetadata%2F105',
       '',
       {
         headers: {

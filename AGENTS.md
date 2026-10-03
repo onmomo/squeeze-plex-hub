@@ -125,7 +125,23 @@ Test files are colocated with the source they test (e.g., `server/lib/squeezePla
 ```bash
 yarn test               # run all tests
 yarn test:coverage      # with LCOV coverage output
+yarn test:e2e           # e2e tests against a real LMS in Docker (needs a running Docker daemon)
 ```
+
+### E2E Tests (hub → LMS)
+
+`test/e2e/*.e2e.spec.ts` (config: `vitest.e2e.config.ts`, not part of `yarn test`) verify playback against a real
+Lyrion Music Server with a real headless squeezelite player, started with [testcontainers](https://node.testcontainers.org/):
+
+- `lmsStack.ts` — LMS (`lmscommunity/lyrionmusicserver`) + squeezelite (`giof71/squeezelite`, ALSA `null` output) on a Docker
+  network. No discovery: squeezelite connects to LMS by alias and the test registers LMS in storage the way `lmsScanner` would.
+- `fakePlexServer.ts` — stands in for PMS: play queues (`POST /playQueues` honours `key`, `GET /playQueues/:id`) and silent WAV
+  tracks. It records requests, so tests can assert which tracks LMS actually streamed.
+- `hub.ts` — mounts the real route handlers on an h3 server with in-memory `useStorage` and a `runTask` shim. Nitro plugins
+  (mDNS, GDM, timeline publisher) do not run.
+
+LMS resolves hostnames with its own DNS client that ignores `/etc/hosts`, so a socat relay joins the network as `plex` and
+forwards to the fake Plex server on the test host. Reproduce LMS-facing bugs here before fixing them.
 
 ### Linting & Formatting
 

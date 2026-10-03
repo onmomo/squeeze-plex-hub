@@ -75,6 +75,10 @@ export default eventHandler(async (event) => {
       repeat: '0',
       uri: queryParameters.uri
     })
+    if (queryParameters.key) {
+      // the item to start with inside `uri` (e.g. the track picked in an album), PMS selects the first item otherwise
+      params.set('key', queryParameters.key)
+    }
     const createPlayQueueUrl = `${playQueueUrl}?${params.toString()}`
     logger.info(`Creating play queue on Plex server with URL: ${createPlayQueueUrl}..`)
     const createPlayQueueResponse = await axios

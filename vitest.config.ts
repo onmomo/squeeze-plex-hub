@@ -12,7 +12,8 @@ export default defineConfig({
         test: {
           setupFiles: ['setup-nitro-test-env.ts'],
           name: 'unit',
-          include: ['**/*.spec.ts', '!**/*.nuxt.spec.ts'],
+          include: ['**/*.spec.ts'],
+          exclude: ['**/*.nuxt.spec.ts', '**/*.e2e.spec.ts', '**/node_modules/**'],
           environment: 'node'
         }
       },
