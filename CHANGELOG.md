@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.48.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.47.0...v1.48.0) (2026-10-03)
+
+
+### Bug Fixes
+
+* **deps:** align @vitest/coverage-v8 and @nuxt/test-utils with vitest 5 ([be3c073](https://github.com/onmomo/squeeze-plex-hub/commit/be3c073bc5c92f732e98a289471a16eedbe2a9ca))
+
 ## [1.47.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.46.0...v1.47.0) (2026-10-03)
 
 ## [1.46.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.45.0...v1.46.0) (2026-10-03)
