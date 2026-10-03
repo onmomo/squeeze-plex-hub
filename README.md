@@ -69,20 +69,24 @@ The volume keeps your [settings](#persist-settings) when the container is recrea
 After start:
 
 1. Open `http://localhost:3000` in your browser to access the [dashboard](#dashboard).
-2. Check that your Lyrion Music Server and its Squeezebox players are listed, and switch off players you don't want to see in Plexamp.
+2. Check that your Lyrion Music Server and its Squeezebox players are listed, and hide players you don't want to see in Plexamp.
 3. Use Plexamp to target discovered Squeezebox players.
 
 No Plex credentials are ever stored. The app discovers LMS and Plex services on your local network only, and when initiating playback it forwards the Plex token so the Squeezebox player can stream directly from your Plex Media Server. The token is not persisted and expires after some time.
 
 ## Dashboard
 
-The dashboard at `http://localhost:3000` shows every discovered Lyrion Music Server as a rack unit with its players.
+The dashboard at `http://localhost:3000` shows every discovered Lyrion Music Server as a rack panel, with its players mounted in the panel's bay.
 
 - **Status display** (top right): how many players are announced to Plexamp out of all discovered players, and the number of Lyrion servers.
+- **Light / dark mode**: the button in the top right corner of the header.
 - **Player modules**: model, name, IP address, player ID (MAC address) and firmware of each player.
 - **In Plexamp key**: the key is lit while a player is announced to Plex clients. Press it to stop announcing the player. All players are shown in
   Plexamp by default. Useful when players are already reachable in Plexamp in another way, e.g. as Chromecast.
-- **Hidden**: hidden players move into the collapsible *Hidden* section of their server, where *Show in Plexamp* brings them back. The confirmation message has an **Undo** button.
+- **Hidden players**: hidden players move into the collapsible *Hidden players* section of their server. Their key reads
+  *Show in Plexamp* and brings them back.
+- **Undo**: each change shows a confirmation message with an **Undo** button. A new change replaces the message, so Undo
+  always reverts the latest change.
 - **Options menu** (`⋮`): show or hide a player, copy its player ID.
 
 Plexamp caches discovered players for a while. If a hidden player is still listed, restart Plexamp.
@@ -132,7 +136,7 @@ On the device the project should be executed:
 
 ### Squeeze players not found in Plexamp:
   1. Verify any Squeezebox player is connected and available in Lyrion / LMS first.
-  2. Check Squeeze Plex Hub (http://localhost:3000) dashboard and confirm both LMS and Squeezebox players are shown, and that the player's In Plexamp key is lit (not in *Hidden*). If nothing is shown, ensure Squeeze Plex Hub can connect to Lyrion / LMS and that the Lyrion CLI is enabled.
+  2. Check Squeeze Plex Hub (http://localhost:3000) dashboard and confirm both LMS and Squeezebox players are shown, and that the player's In Plexamp key is lit (not in *Hidden players*). If nothing is shown, ensure Squeeze Plex Hub can connect to Lyrion / LMS and that the Lyrion CLI is enabled.
 3. Check for port conflicts by reviewing the Squeeze Plex Hub startup logs for any discovery or network errors. This is especially important if both Squeeze Plex Hub and Plex Media Server are running on the same host. Squeeze Plex Hub requires access to UDP port 32412 to handle GDM network player discovery requests from Plex clients. If PMS is running on the same host or docker host network, both services should be able to use UDP 32412. If PMS is running in Docker bridge mode, remove port 32412 from its port mapping. If TCP port 3000 is already in use, you can publish a different host port (e.g., `docker run -p 8080:3000 ...`) and access the app at `http://localhost:8080`. For host networking, the announced HTTP port automatically follows Nuxt/Nitro port configuration in this order: `NITRO_PORT`, then `PORT`, then default `3000`. For more details on proper container deployment and networking, refer to the Container Networking section below.
   - Docker Desktop on **MacOS**: GDM network discovery may not work with Docker Desktop on MacOS due to limitations with containers receiving UDP broadcast requests from the host network even if the container is running in **host network mode**. For full functionality in a container, run Docker on Linux.
   4. Ensure no local firewall blocking UDP ports 32412
@@ -153,8 +157,8 @@ squeeze-plex-hub
 │   ├── assets/css      # Theme (fonts, colors, rack styling)
 │   ├── components      # Dashboard components
 │   │   ├── PlayerDashboard.vue  # Header, status display, server list
-│   │   ├── ServerSection.vue    # One LMS with its players and hidden section
-│   │   └── PlayerCard.vue       # One player with its In Plexamp switch
+│   │   ├── ServerSection.vue    # One LMS panel with its players and hidden players section
+│   │   └── PlayerCard.vue       # One player with its In Plexamp key
 │   ├── composables     # usePlayerDashboard: polling and player settings
 │   └── pages           # Application pages
 │       └── index.vue   # Main page of the application

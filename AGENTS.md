@@ -48,8 +48,8 @@ squeeze-plex-hub/
 │   ├── assets/css/main.css       # Theme tokens, self-hosted fonts (no Google Fonts, hub runs offline)
 │   ├── components/
 │   │   ├── PlayerDashboard.vue   # Header, status display, scanning/error states, server list
-│   │   ├── ServerSection.vue     # One LMS ("rack unit") with player grid + collapsible "Hidden" section
-│   │   └── PlayerCard.vue        # One player ("channel module") with In Plexamp switch + options menu
+│   │   ├── ServerSection.vue     # One LMS ("rack unit") with player bay + collapsible "Hidden players" section
+│   │   └── PlayerCard.vue        # One player ("channel module") with In Plexamp latching key + options menu
 │   ├── composables/
 │   │   └── usePlayerDashboard.ts # Polls /api/players, groups into sections, optimistic hide/show
 │   └── pages/
