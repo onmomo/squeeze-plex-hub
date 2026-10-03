@@ -4,6 +4,34 @@ import { createApp, createRouter, toNodeListener, type EventHandler } from 'h3'
 import { createStorage, type Storage } from 'unstorage'
 import { runPlayQueueRefresher, type PlayQueueRefresherPayload } from '../../server/tasks/playQueueRefresher'
 import { runSqueezePlayersScanner } from '../../server/tasks/squeezePlayersScanner'
+import createPlayQueue from '../../server/routes/player/playback/createPlayQueue.get'
+import pause from '../../server/routes/player/playback/pause.get'
+import play from '../../server/routes/player/playback/play.get'
+import playMedia from '../../server/routes/player/playback/playMedia.get'
+import refreshPlayQueue from '../../server/routes/player/playback/refreshPlayQueue.get'
+import seekTo from '../../server/routes/player/playback/seekTo.get'
+import setParameters from '../../server/routes/player/playback/setParameters.get'
+import skipNext from '../../server/routes/player/playback/skipNext.get'
+import skipPrevious from '../../server/routes/player/playback/skipPrevious.get'
+import skipTo from '../../server/routes/player/playback/skipTo.get'
+import stop from '../../server/routes/player/playback/stop.get'
+import poll from '../../server/routes/player/timeline/poll.get'
+
+/** The routes a Plex client (Plexamp) sends to the player, mounted like Nitro does from `server/routes` */
+const routes: Record<string, EventHandler> = {
+  '/player/playback/createPlayQueue': createPlayQueue,
+  '/player/playback/pause': pause,
+  '/player/playback/play': play,
+  '/player/playback/playMedia': playMedia,
+  '/player/playback/refreshPlayQueue': refreshPlayQueue,
+  '/player/playback/seekTo': seekTo,
+  '/player/playback/setParameters': setParameters,
+  '/player/playback/skipNext': skipNext,
+  '/player/playback/skipPrevious': skipPrevious,
+  '/player/playback/skipTo': skipTo,
+  '/player/playback/stop': stop,
+  '/player/timeline/poll': poll
+}
 
 /**
  * Runs Squeeze Plex Hub's real route handlers on a real HTTP server, with the Nitro runtime pieces they rely on
@@ -15,7 +43,7 @@ export interface Hub {
   close(): Promise<void>
 }
 
-export async function startHub(routes: Record<string, EventHandler>): Promise<Hub> {
+export async function startHub(): Promise<Hub> {
   const storage = createStorage()
   ;(globalThis as any).useStorage = () => storage
   ;(globalThis as any).runTask = async (name: string, { payload }: { payload?: unknown } = {}) => {
