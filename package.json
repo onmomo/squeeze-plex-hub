@@ -14,7 +14,8 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest",
     "test:coverage": "vitest run --coverage",
-    "format": "prettier --write app/** server/**"
+    "format": "prettier --write app/** server/**",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
     "@nuxt/kit": "^4.4.6",
@@ -40,6 +41,7 @@
     "eslint-plugin-vue": "^10.4.0",
     "happy-dom": "^20.8.9",
     "prettier": "^3.5.3",
+    "testcontainers": "^12.2.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10",
     "vue-tsc": "^3.1.8"
