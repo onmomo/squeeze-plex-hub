@@ -72,8 +72,8 @@ const pad = (value: number) => value.toString().padStart(2, '0')
   align-items: center;
   gap: 0.25rem 2rem;
   margin-bottom: 2rem;
-  /* Same side padding as the rack units, so the readouts line up on the right */
-  padding: 1.25rem 1.75rem;
+  /* Same side padding as the rack units (screw inset + screw + inset), so the readouts line up on the right */
+  padding: 1.25rem 1.625rem;
   background: var(--rack-faceplate-sheen), var(--rack-faceplate);
   border: 1px solid var(--rack-edge);
   border-radius: 0.5rem;
@@ -112,8 +112,8 @@ const pad = (value: number) => value.toString().padStart(2, '0')
 .color-mode {
   grid-area: mode;
   justify-self: end;
-  /* Sit in the corner, not on the readout's padding line */
-  margin: -0.75rem -1.25rem 0 0;
+  /* Tucked into the corner (keeps its 44px touch target), not on the readout's padding line */
+  margin: -1.125rem -1.5rem 0 0;
 }
 
 /* Vacuum fluorescent display: amber digits on smoked glass */
@@ -228,7 +228,7 @@ const pad = (value: number) => value.toString().padStart(2, '0')
 
 @media (max-width: 640px) {
   .master-unit {
-    padding: 1rem;
+    padding: 1rem 1.25rem;
   }
 
   /* Phones: the readout gets its own row below the brand */
@@ -245,7 +245,7 @@ const pad = (value: number) => value.toString().padStart(2, '0')
 
   .color-mode {
     align-self: start;
-    margin: -0.5rem -0.5rem 0 0;
+    margin: -0.875rem -1.125rem 0 0;
   }
 
   .vfd {

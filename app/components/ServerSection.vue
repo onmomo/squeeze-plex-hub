@@ -68,8 +68,11 @@ const standbyOpen = ref(false)
 <style scoped>
 /* A 19" rack unit: faceplate, corner screws, engraved label */
 .rack-unit {
+  /* The screws keep the same distance to the plate edge and to the content */
+  --screw-inset: 0.5rem;
+  --screw-size: 0.625rem;
   position: relative;
-  padding: 1.25rem 1.75rem 1.5rem;
+  padding: calc(2 * var(--screw-inset) + var(--screw-size));
   background: var(--rack-faceplate-sheen), var(--rack-faceplate);
   border: 1px solid var(--rack-edge);
   border-radius: 0.5rem;
@@ -80,8 +83,8 @@ const standbyOpen = ref(false)
 
 .screw {
   position: absolute;
-  width: 0.625rem;
-  height: 0.625rem;
+  width: var(--screw-size);
+  height: var(--screw-size);
   border-radius: 9999px;
   background: var(--rack-screw);
   box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
@@ -99,20 +102,20 @@ const standbyOpen = ref(false)
 }
 
 .tl {
-  top: 0.5rem;
-  left: 0.5rem;
+  top: var(--screw-inset);
+  left: var(--screw-inset);
 }
 .tr {
-  top: 0.5rem;
-  right: 0.5rem;
+  top: var(--screw-inset);
+  right: var(--screw-inset);
 }
 .bl {
-  bottom: 0.5rem;
-  left: 0.5rem;
+  bottom: var(--screw-inset);
+  left: var(--screw-inset);
 }
 .br {
-  bottom: 0.5rem;
-  right: 0.5rem;
+  bottom: var(--screw-inset);
+  right: var(--screw-inset);
 }
 
 .unit-head {
@@ -208,7 +211,8 @@ const standbyOpen = ref(false)
 
 @media (max-width: 640px) {
   .rack-unit {
-    padding: 1.25rem 1rem 1.25rem;
+    --screw-inset: 0.375rem;
+    --screw-size: 0.5rem;
   }
 
   .channel-grid {

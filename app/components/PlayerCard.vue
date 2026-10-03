@@ -247,8 +247,8 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
   --key-face: linear-gradient(180deg, #313a39 0%, #222928 100%);
   --key-text: var(--rack-engrave-muted);
   display: grid;
-  /* Lamp on the left, label centered across the whole key */
-  grid-template-columns: 0.5rem 1fr 0.5rem;
+  /* Lamp and label on the left, like the legend on a hardware key */
+  grid-template-columns: auto 1fr;
   align-items: center;
   gap: 0.625rem;
   width: 100%;
@@ -258,7 +258,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
   font-size: 0.8rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  text-align: center;
+  text-align: left;
   white-space: nowrap;
   color: var(--key-text);
   background: var(--key-face);
@@ -314,6 +314,11 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
     inset 0 -2px 6px rgba(160, 70, 0, 0.35),
     0 1px 0 #4a2300,
     0 0 18px rgba(255, 152, 0, 0.28);
+}
+
+.key-label {
+  /* Trim the line box to the capitals, so the label centers like the lamp (no descender space below) */
+  text-box: trim-both cap alphabetic;
 }
 
 .key-lamp {
