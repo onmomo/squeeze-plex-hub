@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.50.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.49.0...v1.50.0) (2026-10-03)
+
+
+### Features
+
+* **dashboard:** hide players from Plexamp, persist settings and redesign dashboard ([4182dfd](https://github.com/onmomo/squeeze-plex-hub/commit/4182dfd0d955bdbb715a0a4450776308a5b5ceba)), closes [#109](https://github.com/onmomo/squeeze-plex-hub/issues/109)
+
+
+### Bug Fixes
+
+* **dashboard:** align header readout, clearer hidden player copy ([bb47cf9](https://github.com/onmomo/squeeze-plex-hub/commit/bb47cf9c55a2ada617e999c33e2659972b37d7e6))
+* **dashboard:** color mode button top right on phones ([546d062](https://github.com/onmomo/squeeze-plex-hub/commit/546d0621ec1b86d954541a9056c0e8c0bd9b1030))
+* **dashboard:** key label and plate spacing polish ([5424fed](https://github.com/onmomo/squeeze-plex-hub/commit/5424fed5b05e6be28ecf8943ef78b009655803dd))
+* **dashboard:** mount player modules in a recessed bay of their LMS plate ([46a39f1](https://github.com/onmomo/squeeze-plex-hub/commit/46a39f1f0cd21c27b0be776b828842f23f6bea6d))
+* **dashboard:** single undo message, color mode top right on all widths ([bb16a7b](https://github.com/onmomo/squeeze-plex-hub/commit/bb16a7bb50e7fdf0cd28fdb45f286a31ab61d3e4))
+
 ## [1.49.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.48.0...v1.49.0) (2026-10-03)
 
 
