@@ -10,7 +10,7 @@
       </div>
 
       <div class="master-controls">
-        <UColorModeButton color="neutral" variant="ghost" class="size-11 justify-center" />
+        <UColorModeButton color="neutral" variant="ghost" class="color-mode size-11 justify-center" />
         <div class="vfd" role="status" aria-live="polite">
           <template v-if="loading">
             <span class="vfd-scan">Scanning for Lyrion servers</span>
@@ -65,6 +65,7 @@ const pad = (value: number) => value.toString().padStart(2, '0')
 }
 
 .master-unit {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -226,6 +227,17 @@ const pad = (value: number) => value.toString().padStart(2, '0')
 @media (max-width: 640px) {
   .master-unit {
     padding: 1rem;
+  }
+
+  /* Phones: color mode in the top right corner, the readout gets its own row */
+  .brand {
+    padding-right: 2.5rem;
+  }
+
+  .color-mode {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
   }
 
   .vfd {
