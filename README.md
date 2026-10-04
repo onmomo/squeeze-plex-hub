@@ -214,8 +214,9 @@ squeeze-plex-hub
    docker run -d --rm --name lyrion-demo -p 9000:9000 lmscommunity/lyrionmusicserver
    NUXT_DEMO_LMS=localhost:9000 yarn dev:demo
    ```
-   Lyrion has images for Squeezebox models (Touch, Radio, Boom, SqueezePlay, …). Players without one, like Squeezelite,
-   show a speaker icon. Stop the container with `docker stop lyrion-demo`.
+   The dashboard picks the image like Lyrion does: the model image (Touch, Radio, Boom, SqueezePlay, …), the image named
+   after a Squeezelite variant (e.g. pCP), otherwise the Softsqueeze image that Lyrion uses for software players such as
+   Squeezelite. A speaker icon shows only if Lyrion has no image at all. Stop the container with `docker stop lyrion-demo`.
 
 ## Container Build Instructions
 

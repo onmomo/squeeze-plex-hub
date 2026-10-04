@@ -22,13 +22,14 @@
     <div class="bezel">
       <UIcon v-if="!imageLoaded" name="i-lucide-speaker" class="bezel-icon" aria-hidden="true" />
       <img
-        v-if="!imageFailed"
+        v-if="imageUrl"
         v-show="imageLoaded"
-        :src="player.imageUrl"
+        :key="imageUrl"
+        :src="imageUrl"
         :alt="`${modelLabel} player`"
         class="bezel-image"
         @load="imageLoaded = true"
-        @error="imageFailed = true"
+        @error="imageIndex++"
       />
     </div>
 
@@ -93,9 +94,10 @@ const emit = defineEmits<{ 'update:hidden': [hidden: boolean]; pair: []; dissolv
 
 const modelLabel = computed(() => (props.pair ? 'Stereo pair' : props.player.modelName))
 
-// The model image comes from LMS, show a speaker icon until it loaded or if it is missing
+// The model image comes from LMS: try the next candidate if one is missing, a speaker icon shows until one loaded or if none exists
 const imageLoaded = ref(false)
-const imageFailed = ref(false)
+const imageIndex = ref(0)
+const imageUrl = computed(() => props.player.imageUrls[imageIndex.value])
 const { copy } = useClipboard({ legacy: true })
 const toast = useToast()
 

@@ -1,5 +1,6 @@
 import type { ServerInfo } from 'lms-discovery'
 import { FetchError } from 'ofetch'
+import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
 import type { PlayerServerInfo } from '../../server/routes/api/players.get'
 
 export interface DashboardPlayer {
@@ -9,7 +10,8 @@ export interface DashboardPlayer {
   modelName: string
   ip: string
   firmware: string
-  imageUrl: string
+  // Model images on Lyrion in the order Lyrion itself picks them, the first one that exists is shown
+  imageUrls: string[]
   // Hidden players are not announced to Plex clients
   hidden: boolean
   // A settings change is being saved
@@ -47,6 +49,22 @@ export interface ServerSection {
 
 const POLL_INTERVAL_MS = 5000
 
+/**
+ * Lyrion's choice of player image (Slim/Web/Settings/Player/Basic.pm): Squeezelite players may have an image named after their
+ * model name (e.g. pCP), Squeezebox 2 uses the Squeezebox image, and players without an image of their own get the
+ * Softsqueeze one.
+ */
+export function playerImageUrls(playerInfo: IPlayerInfo, serverInfo: ServerInfo): string[] {
+  const names: string[] = []
+  if (playerInfo.model === 'squeezelite') {
+    names.push(playerInfo.modelname.toLowerCase().replace(/[^-_a-z0-9]/g, ''))
+  }
+  names.push(playerInfo.model === 'squeezebox2' ? 'squeezebox' : playerInfo.model, 'softsqueeze')
+  return [...new Set(names.filter(Boolean))].map(
+    (name) => `http://${serverInfo.ip}:${serverInfo.jsonPort}/html/images/Players/${name}_250x250.png`
+  )
+}
+
 function toDashboardPlayer({ playerInfo, serverInfo, settings, canPair }: PlayerServerInfo, savingHidden?: boolean): DashboardPlayer {
   return {
     id: playerInfo.playerid,
@@ -55,7 +73,7 @@ function toDashboardPlayer({ playerInfo, serverInfo, settings, canPair }: Player
     modelName: playerInfo.modelname,
     ip: playerInfo.ip,
     firmware: playerInfo.firmware,
-    imageUrl: `http://${serverInfo.ip}:${serverInfo.jsonPort}/html/images/Players/${playerInfo.model}_250x250.png`,
+    imageUrls: playerImageUrls(playerInfo, serverInfo),
     hidden: savingHidden ?? settings?.hidden ?? false,
     saving: savingHidden !== undefined,
     canPair: canPair !== false
