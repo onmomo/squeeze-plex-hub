@@ -52,6 +52,11 @@ describe('plexApi', () => {
       expect(headers.get('X-Plex-Client-Identifier')).toBe('pid')
       expect(headers.get('X-Plex-Device-Name')).toBe('pname')
     })
+
+    it('drops characters headers cannot carry, e.g. the stereo pair mark', () => {
+      expect(plexApi.responseHeaders('pid', 'Kitchen ⇄', 'text/xml').get('X-Plex-Device-Name')).toBe('Kitchen')
+      expect(plexApi.responseHeaders('pid', 'Café 🎵').get('X-Plex-Device-Name')).toBe('Café')
+    })
   })
 
   describe('getPlexApi', () => {

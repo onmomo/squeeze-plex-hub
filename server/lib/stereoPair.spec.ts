@@ -120,13 +120,44 @@ describe('reconcileStereoPair', () => {
 describe('reconcileStereoPairs', () => {
   it('stores the state of every pair for the dashboard', async () => {
     const setItem = vi.fn()
-    vi.stubGlobal('useStorage', () => ({ setItem }))
+    vi.stubGlobal('useStorage', () => ({ setItem, getItem: vi.fn().mockResolvedValue(null) }))
     ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Kitchen', leftId: 'aa', rightId: 'bb' }])
     ;(getPendingResets as Mock).mockResolvedValue([])
     ;(usePlayerInfo as Mock).mockRejectedValue(new Error('Player not found in storage'))
 
     await reconcileStereoPairs()
-    expect(setItem).toHaveBeenCalledWith('pairStatus/aa', { state: 'offline', checkedAt: expect.any(Number) })
+    expect(setItem).toHaveBeenCalledWith('pairStatus/aa', { state: 'offline', checkedAt: expect.any(Number), offlineChecks: 1 })
+  })
+})
+
+describe('reconcileStereoPairs offline debounce', () => {
+  it('reports a pair offline only after repeated checks found a member disconnected', async () => {
+    const stored: Record<string, any> = { 'pairStatus/aa': { state: 'ok', checkedAt: 1 } }
+    vi.stubGlobal('useStorage', () => ({
+      getItem: async (key: string) => stored[key] ?? null,
+      setItem: async (key: string, value: unknown) => {
+        stored[key] = value
+      }
+    }))
+    ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Kitchen', leftId: 'aa', rightId: 'bb' }])
+    ;(getPendingResets as Mock).mockResolvedValue([])
+    ;(usePlayerInfo as Mock).mockRejectedValue(new Error('Player not found in storage'))
+
+    await reconcileStereoPairs()
+    await reconcileStereoPairs()
+    expect(stored['pairStatus/aa']).toMatchObject({ state: 'ok', offlineChecks: 2 })
+    await reconcileStereoPairs()
+    expect(stored['pairStatus/aa']).toMatchObject({ state: 'offline', offlineChecks: 3 })
+
+    // Back online: reset immediately
+    ;(usePlayerInfo as Mock).mockResolvedValue({
+      serverStub: { requestAsync: async () => ({ syncgroups_loop: [{ sync_members: 'aa,bb' }] }) }
+    })
+    ;(useSqueezePlayer as Mock).mockImplementation(async () => ({
+      player: { isConnected: async () => true, getOutputChannels: async () => 'left' }
+    }))
+    await reconcileStereoPairs()
+    expect(stored['pairStatus/aa']).toMatchObject({ state: 'error', offlineChecks: 0 })
   })
 })
 
@@ -149,7 +180,7 @@ describe('pair locks and pending resets', () => {
 
   it('does not reconcile a pair while it is being changed', async () => {
     const setItem = vi.fn()
-    vi.stubGlobal('useStorage', () => ({ setItem }))
+    vi.stubGlobal('useStorage', () => ({ setItem, getItem: vi.fn().mockResolvedValue(null) }))
     ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Kitchen', leftId: 'aa', rightId: 'bb' }])
     ;(getPendingResets as Mock).mockResolvedValue([])
     ;(usePlayerInfo as Mock).mockRejectedValue(new Error('Player not found in storage'))

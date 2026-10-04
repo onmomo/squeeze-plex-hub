@@ -102,7 +102,12 @@ export type StereoPairState = 'ok' | 'repaired' | 'offline' | 'error'
 export interface StereoPairStatus {
   state: StereoPairState
   checkedAt: number
+  // Consecutive checks that found a member disconnected, `offline` is only reported after a few
+  offlineChecks?: number
 }
+
+// LMS reports some players (e.g. Squeezebox Radio) as disconnected for single readings while they keep playing
+const OFFLINE_CHECKS_BEFORE_REPORTING = 3
 
 /** Key in the DISCOVERY storage of the last known state of the pair with the given left player */
 export const stereoPairStatusKey = (leftId: string) => `pairStatus/${leftId}`
@@ -158,8 +163,13 @@ export async function reconcileStereoPairs() {
   await applyPendingResets()
   for (const pair of await getStereoPairs()) {
     if (busyPairs.has(pair.leftId)) continue
-    const state = await reconcileStereoPair(pair)
-    await storage.setItem<StereoPairStatus>(stereoPairStatusKey(pair.leftId), { state, checkedAt: Date.now() })
+    const key = stereoPairStatusKey(pair.leftId)
+    const previous = await storage.getItem<StereoPairStatus>(key)
+    const found = await reconcileStereoPair(pair)
+    const offlineChecks = found === 'offline' ? (previous?.offlineChecks ?? 0) + 1 : 0
+    // A single reading of "disconnected" does not flip the pair, keep what we knew until it persists
+    const state = found === 'offline' && previous && offlineChecks < OFFLINE_CHECKS_BEFORE_REPORTING ? previous.state : found
+    await storage.setItem<StereoPairStatus>(key, { state, checkedAt: Date.now(), offlineChecks })
   }
 }
 
