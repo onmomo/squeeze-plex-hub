@@ -44,19 +44,23 @@ async function applyPairPrefs(left: ExtendedSqueezePlayer, right: ExtendedSqueez
 
 /**
  * Dissolves the sync group and lets both players output stereo again.
+ * The right player leaves first: in LMS the player that stays in the group keeps playing, so the left player (the one Plexamp
+ * knows) continues, no matter which of the two was the sync master.
  * Players that are unreachable are skipped, so a pair can always be removed from the hub.
  *
- * @returns the ids of the players that could not be reset
+ * @returns the ids of the players that could not be reset or were not connected (LMS may ignore commands for those)
  */
 export async function dissolveStereoPair(leftId: string, rightId: string): Promise<string[]> {
   const logger = useLogger('stereoPair')
   const failed: string[] = []
-  for (const playerId of [leftId, rightId]) {
+  for (const playerId of [rightId, leftId]) {
     try {
       const { player } = await useSqueezePlayer(playerId)
+      const connected = await player.isConnected()
       await player.unsync()
       await player.setOutputChannels('stereo')
       await player.setSyncVolume(false)
+      if (!connected) failed.push(playerId)
     } catch (error) {
       logger.warn(`Could not reset player '${playerId}' of the dissolved stereo pair:`, error)
       failed.push(playerId)

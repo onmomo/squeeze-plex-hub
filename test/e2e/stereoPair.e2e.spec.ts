@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { addPendingResets, getPendingResets } from '../../server/lib/hubConfig'
 import { applyPendingResets, dissolveStereoPair, formStereoPair, reconcileStereoPair, supportsStereoPair } from '../../server/lib/stereoPair'
 import { PLAYER2_ID, PLAYER_ID, useE2eStack } from './harness'
 import { waitFor } from './lmsStack'
@@ -140,8 +141,10 @@ describe('e2e: hub -> LMS synced stereo pair', () => {
     await formStereoPair(PLAYER_ID, PLAYER2_ID)
     await e2e.lms.setSecondPlayerOnline(false)
     try {
-      // LMS keeps syncs and prefs per player on the server, so the commands work for the offline player too
-      expect(await dissolveStereoPair(PLAYER_ID, PLAYER2_ID)).toEqual([])
+      // The commands may be ignored for a player that is not connected, so it is left to the scanner to reset it later
+      const failed = await dissolveStereoPair(PLAYER_ID, PLAYER2_ID)
+      expect(failed).toEqual([PLAYER2_ID])
+      await addPendingResets(failed)
     } finally {
       await e2e.lms.setSecondPlayerOnline(true)
     }
@@ -151,8 +154,8 @@ describe('e2e: hub -> LMS synced stereo pair', () => {
     expect(groups.syncgroups_loop ?? []).toHaveLength(0)
     expect(await pref(PLAYER_ID)).toBe('0')
     expect(await pref(PLAYER2_ID)).toBe('0')
-    // Nothing left to reset
     await applyPendingResets()
+    expect(await getPendingResets()).toEqual([])
   })
 
   it('reconcile reports a pair with a disconnected member as offline and has it intact again once the member is back', async () => {
@@ -167,5 +170,15 @@ describe('e2e: hub -> LMS synced stereo pair', () => {
     await waitFor(async () => ['ok', 'repaired'].includes(await reconcileStereoPair(pair)), 60_000)
     expect(await reconcileStereoPair(pair)).toBe('ok')
     expect(await pref(PLAYER2_ID)).toBe('2')
+  })
+
+  it('keeps the left player playing when the pair is dissolved, even if the right one is the sync master', async () => {
+    // Left synced to right: the right player is the master of the group
+    await e2e.lms.stub.requestAsync([PLAYER_ID, ['sync', PLAYER2_ID]])
+    await playOn(PLAYER_ID, 1)
+    await waitFor(async () => (await status2()).mode === 'play', 15_000)
+
+    await dissolveStereoPair(PLAYER_ID, PLAYER2_ID)
+    await waitFor(async () => (await lmsStatus()).mode === 'play' && (await status2()).mode === 'stop', 15_000)
   })
 })

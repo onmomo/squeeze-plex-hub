@@ -25,6 +25,7 @@ const fakePlayer = (id: string) => ({
   syncTo: vi.fn(async (other: string) => calls.push(`${id}.syncTo(${other})`)),
   setOutputChannels: vi.fn(async (channels: string) => calls.push(`${id}.channels(${channels})`)),
   setSyncVolume: vi.fn(async (on: boolean) => calls.push(`${id}.syncVolume(${on})`)),
+  isConnected: vi.fn(async () => true),
   status: vi.fn(async () => ({ volume: 40 })),
   setVolume: vi.fn(async (volume: number) => calls.push(`${id}.volume(${volume})`))
 })
@@ -61,18 +62,31 @@ describe('stereoPair', () => {
     expect(calls).toEqual(['bb.unsync', 'bb.channels(stereo)', 'bb.syncVolume(false)'])
   })
 
+  it('lets the right player leave first so the left one keeps playing, and reports members that were not connected', async () => {
+    players.bb!.isConnected.mockResolvedValue(false)
+    expect(await dissolveStereoPair('aa', 'bb')).toEqual(['bb'])
+    expect(calls).toEqual([
+      'bb.unsync',
+      'bb.channels(stereo)',
+      'bb.syncVolume(false)',
+      'aa.unsync',
+      'aa.channels(stereo)',
+      'aa.syncVolume(false)'
+    ])
+  })
+
   it('does not leave half a pair behind if LMS rejects a command', async () => {
     players.bb!.syncTo.mockRejectedValue(new Error('rejected'))
     await expect(formStereoPair('aa', 'bb')).rejects.toThrow('rejected')
     expect(calls).toEqual([
       'aa.unsync',
       'bb.unsync',
-      'aa.unsync',
-      'aa.channels(stereo)',
-      'aa.syncVolume(false)',
       'bb.unsync',
       'bb.channels(stereo)',
-      'bb.syncVolume(false)'
+      'bb.syncVolume(false)',
+      'aa.unsync',
+      'aa.channels(stereo)',
+      'aa.syncVolume(false)'
     ])
   })
 })
