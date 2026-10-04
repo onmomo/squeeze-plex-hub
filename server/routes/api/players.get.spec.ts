@@ -5,7 +5,7 @@ import type { PlayerServerInfo } from './players.get'
 import playersGetHandler from './players.get'
 import usePlayers from '../../composables/usePlayers'
 import usePlayerInfo from '../../composables/usePlayerInfo'
-import { getPlayerSettings } from '../../lib/hubConfig'
+import { findStereoPair, getPlayerSettings } from '../../lib/hubConfig'
 
 vi.mock('../../composables/useLogger', () => ({
   default: () => ({
@@ -51,7 +51,8 @@ vi.mock('../../composables/usePlayerInfo', () => ({
 }))
 
 vi.mock('../../lib/hubConfig', () => ({
-  getPlayerSettings: vi.fn()
+  getPlayerSettings: vi.fn(),
+  findStereoPair: vi.fn()
 }))
 
 function createEventMock() {
@@ -67,6 +68,8 @@ function createEventMock() {
 describe('players.get API handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.stubGlobal('useStorage', () => ({ getItem: vi.fn().mockResolvedValue(null) }))
+    ;(findStereoPair as Mock).mockResolvedValue(undefined)
     ;(getPlayerSettings as Mock).mockImplementation(async (playerid: string) => ({ hidden: playerid === mockPlayerInfo2.playerid }))
   })
 
@@ -95,6 +98,26 @@ describe('players.get API handler', () => {
     // Hidden players are still listed, with their settings
     expect((result as PlayerServerInfo[])[0]!.settings).toEqual({ hidden: false })
     expect((result as PlayerServerInfo[])[1]!.settings).toEqual({ hidden: true })
+    expect((result as PlayerServerInfo[])[0]!.canPair).toBeUndefined()
+  })
+
+  it('reports the stereo pair a player belongs to', async () => {
+    ;(usePlayers as Mock).mockResolvedValue([{ playerInfo: mockPlayerInfo, serverId: mockServerInfo.uuid }])
+    ;(usePlayerInfo as Mock).mockResolvedValue({ playerInfo: mockPlayerInfo, serverInfo: mockServerInfo })
+    ;(findStereoPair as Mock).mockResolvedValue({
+      pair: { name: 'Kitchen', leftId: mockPlayerInfo.playerid, rightId: 'other' },
+      role: 'left'
+    })
+    vi.stubGlobal('useStorage', () => ({ getItem: vi.fn().mockResolvedValue({ state: 'offline', checkedAt: 1 }) }))
+
+    const result = (await playersGetHandler(createEventMock())) as PlayerServerInfo[]
+    expect(result[0]!.pair).toEqual({
+      name: 'Kitchen',
+      role: 'left',
+      leftId: mockPlayerInfo.playerid,
+      partnerId: 'other',
+      state: 'offline'
+    })
   })
 
   it('returns 404 and message if no LMS found, try/catch', async () => {

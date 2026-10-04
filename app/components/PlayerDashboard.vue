@@ -44,13 +44,27 @@
     </div>
 
     <div v-else class="rack">
-      <ServerSection v-for="section in sections" :key="section.server.uuid" :section="section" @update:hidden="setHidden" />
+      <ServerSection
+        v-for="section in sections"
+        :key="section.server.uuid"
+        :section="section"
+        @update:hidden="setHidden"
+        @pair="(player) => (pairing = player)"
+        @dissolve="dissolvePair"
+      />
     </div>
+
+    <PairDialog v-if="pairing" :player="pairing" :candidates="pairCandidates(pairing)" :create="createPair" @close="pairing = null" />
   </div>
 </template>
 
 <script setup lang="ts">
-const { sections, stats, loading, error, setHidden } = usePlayerDashboard()
+import type { DashboardPlayer } from '../composables/usePlayerDashboard'
+
+const { sections, stats, loading, error, setHidden, pairCandidates, createPair, dissolvePair } = usePlayerDashboard()
+
+// Player a stereo pair is being set up for
+const pairing = ref<DashboardPlayer | null>(null)
 
 const pad = (value: number) => value.toString().padStart(2, '0')
 </script>

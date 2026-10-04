@@ -20,6 +20,7 @@
 <p>
 <img alt="Squeeze Plex Hub - Plexamp controls" src="public/docs/squeezePlexHub_Plexamp_controls.gif" width="320" />
 <img alt="Squeeze Plex Hub - Dashboard" src="public/docs/squeezePlexHub_dashboard.gif" width="320" />
+<img alt="Squeeze Plex Hub - Stereo pair" src="public/docs/squeezePlexHub_stereo_pair.gif" width="320" />
 </p>
 </div>
 
@@ -33,6 +34,7 @@ Squeeze Plex Hub bridges Plexamp (Plex) with your Logitech / Lyrion Music Server
 - Advertises discovered Squeeze players to Plexamp so they appear as selectable targets with full Plexamp controls
 - Enables multi-room audio playback using Squeezebox players controlled by Plexamp
 - Dashboard to choose which players show up in Plexamp, e.g. to hide players you never play to from Plexamp
+- Stereo pairs: sync two (mono) players as left and right speaker and control them as one player in Plexamp
 - Shows player and server metadata
 - Simple Docker-based deployment
 - Full track metadata support on LMS in combination with the [LMS Squeeze Plex Hub Plugin](https://github.com/onmomo/lms-squeeze-plex-hub)
@@ -80,6 +82,16 @@ Open `http://localhost:3000` to see your Lyrion Music Servers and their players.
 lit while Plexamp can see the player. Press it to hide players you never play to from Plexamp, and press it again in
 *Hidden players* to bring them back. Every change can be undone right away.
 
+### Stereo pairs
+
+Squeezebox Radios and other mono speakers can play as a stereo pair. Choose **Pair as stereo…** in the menu of a player,
+pick the partner and which one plays the left channel. Squeeze Plex Hub syncs both players in Lyrion, sets their
+*Output channel* to left and right and links their volumes, Plexamp then sees the pair as one player (`Left ⇄ Right`).
+The pair card has an amber border, the ★ marks the main player: Plexamp controls the pair through it, and it keeps
+playing if you form or dissolve the pair. Use **Dissolve stereo pair** to undo it.
+Both players must be on the same Lyrion server and offer the *Output channel* setting in their Lyrion audio settings
+(Squeezebox 2 and newer, e.g. Radio, Touch, Boom, Receiver, Transporter and Squeezelite). Keep the pair on a stable network, a few milliseconds of sync drift shifts the stereo image.
+
 The dashboard refreshes on its own. If Plexamp still lists a hidden player, restart Plexamp.
 
 ### Persist settings
@@ -106,6 +118,9 @@ The file is plain JSON and can be edited by hand while Squeeze Plex Hub is stopp
   "version": 1,
   "players": {
     "00:04:20:2a:11:04": { "hidden": true }
+  },
+  "pairs": {
+    "00:04:20:2a:11:01": { "name": "Kitchen", "leftId": "00:04:20:2a:11:01", "rightId": "00:04:20:2a:11:02" }
   }
 }
 ```
@@ -199,8 +214,9 @@ squeeze-plex-hub
    docker run -d --rm --name lyrion-demo -p 9000:9000 lmscommunity/lyrionmusicserver
    NUXT_DEMO_LMS=localhost:9000 yarn dev:demo
    ```
-   Lyrion has images for Squeezebox models (Touch, Radio, Boom, SqueezePlay, …). Players without one, like Squeezelite,
-   show a speaker icon. Stop the container with `docker stop lyrion-demo`.
+   The dashboard picks the image like Lyrion does: the model image (Touch, Radio, Boom, SqueezePlay, …), the image named
+   after a Squeezelite variant (e.g. pCP), otherwise the Softsqueeze image that Lyrion uses for software players such as
+   Squeezelite. A speaker icon shows only if Lyrion has no image at all. Stop the container with `docker stop lyrion-demo`.
 
 ## Container Build Instructions
 

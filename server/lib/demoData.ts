@@ -30,11 +30,19 @@ export const demoServers: DemoServer[] = [
       },
       {
         playerid: '00:04:20:2a:11:02',
-        name: 'Kitchen',
+        name: 'Kitchen Counter',
         model: 'baby',
         modelname: 'Squeezebox Radio',
         firmware: '8.0.1-r16952',
         ip: '192.168.1.42'
+      },
+      {
+        playerid: '00:04:20:2a:11:07',
+        name: 'Kitchen Shelf',
+        model: 'baby',
+        modelname: 'Squeezebox Radio',
+        firmware: '8.0.1-r16952',
+        ip: '192.168.1.47'
       },
       {
         playerid: 'b8:27:eb:5c:0f:03',

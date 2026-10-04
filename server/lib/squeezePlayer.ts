@@ -26,6 +26,11 @@ export interface PlayerStatus {
   remoteMeta?: RemoteMeta
 }
 
+/** Values of the LMS player pref `outputChannels` */
+const OUTPUT_CHANNELS = { stereo: 0, left: 1, right: 2 } as const
+export type OutputChannels = keyof typeof OUTPUT_CHANNELS
+const OUTPUT_CHANNEL_NAMES: Record<number, OutputChannels | 'combined'> = { 0: 'stereo', 1: 'left', 2: 'right', 3: 'combined' }
+
 /**
  * @see https://github.com/elParaguayo/LMS-CLI-Documentation
  */
@@ -88,6 +93,65 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
    */
   async seekTo(offset: number) {
     return this.stub.requestAsync([this.id, ['time', offset.toString()]])
+  }
+
+  /**
+   * Syncs this player to another player, both play the same stream in sync afterwards.
+   * @param otherPlayerId player id (MAC) of the player to sync with
+   */
+  async syncTo(otherPlayerId: string) {
+    return this.stub.requestAsync([this.id, ['sync', otherPlayerId]])
+  }
+
+  /**
+   * Removes this player from its sync group.
+   */
+  async unsync() {
+    return this.stub.requestAsync([this.id, ['sync', '-']])
+  }
+
+  /**
+   * Sets which channels the player outputs. LMS only applies left and right while the player is synced to another active player.
+   */
+  async setOutputChannels(channels: OutputChannels) {
+    return this.stub.requestAsync([this.id, ['playerpref', 'outputChannels', OUTPUT_CHANNELS[channels].toString()]])
+  }
+
+  /**
+   * Makes a volume change on this player (or on any player synced with it that has the pref too) apply to all of them.
+   * Only has an effect while the players are synced.
+   */
+  async setSyncVolume(on: boolean) {
+    return this.stub.requestAsync([this.id, ['playerpref', 'syncVolume', on ? '1' : '0']])
+  }
+
+  async getSyncVolume(): Promise<boolean> {
+    const response: any = await this.stub.requestAsync([this.id, ['playerpref', 'syncVolume', '?']])
+    return Number.parseInt(response?._p2) === 1
+  }
+
+  /**
+   * Sets the volume (0 - 100), which also reaches the players synced with this one if they sync their volume.
+   */
+  async setVolume(volume: number) {
+    return this.stub.requestAsync([this.id, ['mixer', 'volume', Math.round(volume).toString()]])
+  }
+
+  /**
+   * Reads the player pref `outputChannels`. Undefined if the player has none: LMS only offers it to players of the Squeezebox 2
+   * family (`hasOutputChannels`), the others have no such pref.
+   */
+  async getOutputChannels(): Promise<OutputChannels | 'combined' | undefined> {
+    const response: any = await this.stub.requestAsync([this.id, ['playerpref', 'outputChannels', '?']])
+    return OUTPUT_CHANNEL_NAMES[Number.parseInt(response?._p2)]
+  }
+
+  /**
+   * Whether the player is connected to LMS right now.
+   */
+  async isConnected(): Promise<boolean> {
+    const response: any = await this.stub.requestAsync([this.id, ['connected', '?']])
+    return Number.parseInt(response?._connected) === 1
   }
 
   async status() {

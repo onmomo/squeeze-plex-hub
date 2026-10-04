@@ -204,7 +204,8 @@ forwards to the fake Plex server on the test host. Reproduce LMS-facing bugs her
   `config/settings.json`, read and written only through `server/lib/hubConfig.ts` (cached, serialized atomic writes).
 - Schema is versioned and keyed per player: `{ "version": 1, "players": { "<playerId>": { "hidden": true } } }`.
   Do not store player names or other LMS data here, LMS owns them.
-  Add new settings as optional fields (or a sibling top-level key, e.g. `groups`), never break existing files.
+  Stereo pairs live in the sibling key `pairs`, keyed by the left player id: `{ "<leftId>": { "name", "leftId", "rightId" } }`
+  (the pair name is a hub concept, LMS has none). Add new settings as optional fields or sibling keys, never break existing files.
 - Demo mode writes to `config/settings.demo.json` instead.
 
 ### Logging
@@ -275,7 +276,9 @@ Every Plex client request includes these headers (read them from the event):
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/api/players` | List all discovered players + server info + `settings.hidden` (hidden players included) |
+| GET | `/api/players` | List all discovered players + server info + `settings.hidden` (hidden players included) + `pair` if the player is part of a stereo pair |
+| POST | `/api/pairs` | Body `{ "name", "leftId", "rightId" }`: syncs the players, sets left/right output, persists the pair (400 / 404 / 409 / 500 / 502) |
+| DELETE | `/api/pairs/{leftId}` | Dissolves the pair: unsync both players, stereo output again (404 / 500) |
 | PATCH | `/api/players/{playerId}/settings` | Body `{ "hidden": boolean }`, persists to `config/settings.json` (400 / 404 / 500) |
 | GET | `/resources` | Device resource info (Plex registration) |
 | GET | `/player/{playerId}/playback/play` | Resume playback |
@@ -339,9 +342,20 @@ gdmDiscovery task (every minute)
 player (`{ id, name, kind: 'player', serverId, memberIds }`). Both the GDM announcer and `/resources` go through it, so a
 hidden player is neither announced nor described. Playback routes still accept hidden players (a running session may finish).
 
-Planned player groups (room groups, stereo pairs) plug in here: a group becomes one target (`kind: 'group'`, one
-`Resource-Identifier`, several `memberIds`), and the dashboard renders it as another `DashboardItem` kind in
-`usePlayerDashboard`. Do not announce players directly from storage.
+A **stereo pair** is one target (`kind: 'stereoPair'`) under the id of its left player; the right player is not announced.
+Creating a pair (`server/lib/stereoPair.ts`) only issues LMS commands: the left player syncs to the right one (LMS: `A sync B` makes A the master, so what the left player plays carries on; the other way round the idle right player would clear the playlist) and the
+players get the pref `outputChannels` 1 (left) / 2 (right), 0 = stereo, and `syncVolume` 1 so a volume change on one reaches the other (0 again when dissolved). LMS applies the channel only while the player is
+synced, and playback commands to the left player apply to the whole sync group (verified in `test/e2e/stereoPair.e2e.spec.ts`).
+The scanner (every minute) records which players have the `outputChannels` pref (`playerCapabilities/{id}`; LMS only has it for
+the Squeezebox 2 family, `hasOutputChannels`), only those can be paired (`canPair` in `/api/players`, checked live by
+`POST /api/pairs`). It also calls `reconcileStereoPairs()`: an intact pair is left alone, a lost sync group or output channel is
+restored, a pair with a disconnected member is reported `offline` (`pairStatus/{leftId}`, shown on the card). Which member is
+the sync master does not matter, LMS applies playback commands of either member to the group (e2e covered).
+Creating and dissolving a pair run under `withPairLock` so the scanner does not "repair" them meanwhile. Members that were
+unreachable when a pair was dissolved are kept in `pendingResets` (settings) and reset to stereo/unsynced by the scanner once
+connected (LMS keeps syncs and prefs per player on the server, so with a real LMS an offline member is usually reset right away,
+see the e2e test). The hub never touches audio. The dashboard renders a pair as a `DashboardItem` of kind `'pair'` (one card for the left player).
+Do not announce players directly from storage.
 
 ### Multiple Plex Media Servers
 

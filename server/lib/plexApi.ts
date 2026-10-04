@@ -12,11 +12,17 @@ export interface PlexServer {
   token: string
 }
 
+/**
+ * HTTP header values can only carry Latin-1, any other character (e.g. the ⇄ of a stereo pair, emoji in player names) makes
+ * `new Headers()` throw. The name in the body is not affected.
+ */
+const headerSafe = (value: string) => value.replace(/[^\x20-\xff]/gu, '').trim()
+
 export const responseHeaders = (playerId: string, playerName: string, contentType?: string) =>
   new Headers({
     'Content-Type': contentType ? contentType : 'text/plain',
     'X-Plex-Client-Identifier': playerId,
-    'X-Plex-Device-Name': playerName,
+    'X-Plex-Device-Name': headerSafe(playerName),
     'X-Plex-Product': plexOptions.product,
     'X-Plex-Version': plexOptions.version,
     'X-Plex-Protocol': plexOptions.protocol,

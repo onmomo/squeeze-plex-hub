@@ -3,19 +3,27 @@ import { flushPromises } from '@vue/test-utils'
 import { createError, readBody } from 'h3'
 import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
 import PlayerDashboard from './PlayerDashboard.vue'
+import PairDialog from './PairDialog.vue'
 import PlayerCard from './PlayerCard.vue'
 
 const server = { uuid: 'server-1', name: 'Lyrion NAS', ip: '192.168.1.20', jsonPort: '9000', ver: '9.0.2', cliPort: '9090' }
-const player = (playerid: string, name: string, hidden: boolean) => ({
+const player = (
+  playerid: string,
+  name: string,
+  hidden: boolean,
+  pair?: { name: string; role: 'left' | 'right'; partnerId: string; leftId?: string }
+) => ({
   playerInfo: { playerid, name, model: 'squeezelite', modelname: 'SqueezeLite', ip: '192.168.1.40', firmware: 'v2' },
   serverInfo: server,
-  settings: { hidden }
+  settings: { hidden },
+  ...(pair && { pair })
 })
 
 let players: unknown[] = []
 let playersStatus = 200
 let patchStatus = 200
 let patchBodies: unknown[] = []
+let dissolved: string[] = []
 
 registerEndpoint('/api/players', () => {
   if (playersStatus !== 200) {
@@ -34,6 +42,15 @@ registerEndpoint('/api/players/aa/settings', {
   }
 })
 
+registerEndpoint('/api/pairs/aa', {
+  method: 'DELETE',
+  handler: () => {
+    dissolved.push('aa')
+    players = [player('aa', 'Kitchen L', false), player('bb', 'Kitchen R', false)]
+    return { removed: true }
+  }
+})
+
 async function mountDashboard() {
   const wrapper = await mountSuspended(PlayerDashboard)
   await flushPromises()
@@ -48,6 +65,7 @@ describe('PlayerDashboard', () => {
     playersStatus = 200
     patchStatus = 200
     patchBodies = []
+    dissolved = []
   })
 
   it('shows servers with visible players and a standby section for hidden ones', async () => {
@@ -108,6 +126,118 @@ describe('PlayerDashboard', () => {
     await new Promise((resolve) => setTimeout(resolve, 20))
     expect(wrapper.findAllComponents(PlayerCard)).toHaveLength(1)
     expect(wrapper.text()).toContain('Hidden players (1)')
+    wrapper.unmount()
+  })
+
+  it('shows the two players of a stereo pair as one card named after the pair', async () => {
+    players = [
+      player('aa', 'Kitchen L', false, { name: 'Kitchen', role: 'left', partnerId: 'bb' }),
+      player('bb', 'Kitchen R', false, { name: 'Kitchen', role: 'right', partnerId: 'aa' }),
+      player('cc', 'Office', false)
+    ]
+    const wrapper = await mountDashboard()
+    const cards = wrapper.findAllComponents(PlayerCard)
+    expect(cards).toHaveLength(2)
+    const pair = cards.find((card) => card.text().includes('Stereo pair'))!
+    expect(pair.find('.channel-name').text()).toBe('Kitchen ⇄')
+    expect(pair.text()).toContain('Kitchen L')
+    expect(pair.text()).toContain('Kitchen R')
+    expect(wrapper.find('.vfd').text()).toContain('02/02')
+    wrapper.unmount()
+  })
+
+  it('dissolves a stereo pair and shows both players again', async () => {
+    players = [
+      player('aa', 'Kitchen L', false, { name: 'Kitchen', role: 'left', partnerId: 'bb' }),
+      player('bb', 'Kitchen R', false, { name: 'Kitchen', role: 'right', partnerId: 'aa' })
+    ]
+    const wrapper = await mountDashboard()
+    wrapper.findComponent(PlayerCard).vm.$emit('dissolve')
+    await flushPromises()
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    await flushPromises()
+
+    expect(dissolved).toEqual(['aa'])
+    expect(wrapper.findAllComponents(PlayerCard)).toHaveLength(2)
+    wrapper.unmount()
+  })
+
+  it('opens the pair dialog with the free players of the server as partners', async () => {
+    const wrapper = await mountDashboard()
+    wrapper.findComponent(PlayerCard).vm.$emit('pair')
+    await flushPromises()
+    expect(wrapper.findComponent(PairDialog).exists()).toBe(true)
+    expect(
+      wrapper
+        .findComponent(PairDialog)
+        .props('candidates')
+        .map((candidate: { id: string }) => candidate.id)
+    ).toEqual(['bb'])
+    wrapper.unmount()
+  })
+
+  it('only offers players with output channel setting as stereo partners', async () => {
+    players = [player('aa', 'Kitchen', false), { ...player('bb', 'Old Squeezebox', false), canPair: false }, player('cc', 'Office', false)]
+    const wrapper = await mountDashboard()
+    wrapper.findAllComponents(PlayerCard)[0]!.vm.$emit('pair')
+    await flushPromises()
+    expect(
+      wrapper
+        .findComponent(PairDialog)
+        .props('candidates')
+        .map((candidate: { id: string }) => candidate.id)
+    ).toEqual(['cc'])
+    wrapper.unmount()
+  })
+
+  it('only offers players of the same Lyrion server as stereo partners', async () => {
+    const otherServer = { ...server, uuid: 'server-2', name: 'Lyrion Attic', ip: '192.168.1.30' }
+    players = [player('aa', 'Kitchen', false), player('bb', 'Office', false), { ...player('cc', 'Attic', false), serverInfo: otherServer }]
+    const wrapper = await mountDashboard()
+    wrapper
+      .findAllComponents(PlayerCard)
+      .find((card) => card.props('player').id === 'aa')!
+      .vm.$emit('pair')
+    await flushPromises()
+    expect(
+      wrapper
+        .findComponent(PairDialog)
+        .props('candidates')
+        .map((candidate: { id: string }) => candidate.id)
+    ).toEqual(['bb'])
+    wrapper.unmount()
+  })
+
+  it('does not add the mark to a pair name that has it already', async () => {
+    players = [
+      player('aa', 'Kitchen L', false, { name: 'Kitchen L ⇄ Kitchen R', role: 'left', partnerId: 'bb' }),
+      player('bb', 'Kitchen R', false, { name: 'Kitchen L ⇄ Kitchen R', role: 'right', partnerId: 'aa' })
+    ]
+    const wrapper = await mountDashboard()
+    expect(wrapper.find('.channel-name').text()).toBe('Kitchen L ⇄ Kitchen R')
+    wrapper.unmount()
+  })
+
+  it('shows a pair whose right player is missing and can dissolve it', async () => {
+    players = [player('aa', 'Kitchen L', false, { name: 'Kitchen', role: 'left', partnerId: 'bb', leftId: 'aa' })]
+    const wrapper = await mountDashboard()
+    const card = wrapper.findComponent(PlayerCard)
+    expect(card.text()).toContain('Kitchen L')
+    expect(card.text()).toContain('Not found')
+    wrapper.unmount()
+  })
+
+  it('shows a pair whose left player is missing instead of hiding the right one, and dissolves it by the left id', async () => {
+    players = [player('bb', 'Kitchen R', false, { name: 'Kitchen', role: 'right', partnerId: 'aa', leftId: 'aa' })]
+    const wrapper = await mountDashboard()
+    const card = wrapper.findComponent(PlayerCard)
+    expect(card.text()).toContain('Kitchen R')
+    expect(card.text()).toContain('Not found')
+    card.vm.$emit('dissolve')
+    await flushPromises()
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    await flushPromises()
+    expect(dissolved).toEqual(['aa'])
     wrapper.unmount()
   })
 })

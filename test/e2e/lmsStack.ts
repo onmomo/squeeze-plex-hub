@@ -1,3 +1,5 @@
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import { GenericContainer, Network, SocatContainer, Wait, type StartedNetwork, type StartedTestContainer } from 'testcontainers'
 import { SqueezeServerStub } from 'lms-squeeze-rpc-x'
 
@@ -12,10 +14,15 @@ import { SqueezeServerStub } from 'lms-squeeze-rpc-x'
  * PLEX_HOST and forwards to the fake Plex server on the test host, Docker's embedded DNS resolves the alias for LMS.
  */
 
+const execFileAsync = promisify(execFile)
+
 export const LMS_IMAGE = process.env.E2E_LMS_IMAGE ?? 'lmscommunity/lyrionmusicserver:9.1.1'
 export const SQUEEZELITE_IMAGE = process.env.E2E_SQUEEZELITE_IMAGE ?? 'giof71/squeezelite:debian-full-squeezelite-current-2026-08-05'
 export const PLAYER_MAC = 'aa:bb:cc:00:00:01'
 export const PLAYER_NAME = 'E2E Player'
+/** Second player, only started for stereo pair tests */
+export const PLAYER2_MAC = 'aa:bb:cc:00:00:02'
+export const PLAYER2_NAME = 'E2E Player 2'
 /** Hostname the containers reach the fake Plex server on (same port as on the test host) */
 export const PLEX_HOST = 'plex'
 
@@ -24,6 +31,8 @@ export interface LmsStack {
   host: string
   port: number
   stub: SqueezeServerStub
+  /** Disconnects / reconnects the second player (only with `secondPlayer`) */
+  setSecondPlayerOnline(online: boolean): Promise<void>
   stop(): Promise<void>
 }
 
@@ -31,7 +40,7 @@ export interface LmsStack {
  * Starts LMS and squeezelite and waits until the player is connected.
  * @param plexPort port of the fake Plex server on the test host, reachable from the containers as `PLEX_HOST:plexPort`
  */
-export async function startLmsStack(plexPort: number): Promise<LmsStack> {
+export async function startLmsStack(plexPort: number, options: { secondPlayer?: boolean } = {}): Promise<LmsStack> {
   const network: StartedNetwork = await new Network().start()
   const plexRelay = await new SocatContainer()
     .withNetwork(network)
@@ -62,20 +71,38 @@ export async function startLmsStack(plexPort: number): Promise<LmsStack> {
     })
     .start()
 
+  const startSqueezelite = (name: string, mac: string) =>
+    new GenericContainer(SQUEEZELITE_IMAGE)
+      .withNetwork(network)
+      .withEnvironment({
+        SQUEEZELITE_SERVER_PORT: 'lms:3483',
+        SQUEEZELITE_NAME: name,
+        SQUEEZELITE_MAC_ADDRESS: mac,
+        SQUEEZELITE_AUDIO_DEVICE: 'null'
+      })
+      .start()
+  const squeezelite2 = options.secondPlayer ? await startSqueezelite(PLAYER2_NAME, PLAYER2_MAC) : undefined
+
   const host = lms.getHost()
   const port = lms.getMappedPort(9000)
   const stub = new SqueezeServerStub(`http://${host}:${port}`)
   await waitFor(async () => {
     const response: any = await stub.requestAsync(['', ['players', '0', '10']])
-    return Number(response?.count) > 0
+    return Number(response?.count) >= (options.secondPlayer ? 2 : 1)
   }, 60_000)
 
   return {
     host,
     port,
     stub,
+    async setSecondPlayerOnline(online: boolean) {
+      if (!squeezelite2) throw new Error('No second player started')
+      // Not squeezelite2.stop(): testcontainers would then ignore the stop in `stop()` below and leave the container behind
+      await execFileAsync('docker', online ? ['start', squeezelite2.getId()] : ['stop', '-t', '0', squeezelite2.getId()])
+    },
     async stop() {
       await squeezelite.stop()
+      await squeezelite2?.stop()
       await lms.stop()
       await plexRelay.stop()
       await network.stop()

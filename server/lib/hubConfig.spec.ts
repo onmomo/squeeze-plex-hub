@@ -2,7 +2,21 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'fs/promises'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { configFilePath, getPlayerSettings, isPlayerHidden, loadHubConfig, setConfigDir, setPlayerSettings } from './hubConfig'
+import {
+  configFilePath,
+  findStereoPair,
+  getPlayerSettings,
+  getStereoPairs,
+  isPlayerHidden,
+  loadHubConfig,
+  addPendingResets,
+  getPendingResets,
+  removePendingReset,
+  removeStereoPair,
+  saveStereoPair,
+  setConfigDir,
+  setPlayerSettings
+} from './hubConfig'
 
 vi.mock('../composables/useLogger', () => ({
   default: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })
@@ -31,28 +45,33 @@ describe('hubConfig', () => {
   })
 
   it('makes all players visible when no settings file exists', async () => {
-    expect(await loadHubConfig()).toEqual({ version: 1, players: {} })
+    expect(await loadHubConfig()).toEqual({ version: 1, players: {}, pairs: {}, pendingResets: [] })
     expect(await isPlayerHidden('00:04:20:aa:bb:cc')).toBe(false)
   })
 
   it('falls back to defaults if the settings file is invalid', async () => {
     await writeFile(join(dir, 'settings.json'), '{ not json')
-    expect(await loadHubConfig()).toEqual({ version: 1, players: {} })
+    expect(await loadHubConfig()).toEqual({ version: 1, players: {}, pairs: {}, pendingResets: [] })
   })
 
   it('falls back to defaults if the settings file has no players', async () => {
     await writeFile(join(dir, 'settings.json'), 'null')
-    expect(await loadHubConfig()).toEqual({ version: 1, players: {} })
+    expect(await loadHubConfig()).toEqual({ version: 1, players: {}, pairs: {}, pendingResets: [] })
   })
 
   it('ignores fields it does not know, e.g. names written by older versions', async () => {
     await writeFile(join(dir, 'settings.json'), JSON.stringify({ version: 1, players: { a: { name: 'Kitchen', hidden: true } } }))
-    expect(await loadHubConfig()).toEqual({ version: 1, players: { a: { hidden: true } } })
+    expect(await loadHubConfig()).toEqual({ version: 1, players: { a: { hidden: true } }, pairs: {}, pendingResets: [] })
   })
 
   it('ignores malformed player entries', async () => {
     await writeFile(join(dir, 'settings.json'), JSON.stringify({ players: { a: { hidden: true }, b: 'nope', c: { hidden: 'yes' } } }))
-    expect(await loadHubConfig()).toEqual({ version: 1, players: { a: { hidden: true }, c: { hidden: false } } })
+    expect(await loadHubConfig()).toEqual({
+      version: 1,
+      players: { a: { hidden: true }, c: { hidden: false } },
+      pairs: {},
+      pendingResets: []
+    })
   })
 
   it('persists player settings as readable json', async () => {
@@ -60,7 +79,7 @@ describe('hubConfig', () => {
 
     expect(await isPlayerHidden('00:04:20:aa:bb:cc')).toBe(true)
     const file = JSON.parse(await readFile(join(dir, 'settings.json'), 'utf8'))
-    expect(file).toEqual({ version: 1, players: { '00:04:20:aa:bb:cc': { hidden: true } } })
+    expect(file).toEqual({ version: 1, players: { '00:04:20:aa:bb:cc': { hidden: true } }, pairs: {}, pendingResets: [] })
 
     // Survives a restart
     setConfigDir(dir)
@@ -88,5 +107,66 @@ describe('hubConfig', () => {
     await rm(join(dir, 'settings.json.tmp'), { recursive: true })
     await setPlayerSettings('a', { hidden: false })
     expect(await isPlayerHidden('a')).toBe(false)
+  })
+
+  describe('stereo pairs', () => {
+    const kitchen = { name: 'Kitchen', leftId: 'aa', rightId: 'bb' }
+
+    it('persists a pair and finds it by either member', async () => {
+      await saveStereoPair(kitchen)
+      expect(await getStereoPairs()).toEqual([kitchen])
+      expect(await findStereoPair('aa')).toEqual({ pair: kitchen, role: 'left' })
+      expect(await findStereoPair('bb')).toEqual({ pair: kitchen, role: 'right' })
+      expect(await findStereoPair('cc')).toBeUndefined()
+
+      setConfigDir(dir)
+      expect(await getStereoPairs()).toEqual([kitchen])
+      expect(JSON.parse(await readFile(join(dir, 'settings.json'), 'utf8')).pairs).toEqual({ aa: kitchen })
+    })
+
+    it('removes a pair and keeps player settings', async () => {
+      await setPlayerSettings('cc', { hidden: true })
+      await saveStereoPair(kitchen)
+      await removeStereoPair('aa')
+      expect(await getStereoPairs()).toEqual([])
+      expect(await isPlayerHidden('cc')).toBe(true)
+    })
+
+    it('ignores invalid pairs in the settings file', async () => {
+      await writeFile(
+        join(dir, 'settings.json'),
+        JSON.stringify({
+          version: 1,
+          players: {},
+          pairs: { x: { leftId: 'x', rightId: 'x' }, y: { name: 1, leftId: 'y', rightId: 'z' }, w: null }
+        })
+      )
+      expect(await getStereoPairs()).toEqual([{ name: 'y', leftId: 'y', rightId: 'z' }])
+    })
+  })
+
+  describe('pending resets', () => {
+    it('remembers players to reset once, survives a restart and is cleared by removePendingReset', async () => {
+      await addPendingResets([])
+      await addPendingResets(['aa', 'bb'])
+      await addPendingResets(['bb', 'cc'])
+      expect(await getPendingResets()).toEqual(['aa', 'bb', 'cc'])
+
+      setConfigDir(dir)
+      expect(await getPendingResets()).toEqual(['aa', 'bb', 'cc'])
+      await removePendingReset('bb')
+      expect(await getPendingResets()).toEqual(['aa', 'cc'])
+    })
+
+    it('ignores invalid entries in the settings file', async () => {
+      await writeFile(join(dir, 'settings.json'), JSON.stringify({ pendingResets: ['aa', 1, null, 'aa'] }))
+      expect(await getPendingResets()).toEqual(['aa'])
+    })
+
+    it('forgets a pending reset of a player that is paired again', async () => {
+      await addPendingResets(['aa', 'zz'])
+      await saveStereoPair({ name: 'Kitchen', leftId: 'aa', rightId: 'bb' })
+      expect(await getPendingResets()).toEqual(['zz'])
+    })
   })
 })

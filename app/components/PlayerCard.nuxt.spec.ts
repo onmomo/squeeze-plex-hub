@@ -10,9 +10,13 @@ const player: DashboardPlayer = {
   modelName: 'Squeezebox Radio',
   ip: '192.168.1.42',
   firmware: '8.0.1',
-  imageUrl: 'http://192.168.1.20:9000/html/images/Players/baby_250x250.png',
+  imageUrls: [
+    'http://192.168.1.20:9000/html/images/Players/baby_250x250.png',
+    'http://192.168.1.20:9000/html/images/Players/softsqueeze_250x250.png'
+  ],
   hidden: false,
-  saving: false
+  saving: false,
+  canPair: true
 }
 
 describe('PlayerCard', () => {
@@ -23,11 +27,13 @@ describe('PlayerCard', () => {
     expect(wrapper.text()).toContain('192.168.1.42')
     expect(wrapper.text()).toContain('In Plexamp')
     expect(wrapper.find('.channel-state').exists()).toBe(false)
-    expect(wrapper.find('img').attributes('src')).toBe(player.imageUrl)
+    expect(wrapper.find('img').attributes('src')).toBe(player.imageUrls[0])
   })
 
-  it('falls back to an icon if the model image is missing', async () => {
+  it('tries the next image if the model image is missing and falls back to an icon after the last one', async () => {
     const wrapper = await mountSuspended(PlayerCard, { props: { player } })
+    await wrapper.find('img').trigger('error')
+    expect(wrapper.find('img').attributes('src')).toBe(player.imageUrls[1])
     await wrapper.find('img').trigger('error')
     expect(wrapper.find('img').exists()).toBe(false)
   })
@@ -45,5 +51,16 @@ describe('PlayerCard', () => {
     expect(wrapper.find('button[role="switch"]').attributes('aria-checked')).toBe('true')
     await wrapper.find('button[role="switch"]').trigger('click')
     expect(wrapper.emitted('update:hidden')).toEqual([[true]])
+  })
+
+  it('marks a stereo pair with the amber border and shows both players', async () => {
+    const pair = { leftName: 'Kitchen L', right: { ...player, name: 'Kitchen R' } }
+    const wrapper = await mountSuspended(PlayerCard, { props: { player: { ...player, name: 'Kitchen ⇄' }, pair } })
+    expect(wrapper.find('.channel').classes()).toContain('is-pair')
+    expect(wrapper.text()).toContain('Stereo pair')
+    expect(wrapper.find('.main-star').exists()).toBe(true)
+    expect(wrapper.findAll('.main-star')).toHaveLength(1)
+    const single = await mountSuspended(PlayerCard, { props: { player } })
+    expect(single.find('.channel').classes()).not.toContain('is-pair')
   })
 })

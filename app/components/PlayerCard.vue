@@ -1,9 +1,12 @@
 <template>
-  <article class="channel" :class="{ 'is-standby': player.hidden }" :aria-label="`${player.name}, ${player.modelName}`">
+  <article class="channel" :class="{ 'is-standby': player.hidden, 'is-pair': !!pair }" :aria-label="`${player.name}, ${modelLabel}`">
     <header class="channel-head">
       <span class="channel-model">
-        <span class="channel-model-name" :title="player.modelName">{{ player.modelName }}</span>
-        <span v-if="player.hidden" class="channel-state">Hidden</span>
+        <span class="channel-model-name" :title="modelLabel"
+          ><span v-if="pair" class="channel-pair-mark" aria-hidden="true">⇄</span> {{ modelLabel }}</span
+        >
+        <span v-if="pair?.problem" class="channel-state">{{ pair.problem === 'offline' ? 'Offline' : 'Not in sync' }}</span>
+        <span v-else-if="player.hidden" class="channel-state">Hidden</span>
       </span>
       <UDropdownMenu :items="menuItems" :content="{ align: 'end' }">
         <UButton
@@ -19,19 +22,35 @@
     <div class="bezel">
       <UIcon v-if="!imageLoaded" name="i-lucide-speaker" class="bezel-icon" aria-hidden="true" />
       <img
-        v-if="!imageFailed"
+        v-if="imageUrl"
         v-show="imageLoaded"
-        :src="player.imageUrl"
-        :alt="`${player.modelName} player`"
+        :key="imageUrl"
+        :src="imageUrl"
+        :alt="`${modelLabel} player`"
         class="bezel-image"
         @load="imageLoaded = true"
-        @error="imageFailed = true"
+        @error="imageIndex++"
       />
     </div>
 
     <h3 class="channel-name" :title="player.name">{{ player.name }}</h3>
 
-    <dl class="readout">
+    <dl v-if="pair" class="readout">
+      <div>
+        <dt>L</dt>
+        <dd>
+          {{ pair.leftName }}
+          <span class="main-star" title="Main player: Plexamp controls the pair through it and it keeps playing if the pair is dissolved"
+            >★<span class="sr-only"> main player</span></span
+          >
+        </dd>
+      </div>
+      <div>
+        <dt>R</dt>
+        <dd>{{ pair.rightName }}</dd>
+      </div>
+    </dl>
+    <dl v-else class="readout">
       <div>
         <dt>IP</dt>
         <dd>{{ player.ip }}</dd>
@@ -68,19 +87,29 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import { useClipboard } from '@vueuse/core'
-import type { DashboardPlayer } from '../composables/usePlayerDashboard'
+import type { DashboardPair, DashboardPlayer } from '../composables/usePlayerDashboard'
 
-const props = defineProps<{ player: DashboardPlayer }>()
-const emit = defineEmits<{ 'update:hidden': [hidden: boolean] }>()
+const props = defineProps<{ player: DashboardPlayer; pair?: DashboardPair }>()
+const emit = defineEmits<{ 'update:hidden': [hidden: boolean]; pair: []; dissolve: [] }>()
 
-// The model image comes from LMS, show a speaker icon until it loaded or if it is missing
+const modelLabel = computed(() => (props.pair ? 'Stereo pair' : props.player.modelName))
+
+// The model image comes from LMS: try the next candidate if one is missing, a speaker icon shows until one loaded or if none exists
 const imageLoaded = ref(false)
-const imageFailed = ref(false)
+const imageIndex = ref(0)
+const imageUrl = computed(() => props.player.imageUrls[imageIndex.value])
 const { copy } = useClipboard({ legacy: true })
 const toast = useToast()
 
-// Extension point: "Add to group…" will live here once player groups exist
 const menuItems = computed<DropdownMenuItem[]>(() => [
+  props.pair
+    ? { label: 'Dissolve stereo pair', icon: 'i-lucide-unlink', disabled: props.player.saving, onSelect: () => emit('dissolve') }
+    : {
+        label: 'Pair as stereo…',
+        icon: 'i-lucide-audio-lines',
+        disabled: props.player.saving || !props.player.canPair,
+        onSelect: () => emit('pair')
+      },
   {
     label: props.player.hidden ? 'Show in Plexamp' : 'Hide from Plexamp',
     icon: props.player.hidden ? 'i-lucide-radio' : 'i-lucide-eye-off',
@@ -114,6 +143,16 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
   transition:
     opacity 300ms ease,
     filter 300ms ease;
+}
+
+/* A stereo pair has the amber of the "In Plexamp" key around it */
+.channel.is-pair {
+  border-color: #ff9800;
+  box-shadow:
+    inset 0 1px 0 var(--rack-edge-highlight),
+    0 0 0 1px rgba(255, 152, 0, 0.35),
+    0 0 14px rgba(255, 152, 0, 0.2),
+    0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .channel.is-standby {
@@ -227,6 +266,12 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
 .readout div {
   display: grid;
   grid-template-columns: 2rem 1fr;
+}
+
+/* The main player of a stereo pair, amber like the pair border */
+.main-star {
+  color: #ff9800;
+  margin-left: 0;
 }
 
 .readout dt {
