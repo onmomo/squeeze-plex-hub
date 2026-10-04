@@ -71,14 +71,15 @@ export async function dissolveStereoPair(leftId: string, rightId: string): Promi
   return failed
 }
 
-// Pairs (by left player id) that are being created or dissolved, the scanner must not "repair" them meanwhile
-const busyPairs = new Set<string>()
+// Pairs (left player id -> member player ids) that are being created or dissolved, the scanner must neither "repair" them
+// nor reset their members meanwhile
+const busyPairs = new Map<string, string[]>()
 
 /**
- * Runs a change of a stereo pair while the scanner leaves that pair alone.
+ * Runs a change of a stereo pair while the scanner leaves that pair and its members alone.
  */
-export async function withPairLock<T>(leftId: string, change: () => Promise<T>): Promise<T> {
-  busyPairs.add(leftId)
+export async function withPairLock<T>(leftId: string, change: () => Promise<T>, memberIds: string[] = [leftId]): Promise<T> {
+  busyPairs.set(leftId, memberIds)
   try {
     return await change()
   } finally {
@@ -92,7 +93,10 @@ export async function withPairLock<T>(leftId: string, change: () => Promise<T>):
 export async function applyPendingResets() {
   const logger = useLogger('stereoPair')
   const pairedIds = new Set((await getStereoPairs()).flatMap((pair) => [pair.leftId, pair.rightId]))
+  const busyIds = new Set([...busyPairs.values()].flat())
   for (const playerId of await getPendingResets()) {
+    // Being paired right now: the pending reset is dropped when the new pair is saved
+    if (busyIds.has(playerId)) continue
     if (pairedIds.has(playerId)) {
       await removePendingReset(playerId)
       continue
@@ -202,6 +206,8 @@ export const playerCapabilitiesKey = (playerId: string) => `playerCapabilities/$
 export interface PlayerCapabilities {
   // The player offers the `outputChannels` pref, required to play only the left or right channel
   outputChannels: boolean
+  // When the capabilities were read, a negative answer is checked again after a while
+  checkedAt?: number
 }
 
 /**

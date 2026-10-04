@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
       // Members that are unreachable now are reset by the scanner once they are back
       await addPendingResets(await dissolveStereoPair(pair.leftId, pair.rightId))
       await removeStereoPair(leftId)
-    })
+    }, [pair.leftId, pair.rightId])
   } catch (error) {
     logger.error(`Failed to remove stereo pair '${pair.name}':`, error)
     throw createError({ statusCode: 500, statusMessage: 'Failed to save settings, check that the config directory is writable' })

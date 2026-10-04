@@ -63,5 +63,5 @@ export default defineEventHandler(async (event) => {
       logger.error(`Failed to save stereo pair '${name}':`, error)
       throw createError({ statusCode: 500, statusMessage: 'Failed to save settings, check that the config directory is writable' })
     }
-  })
+  }, [leftId, rightId])
 })

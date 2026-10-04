@@ -3,7 +3,7 @@ import { SqueezeServerStub, SqueezeServer } from 'lms-squeeze-rpc-x'
 import type { ServerInfo } from 'lms-discovery'
 import squeezePlayersScannerTask, { runSqueezePlayersScanner } from './squeezePlayersScanner'
 import type { IPlayerInfo } from 'lms-squeeze-rpc-x/dist/modelTypes'
-import { reconcileStereoPairs } from '../lib/stereoPair'
+import { reconcileStereoPairs, supportsStereoPair } from '../lib/stereoPair'
 
 // Mocks
 vi.mock('../composables/useLogger', () => ({
@@ -132,5 +132,35 @@ describe('squeezePlayersScanner plugin', () => {
     await runSqueezePlayersScanner()
     expect(mockSetItem).toHaveBeenCalledWith('players/u2', players)
     expect(reconcileStereoPairs).toHaveBeenCalledTimes(1)
+  })
+
+  it('asks again after a while if a player was not able to pair, but never if it is', async () => {
+    const server = { name: 'LMS', ip: '10.0.0.1', uuid: 'u1' }
+    const infos = ['a', 'b', 'c', 'd'].map((playerid) => ({
+      name: playerid,
+      playerid,
+      model: 'm',
+      modelname: 'baby',
+      firmware: '1',
+      ip: '1'
+    }))
+    const stored: Record<string, unknown> = {
+      'playerCapabilities/a': { outputChannels: true, checkedAt: 0 },
+      'playerCapabilities/b': { outputChannels: false, checkedAt: Date.now() },
+      'playerCapabilities/c': { outputChannels: false, checkedAt: Date.now() - 11 * 60 * 1000 }
+    }
+    mockGetKeys.mockResolvedValue(['servers/u1'])
+    mockGetItem.mockImplementation(async (key: string) => (key === 'servers/u1' ? server : (stored[key] ?? null)))
+    ;(SqueezeServer as unknown as Mock).mockImplementation(function () {
+      return { getPlayerInfosAsync: vi.fn().mockResolvedValue(infos) }
+    })
+    ;(SqueezeServerStub as unknown as Mock).mockImplementation(function () {
+      return {}
+    })
+    ;(supportsStereoPair as Mock).mockClear()
+
+    await runSqueezePlayersScanner()
+    expect((supportsStereoPair as Mock).mock.calls.map((call) => call[1]).sort()).toEqual(['c', 'd'])
+    expect(mockSetItem).toHaveBeenCalledWith('playerCapabilities/c', { outputChannels: true, checkedAt: expect.any(Number) })
   })
 })

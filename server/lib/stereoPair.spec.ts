@@ -259,6 +259,17 @@ describe('pair locks and pending resets', () => {
     expect(removePendingReset).toHaveBeenCalledWith('bb')
   })
 
+  it('leaves a player with a pending reset alone while it is being paired', async () => {
+    ;(getStereoPairs as Mock).mockResolvedValue([])
+    ;(getPendingResets as Mock).mockResolvedValue(['bb'])
+    const players: Record<string, any> = { bb: { ...fakePlayer('bb'), isConnected: vi.fn(async () => true) } }
+    ;(useSqueezePlayer as Mock).mockImplementation(async (id: string) => ({ player: players[id] }))
+
+    await withPairLock('aa', () => applyPendingResets(), ['aa', 'bb'])
+    expect(calls).toEqual([])
+    expect(removePendingReset).not.toHaveBeenCalled()
+  })
+
   it('drops a pending reset of a player that is part of a pair again', async () => {
     ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Kitchen', leftId: 'aa', rightId: 'bb' }])
     ;(getPendingResets as Mock).mockResolvedValue(['bb'])
