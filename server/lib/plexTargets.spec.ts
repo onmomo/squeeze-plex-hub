@@ -37,7 +37,7 @@ describe('plexTargets', () => {
     ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Living Room', leftId: 'aa', rightId: 'bb' }])
 
     expect(await resolvePlexTargets()).toEqual([
-      { id: 'aa', name: 'Living Room', kind: 'stereoPair', serverId: 's1', memberIds: ['aa', 'bb'] },
+      { id: 'aa', name: 'Living Room ⇄', kind: 'stereoPair', serverId: 's1', memberIds: ['aa', 'bb'] },
       { id: 'cc', name: 'Office 2', kind: 'player', serverId: 's1', memberIds: ['cc'] }
     ])
     expect(await findPlexTarget('bb')).toBeUndefined()
