@@ -3,7 +3,7 @@ import type ExtendedSqueezePlayer from './squeezePlayer'
 import type { SqueezeServerStub } from 'lms-squeeze-rpc-x'
 import useLogger from '../composables/useLogger'
 import usePlayerInfo from '../composables/usePlayerInfo'
-import { getPendingResets, getStereoPairs, removePendingReset, type StereoPair } from './hubConfig'
+import { addPendingResets, getPendingResets, getStereoPairs, removePendingReset, type StereoPair } from './hubConfig'
 
 /**
  * Syncs two players and sets the left player to output the left channel and the right player the right channel.
@@ -30,7 +30,13 @@ export async function formStereoPair(leftId: string, rightId: string) {
     if (volume !== undefined) await left.setVolume(volume)
   } catch (error) {
     // Do not leave half a pair behind, the former sync groups of the players are not restored
-    await dissolveStereoPair(leftId, rightId)
+    const failed = await dissolveStereoPair(leftId, rightId)
+    // Players the cleanup could not reach are reset by the scanner later
+    try {
+      await addPendingResets(failed)
+    } catch (saveError) {
+      logger.warn('Could not remember the players to reset:', saveError)
+    }
     throw error
   }
   logger.info(`Synced players '${leftId}' (left) and '${rightId}' (right) as stereo pair`)
@@ -74,17 +80,24 @@ export async function dissolveStereoPair(leftId: string, rightId: string): Promi
 // Pairs (left player id -> member player ids) that are being created or dissolved, the scanner must neither "repair" them
 // nor reset their members meanwhile
 const busyPairs = new Map<string, string[]>()
+// Changes of pairs run one after the other, so two requests sharing a player cannot both pass their membership checks
+let pairChanges: Promise<unknown> = Promise.resolve()
 
 /**
- * Runs a change of a stereo pair while the scanner leaves that pair and its members alone.
+ * Runs a change of a stereo pair exclusively: other changes wait for it, and the scanner leaves that pair and its members
+ * alone. Re-check preconditions (e.g. that the players are not paired yet) inside `change`.
  */
-export async function withPairLock<T>(leftId: string, change: () => Promise<T>, memberIds: string[] = [leftId]): Promise<T> {
-  busyPairs.set(leftId, memberIds)
-  try {
-    return await change()
-  } finally {
-    busyPairs.delete(leftId)
-  }
+export function withPairLock<T>(leftId: string, change: () => Promise<T>, memberIds: string[] = [leftId]): Promise<T> {
+  const run = pairChanges.then(async () => {
+    busyPairs.set(leftId, memberIds)
+    try {
+      return await change()
+    } finally {
+      busyPairs.delete(leftId)
+    }
+  })
+  pairChanges = run.catch(() => undefined)
+  return run
 }
 
 /**
@@ -154,8 +167,9 @@ export async function reconcileStereoPair(pair: StereoPair): Promise<StereoPairS
 
     const groups: any = await serverStub.requestAsync(['', ['syncgroups', '?']])
     const synced = ((groups?.syncgroups_loop ?? []) as { sync_members?: string }[]).some((group) => {
-      const members = (group.sync_members ?? '').split(',')
-      return members.includes(pair.leftId) && members.includes(pair.rightId)
+      // Exactly the two players: a third one in the group would play along although the pair does not know it
+      const members = (group.sync_members ?? '').split(',').filter(Boolean)
+      return members.length === 2 && members.includes(pair.leftId) && members.includes(pair.rightId)
     })
     const intact =
       synced &&

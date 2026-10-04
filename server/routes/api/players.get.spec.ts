@@ -111,7 +111,13 @@ describe('players.get API handler', () => {
     vi.stubGlobal('useStorage', () => ({ getItem: vi.fn().mockResolvedValue({ state: 'offline', checkedAt: 1 }) }))
 
     const result = (await playersGetHandler(createEventMock())) as PlayerServerInfo[]
-    expect(result[0]!.pair).toEqual({ name: 'Kitchen', role: 'left', partnerId: 'other', state: 'offline' })
+    expect(result[0]!.pair).toEqual({
+      name: 'Kitchen',
+      role: 'left',
+      leftId: mockPlayerInfo.playerid,
+      partnerId: 'other',
+      state: 'offline'
+    })
   })
 
   it('returns 404 and message if no LMS found, try/catch', async () => {

@@ -23,10 +23,11 @@ export interface DashboardPlayer {
  * Plex target: its `player` carries the pair name and the visibility.
  */
 export interface DashboardPair {
-  // Right player, with its own LMS name
-  right: DashboardPlayer
-  // The left player's own LMS name, `player.name` is the pair name
+  // Player id of the left player, which identifies the pair
+  leftId: string
+  // LMS names of the members, `player.name` is the pair name. A member that is not known (offline) shows as such
   leftName: string
+  rightName: string
   // `offline`: a member is not connected, `error`: the hub could not restore the pair. Both are checked every minute
   problem?: 'offline' | 'error'
 }
@@ -94,25 +95,27 @@ export function usePlayerDashboard() {
       const section = byServer.get(entry.serverInfo.uuid) ?? { server: entry.serverInfo, items: [], hiddenItems: [] }
       byServer.set(entry.serverInfo.uuid, section)
 
-      // The right player of a pair is shown on the card of the left one
-      if (entry.pair?.role === 'right') continue
-
       const player = toDashboardPlayer(entry, savingHidden.get(entry.playerInfo.playerid))
-      const partner = entry.pair && players.value.find((candidate) => candidate.playerInfo.playerid === entry.pair!.partnerId)
-      const item: DashboardItem =
-        entry.pair && partner
-          ? {
-              kind: 'pair',
-              id: player.id,
-              // Same name as in Plexamp (server/lib/plexTargets.ts)
-              player: { ...player, name: entry.pair.name.includes('⇄') ? entry.pair.name : `${entry.pair.name} ⇄` },
-              pair: {
-                right: toDashboardPlayer(partner),
-                leftName: player.name,
-                problem: entry.pair.state === 'offline' || entry.pair.state === 'error' ? entry.pair.state : undefined
-              }
-            }
-          : { kind: 'player', id: player.id, player }
+      let item: DashboardItem = { kind: 'player', id: player.id, player }
+      if (entry.pair) {
+        const partner = players.value.find((candidate) => candidate.playerInfo.playerid === entry.pair!.partnerId)
+        // The right player is shown on the card of the left one, as long as that card can be rendered
+        if (entry.pair.role === 'right' && partner) continue
+        const [leftName, rightName] =
+          entry.pair.role === 'left' ? [player.name, partner?.playerInfo.name ?? 'Not found'] : ['Not found', player.name]
+        item = {
+          kind: 'pair',
+          id: player.id,
+          // Same name as in Plexamp (server/lib/plexTargets.ts)
+          player: { ...player, name: entry.pair.name.includes('⇄') ? entry.pair.name : `${entry.pair.name} ⇄` },
+          pair: {
+            leftId: entry.pair.leftId,
+            leftName,
+            rightName,
+            problem: entry.pair.state === 'offline' || entry.pair.state === 'error' ? entry.pair.state : undefined
+          }
+        }
+      }
       ;(player.hidden ? section.hiddenItems : section.items).push(item)
     }
 
@@ -168,9 +171,9 @@ export function usePlayerDashboard() {
     }
   }
 
-  async function dissolvePair(left: DashboardPlayer) {
+  async function dissolvePair(left: DashboardPlayer, leftId = left.id) {
     try {
-      await $fetch(`/api/pairs/${encodeURIComponent(left.id)}`, { method: 'DELETE' })
+      await $fetch(`/api/pairs/${encodeURIComponent(leftId)}`, { method: 'DELETE' })
       await refresh()
       toast.add({
         title: `${left.name} dissolved`,

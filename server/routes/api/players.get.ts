@@ -26,6 +26,7 @@ export type PlayerServerInfo = {
     name: string
     role: 'left' | 'right'
     partnerId: string
+    leftId: string
     // Last known state, unknown until the scanner checked the pair
     state?: StereoPairState
   }
@@ -52,6 +53,7 @@ export default defineEventHandler(async (event) => {
             pair: {
               name: membership.pair.name,
               role: membership.role,
+              leftId: membership.pair.leftId,
               partnerId: membership.role === 'left' ? membership.pair.rightId : membership.pair.leftId,
               state: status?.state
             }

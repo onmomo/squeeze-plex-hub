@@ -1,19 +1,20 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { readBody } from 'h3'
 import usePlayers from '../../composables/usePlayers'
-import { findStereoPair, saveStereoPair } from '../../lib/hubConfig'
+import { addPendingResets, findStereoPair, saveStereoPair } from '../../lib/hubConfig'
 import usePlayerInfo from '../../composables/usePlayerInfo'
-import { formStereoPair, supportsStereoPair } from '../../lib/stereoPair'
+import { dissolveStereoPair, formStereoPair, supportsStereoPair } from '../../lib/stereoPair'
 import pairsPostHandler from './pairs.post'
 
 vi.mock('../../composables/useLogger', () => ({
   default: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })
 }))
 vi.mock('../../composables/usePlayers', () => ({ default: vi.fn() }))
-vi.mock('../../lib/hubConfig', () => ({ findStereoPair: vi.fn(), saveStereoPair: vi.fn() }))
+vi.mock('../../lib/hubConfig', () => ({ findStereoPair: vi.fn(), saveStereoPair: vi.fn(), addPendingResets: vi.fn() }))
 vi.mock('../../composables/usePlayerInfo', () => ({ default: vi.fn() }))
 vi.mock('../../lib/stereoPair', () => ({
   formStereoPair: vi.fn(),
+  dissolveStereoPair: vi.fn(),
   supportsStereoPair: vi.fn(),
   withPairLock: async (_id: string, change: () => Promise<unknown>) => change()
 }))
@@ -98,6 +99,10 @@ describe('POST /api/pairs', () => {
 
   it('returns 500 if the pair cannot be saved', async () => {
     ;(saveStereoPair as Mock).mockRejectedValue(new Error('EACCES'))
+    ;(dissolveStereoPair as Mock).mockResolvedValue(['bb'])
     await expect(pairsPostHandler(event)).rejects.toMatchObject({ statusCode: 500 })
+    // The synced players are not left behind without a pair that manages them
+    expect(dissolveStereoPair).toHaveBeenCalledWith('aa', 'bb')
+    expect(addPendingResets).toHaveBeenCalledWith(['bb'])
   })
 })

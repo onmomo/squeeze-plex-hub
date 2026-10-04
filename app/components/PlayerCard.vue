@@ -46,7 +46,7 @@
       </div>
       <div>
         <dt>R</dt>
-        <dd>{{ pair.right.name }}</dd>
+        <dd>{{ pair.rightName }}</dd>
       </div>
     </dl>
     <dl v-else class="readout">

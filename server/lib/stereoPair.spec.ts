@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import useSqueezePlayer from '../composables/useSqueezePlayer'
 import usePlayerInfo from '../composables/usePlayerInfo'
-import { getPendingResets, getStereoPairs, removePendingReset } from './hubConfig'
+import { addPendingResets, getPendingResets, getStereoPairs, removePendingReset } from './hubConfig'
 import {
   applyPendingResets,
   dissolveStereoPair,
@@ -17,7 +17,12 @@ vi.mock('../composables/useLogger', () => ({
 }))
 vi.mock('../composables/useSqueezePlayer', () => ({ default: vi.fn() }))
 vi.mock('../composables/usePlayerInfo', () => ({ default: vi.fn() }))
-vi.mock('./hubConfig', () => ({ getStereoPairs: vi.fn(), getPendingResets: vi.fn(), removePendingReset: vi.fn() }))
+vi.mock('./hubConfig', () => ({
+  getStereoPairs: vi.fn(),
+  getPendingResets: vi.fn(),
+  removePendingReset: vi.fn(),
+  addPendingResets: vi.fn()
+}))
 
 const calls: string[] = []
 const fakePlayer = (id: string) => ({
@@ -73,6 +78,13 @@ describe('stereoPair', () => {
       'aa.channels(stereo)',
       'aa.syncVolume(false)'
     ])
+  })
+
+  it('remembers players the cleanup could not reach after a failed formation', async () => {
+    players.aa!.syncTo.mockRejectedValue(new Error('rejected'))
+    players.bb!.isConnected.mockResolvedValue(false)
+    await expect(formStereoPair('aa', 'bb')).rejects.toThrow('rejected')
+    expect(addPendingResets).toHaveBeenCalledWith(['bb'])
   })
 
   it('does not leave half a pair behind if LMS rejects a command', async () => {
@@ -136,6 +148,12 @@ describe('reconcileStereoPair', () => {
       'bb.syncVolume(true)',
       'aa.volume(40)'
     ])
+  })
+
+  it('treats a sync group with a third player as not intact', async () => {
+    syncMembers = 'aa,bb,cc'
+    expect(await reconcileStereoPair(pair)).toBe('repaired')
+    expect(calls).toContain('aa.syncTo(bb)')
   })
 
   it('treats a sync group of other players as not synced', async () => {
@@ -226,6 +244,25 @@ describe('supportsStereoPair', () => {
 })
 
 describe('pair locks and pending resets', () => {
+  it('runs changes of pairs one after the other', async () => {
+    const order: string[] = []
+    const first = withPairLock('aa', async () => {
+      order.push('first start')
+      await new Promise((resolve) => setTimeout(resolve, 20))
+      order.push('first end')
+    })
+    const second = withPairLock('cc', async () => {
+      order.push('second')
+    })
+    await Promise.all([first, second])
+    expect(order).toEqual(['first start', 'first end', 'second'])
+  })
+
+  it('keeps going after a failed change', async () => {
+    await expect(withPairLock('aa', async () => Promise.reject(new Error('boom')))).rejects.toThrow('boom')
+    await expect(withPairLock('aa', async () => 'ok')).resolves.toBe('ok')
+  })
+
   beforeEach(() => {
     calls.length = 0
     vi.clearAllMocks()

@@ -1,10 +1,10 @@
 import { createError, defineEventHandler, readBody } from 'h3'
 import useLogger from '../../composables/useLogger'
 import usePlayers from '../../composables/usePlayers'
-import { findStereoPair, saveStereoPair, type StereoPair } from '../../lib/hubConfig'
+import { addPendingResets, findStereoPair, saveStereoPair, type StereoPair } from '../../lib/hubConfig'
 import usePlayerInfo from '../../composables/usePlayerInfo'
 import { isDemoMode } from '../../lib/demoMode'
-import { formStereoPair, supportsStereoPair, withPairLock } from '../../lib/stereoPair'
+import { dissolveStereoPair, formStereoPair, supportsStereoPair, withPairLock } from '../../lib/stereoPair'
 
 /**
  * Creates a stereo pair of two players of the same LMS, e.g. `{ "name": "Kitchen", "leftId": "<mac>", "rightId": "<mac>" }`.
@@ -35,12 +35,6 @@ export default defineEventHandler(async (event) => {
   if (left.serverId !== right.serverId) {
     throw createError({ statusCode: 400, statusMessage: 'Both players of a stereo pair must be on the same Lyrion server' })
   }
-  for (const playerId of [leftId, rightId]) {
-    if (await findStereoPair(playerId)) {
-      throw createError({ statusCode: 409, statusMessage: `Player '${playerId}' is already part of a stereo pair` })
-    }
-  }
-
   // The demo players are fake, there is no Lyrion to sync them on
   const demo = isDemoMode()
   for (const { playerInfo, serverStub } of demo ? [] : await Promise.all([leftId, rightId].map((id) => usePlayerInfo(id)))) {
@@ -53,6 +47,13 @@ export default defineEventHandler(async (event) => {
   }
 
   return withPairLock(leftId, async () => {
+    // Checked while holding the lock, a request that ran before may have paired one of them
+    for (const playerId of [leftId, rightId]) {
+      if (await findStereoPair(playerId)) {
+        throw createError({ statusCode: 409, statusMessage: `Player '${playerId}' is already part of a stereo pair` })
+      }
+    }
+
     try {
       if (!demo) await formStereoPair(leftId, rightId)
     } catch (error) {
@@ -64,6 +65,15 @@ export default defineEventHandler(async (event) => {
       return await saveStereoPair({ name, leftId, rightId })
     } catch (error) {
       logger.error(`Failed to save stereo pair '${name}':`, error)
+      // The pair would be unmanaged: undo it and make sure players that cannot be reached now are reset later
+      if (!demo) {
+        const failed = await dissolveStereoPair(leftId, rightId)
+        try {
+          await addPendingResets(failed)
+        } catch (saveError) {
+          logger.warn('Could not remember the players to reset:', saveError)
+        }
+      }
       throw createError({ statusCode: 500, statusMessage: 'Failed to save settings, check that the config directory is writable' })
     }
   }, [leftId, rightId])

@@ -7,7 +7,12 @@ import PairDialog from './PairDialog.vue'
 import PlayerCard from './PlayerCard.vue'
 
 const server = { uuid: 'server-1', name: 'Lyrion NAS', ip: '192.168.1.20', jsonPort: '9000', ver: '9.0.2', cliPort: '9090' }
-const player = (playerid: string, name: string, hidden: boolean, pair?: { name: string; role: 'left' | 'right'; partnerId: string }) => ({
+const player = (
+  playerid: string,
+  name: string,
+  hidden: boolean,
+  pair?: { name: string; role: 'left' | 'right'; partnerId: string; leftId?: string }
+) => ({
   playerInfo: { playerid, name, model: 'squeezelite', modelname: 'SqueezeLite', ip: '192.168.1.40', firmware: 'v2' },
   serverInfo: server,
   settings: { hidden },
@@ -210,6 +215,29 @@ describe('PlayerDashboard', () => {
     ]
     const wrapper = await mountDashboard()
     expect(wrapper.find('.channel-name').text()).toBe('Kitchen L ⇄ Kitchen R')
+    wrapper.unmount()
+  })
+
+  it('shows a pair whose right player is missing and can dissolve it', async () => {
+    players = [player('aa', 'Kitchen L', false, { name: 'Kitchen', role: 'left', partnerId: 'bb', leftId: 'aa' })]
+    const wrapper = await mountDashboard()
+    const card = wrapper.findComponent(PlayerCard)
+    expect(card.text()).toContain('Kitchen L')
+    expect(card.text()).toContain('Not found')
+    wrapper.unmount()
+  })
+
+  it('shows a pair whose left player is missing instead of hiding the right one, and dissolves it by the left id', async () => {
+    players = [player('bb', 'Kitchen R', false, { name: 'Kitchen', role: 'right', partnerId: 'aa', leftId: 'aa' })]
+    const wrapper = await mountDashboard()
+    const card = wrapper.findComponent(PlayerCard)
+    expect(card.text()).toContain('Kitchen R')
+    expect(card.text()).toContain('Not found')
+    card.vm.$emit('dissolve')
+    await flushPromises()
+    await new Promise((resolve) => setTimeout(resolve, 50))
+    await flushPromises()
+    expect(dissolved).toEqual(['aa'])
     wrapper.unmount()
   })
 })

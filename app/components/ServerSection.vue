@@ -25,7 +25,7 @@
           :pair="item.kind === 'pair' ? item.pair : undefined"
           @update:hidden="(hidden) => emit('update:hidden', item.player, hidden)"
           @pair="emit('pair', item.player)"
-          @dissolve="emit('dissolve', item.player)"
+          @dissolve="emit('dissolve', item.player, item.kind === 'pair' ? item.pair.leftId : item.id)"
         />
       </template>
     </div>
@@ -49,7 +49,7 @@
               :pair="item.kind === 'pair' ? item.pair : undefined"
               @update:hidden="(hidden) => emit('update:hidden', item.player, hidden)"
               @pair="emit('pair', item.player)"
-              @dissolve="emit('dissolve', item.player)"
+              @dissolve="emit('dissolve', item.player, item.kind === 'pair' ? item.pair.leftId : item.id)"
             />
           </template>
         </div>
@@ -65,7 +65,7 @@ const props = defineProps<{ section: ServerSection }>()
 const emit = defineEmits<{
   'update:hidden': [player: DashboardPlayer, hidden: boolean]
   pair: [player: DashboardPlayer]
-  dissolve: [player: DashboardPlayer]
+  dissolve: [player: DashboardPlayer, leftId: string]
 }>()
 
 const headingId = computed(() => `lms-${props.section.server.uuid}`)
