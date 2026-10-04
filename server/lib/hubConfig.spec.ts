@@ -9,6 +9,9 @@ import {
   getStereoPairs,
   isPlayerHidden,
   loadHubConfig,
+  addPendingResets,
+  getPendingResets,
+  removePendingReset,
   removeStereoPair,
   saveStereoPair,
   setConfigDir,
@@ -139,6 +142,31 @@ describe('hubConfig', () => {
         })
       )
       expect(await getStereoPairs()).toEqual([{ name: 'y', leftId: 'y', rightId: 'z' }])
+    })
+  })
+
+  describe('pending resets', () => {
+    it('remembers players to reset once, survives a restart and is cleared by removePendingReset', async () => {
+      await addPendingResets([])
+      await addPendingResets(['aa', 'bb'])
+      await addPendingResets(['bb', 'cc'])
+      expect(await getPendingResets()).toEqual(['aa', 'bb', 'cc'])
+
+      setConfigDir(dir)
+      expect(await getPendingResets()).toEqual(['aa', 'bb', 'cc'])
+      await removePendingReset('bb')
+      expect(await getPendingResets()).toEqual(['aa', 'cc'])
+    })
+
+    it('ignores invalid entries in the settings file', async () => {
+      await writeFile(join(dir, 'settings.json'), JSON.stringify({ pendingResets: ['aa', 1, null, 'aa'] }))
+      expect(await getPendingResets()).toEqual(['aa'])
+    })
+
+    it('forgets a pending reset of a player that is paired again', async () => {
+      await addPendingResets(['aa', 'zz'])
+      await saveStereoPair({ name: 'Kitchen', leftId: 'aa', rightId: 'bb' })
+      expect(await getPendingResets()).toEqual(['zz'])
     })
   })
 })

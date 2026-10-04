@@ -160,4 +160,43 @@ describe('ExtendedSqueezePlayer', () => {
       shuffle: 0
     })
   })
+
+  it('syncs to another player and leaves the sync group', async () => {
+    await player.syncTo('def456')
+    expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['sync', 'def456']])
+    await player.unsync()
+    expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['sync', '-']])
+  })
+
+  it.each([
+    ['stereo', '0'],
+    ['left', '1'],
+    ['right', '2']
+  ] as const)('sets the output channels to %s', async (channels, value) => {
+    await player.setOutputChannels(channels)
+    expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['playerpref', 'outputChannels', value]])
+  })
+
+  it.each([
+    [{ _p2: '0' }, 'stereo'],
+    [{ _p2: '1' }, 'left'],
+    [{ _p2: '2' }, 'right'],
+    [{ _p2: '3' }, 'combined'],
+    [{}, undefined],
+    [undefined, undefined]
+  ])('reads the output channels from %j as %s', async (response, expected) => {
+    ;(stub.requestAsync as Mock).mockResolvedValue(response)
+    expect(await player.getOutputChannels()).toBe(expected)
+    expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['playerpref', 'outputChannels', '?']])
+  })
+
+  it.each([
+    [{ _connected: 1 }, true],
+    [{ _connected: '0' }, false],
+    [undefined, false]
+  ])('reads connected from %j as %s', async (response, expected) => {
+    ;(stub.requestAsync as Mock).mockResolvedValue(response)
+    expect(await player.isConnected()).toBe(expected)
+    expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['connected', '?']])
+  })
 })
