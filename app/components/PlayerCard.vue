@@ -37,7 +37,12 @@
     <dl v-if="pair" class="readout">
       <div>
         <dt>L</dt>
-        <dd>{{ pair.leftName }}</dd>
+        <dd>
+          {{ pair.leftName }}
+          <span class="main-star" title="Main player: Plexamp controls the pair through it and it keeps playing if the pair is dissolved"
+            >★<span class="sr-only"> main player</span></span
+          >
+        </dd>
       </div>
       <div>
         <dt>R</dt>
@@ -259,6 +264,12 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
 .readout div {
   display: grid;
   grid-template-columns: 2rem 1fr;
+}
+
+/* The main player of a stereo pair, amber like the pair border */
+.main-star {
+  color: #ff9800;
+  margin-left: 0.25rem;
 }
 
 .readout dt {

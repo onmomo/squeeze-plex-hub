@@ -53,6 +53,8 @@ describe('PlayerCard', () => {
     const wrapper = await mountSuspended(PlayerCard, { props: { player: { ...player, name: 'Kitchen ⇄' }, pair } })
     expect(wrapper.find('.channel').classes()).toContain('is-pair')
     expect(wrapper.text()).toContain('Stereo pair')
+    expect(wrapper.find('.main-star').exists()).toBe(true)
+    expect(wrapper.findAll('.main-star')).toHaveLength(1)
     const single = await mountSuspended(PlayerCard, { props: { player } })
     expect(single.find('.channel').classes()).not.toContain('is-pair')
   })
