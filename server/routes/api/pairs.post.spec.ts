@@ -12,7 +12,11 @@ vi.mock('../../composables/useLogger', () => ({
 vi.mock('../../composables/usePlayers', () => ({ default: vi.fn() }))
 vi.mock('../../lib/hubConfig', () => ({ findStereoPair: vi.fn(), saveStereoPair: vi.fn() }))
 vi.mock('../../composables/usePlayerInfo', () => ({ default: vi.fn() }))
-vi.mock('../../lib/stereoPair', () => ({ formStereoPair: vi.fn(), supportsStereoPair: vi.fn() }))
+vi.mock('../../lib/stereoPair', () => ({
+  formStereoPair: vi.fn(),
+  supportsStereoPair: vi.fn(),
+  withPairLock: async (_id: string, change: () => Promise<unknown>) => change()
+}))
 vi.mock('h3', async () => {
   const actual = await vi.importActual<typeof import('h3')>('h3')
   return { ...actual, readBody: vi.fn() }

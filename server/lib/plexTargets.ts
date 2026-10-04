@@ -28,7 +28,9 @@ export interface PlexTarget {
 export async function resolvePlexTargets(): Promise<PlexTarget[]> {
   const players = await usePlayers()
   const pairs = await getStereoPairs()
-  const rightIds = new Set(pairs.map((pair) => pair.rightId))
+  // The right player only disappears behind its pair if the pair is announced, i.e. its left player is known
+  const knownIds = new Set(players.map(({ playerInfo }) => playerInfo.playerid))
+  const rightIds = new Set(pairs.filter((pair) => knownIds.has(pair.leftId)).map((pair) => pair.rightId))
   const targets: PlexTarget[] = []
   for (const { serverId, playerInfo } of players) {
     const id = playerInfo.playerid

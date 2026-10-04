@@ -2,7 +2,7 @@ import useSqueezePlayer from '../composables/useSqueezePlayer'
 import type { SqueezeServerStub } from 'lms-squeeze-rpc-x'
 import useLogger from '../composables/useLogger'
 import usePlayerInfo from '../composables/usePlayerInfo'
-import { getStereoPairs, type StereoPair } from './hubConfig'
+import { getPendingResets, getStereoPairs, removePendingReset, type StereoPair } from './hubConfig'
 
 /**
  * Syncs two players and sets the left player to output the left channel and the right player the right channel.
@@ -16,21 +16,30 @@ export async function formStereoPair(leftId: string, rightId: string) {
   const { player: left } = await useSqueezePlayer(leftId)
   const { player: right } = await useSqueezePlayer(rightId)
 
-  // Leave previous sync groups first, otherwise the right player would drag its old group along
-  await left.unsync()
-  await right.unsync()
-  await right.syncTo(leftId)
-  await left.setOutputChannels('left')
-  await right.setOutputChannels('right')
+  try {
+    // Leave previous sync groups first, otherwise the right player would drag its old group along
+    await left.unsync()
+    await right.unsync()
+    await right.syncTo(leftId)
+    await left.setOutputChannels('left')
+    await right.setOutputChannels('right')
+  } catch (error) {
+    // Do not leave half a pair behind, the former sync groups of the players are not restored
+    await dissolveStereoPair(leftId, rightId)
+    throw error
+  }
   logger.info(`Synced players '${leftId}' (left) and '${rightId}' (right) as stereo pair`)
 }
 
 /**
  * Dissolves the sync group and lets both players output stereo again.
  * Players that are unreachable are skipped, so a pair can always be removed from the hub.
+ *
+ * @returns the ids of the players that could not be reset
  */
-export async function dissolveStereoPair(leftId: string, rightId: string) {
+export async function dissolveStereoPair(leftId: string, rightId: string): Promise<string[]> {
   const logger = useLogger('stereoPair')
+  const failed: string[] = []
   for (const playerId of [leftId, rightId]) {
     try {
       const { player } = await useSqueezePlayer(playerId)
@@ -38,6 +47,48 @@ export async function dissolveStereoPair(leftId: string, rightId: string) {
       await player.setOutputChannels('stereo')
     } catch (error) {
       logger.warn(`Could not reset player '${playerId}' of the dissolved stereo pair:`, error)
+      failed.push(playerId)
+    }
+  }
+  return failed
+}
+
+// Pairs (by left player id) that are being created or dissolved, the scanner must not "repair" them meanwhile
+const busyPairs = new Set<string>()
+
+/**
+ * Runs a change of a stereo pair while the scanner leaves that pair alone.
+ */
+export async function withPairLock<T>(leftId: string, change: () => Promise<T>): Promise<T> {
+  busyPairs.add(leftId)
+  try {
+    return await change()
+  } finally {
+    busyPairs.delete(leftId)
+  }
+}
+
+/**
+ * Resets the players of dissolved pairs that were unreachable at that time, as soon as they are connected again.
+ */
+export async function applyPendingResets() {
+  const logger = useLogger('stereoPair')
+  const pairedIds = new Set((await getStereoPairs()).flatMap((pair) => [pair.leftId, pair.rightId]))
+  for (const playerId of await getPendingResets()) {
+    if (pairedIds.has(playerId)) {
+      await removePendingReset(playerId)
+      continue
+    }
+    try {
+      const { player } = await useSqueezePlayer(playerId)
+      if (await player.isConnected()) {
+        await player.unsync()
+        await player.setOutputChannels('stereo')
+        await removePendingReset(playerId)
+        logger.info(`Reset player '${playerId}' of a dissolved stereo pair`)
+      }
+    } catch (error) {
+      logger.debug(`Player '${playerId}' of a dissolved stereo pair is still not reachable:`, error)
     }
   }
 }
@@ -104,7 +155,9 @@ export async function reconcileStereoPair(pair: StereoPair): Promise<StereoPairS
  */
 export async function reconcileStereoPairs() {
   const storage = useStorage('DISCOVERY')
+  await applyPendingResets()
   for (const pair of await getStereoPairs()) {
+    if (busyPairs.has(pair.leftId)) continue
     const state = await reconcileStereoPair(pair)
     await storage.setItem<StereoPairStatus>(stereoPairStatusKey(pair.leftId), { state, checkedAt: Date.now() })
   }

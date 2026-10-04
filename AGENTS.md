@@ -351,7 +351,9 @@ the Squeezebox 2 family, `hasOutputChannels`), only those can be paired (`canPai
 `POST /api/pairs`). It also calls `reconcileStereoPairs()`: an intact pair is left alone, a lost sync group or output channel is
 restored, a pair with a disconnected member is reported `offline` (`pairStatus/{leftId}`, shown on the card). Which member is
 the sync master does not matter, LMS applies playback commands of either member to the group (e2e covered).
-The hub never touches audio. The dashboard renders a pair as a `DashboardItem` of kind `'pair'` (one card for the left player).
+Creating and dissolving a pair run under `withPairLock` so the scanner does not "repair" them meanwhile. Members that were
+unreachable when a pair was dissolved are kept in `pendingResets` (settings) and reset to stereo/unsynced by the scanner once
+connected. The hub never touches audio. The dashboard renders a pair as a `DashboardItem` of kind `'pair'` (one card for the left player).
 Do not announce players directly from storage.
 
 ### Multiple Plex Media Servers

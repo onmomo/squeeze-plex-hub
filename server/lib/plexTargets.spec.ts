@@ -53,4 +53,12 @@ describe('plexTargets', () => {
 
     expect(await resolvePlexTargets()).toEqual([])
   })
+
+  it('keeps announcing the right player while its pair has no known left player', async () => {
+    ;(usePlayers as Mock).mockResolvedValue([{ serverId: 's1', playerInfo: office }])
+    ;(isPlayerHidden as Mock).mockResolvedValue(false)
+    ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Living Room', leftId: 'aa', rightId: 'bb' }])
+
+    expect(await resolvePlexTargets()).toEqual([{ id: 'bb', name: 'Office', kind: 'player', serverId: 's1', memberIds: ['bb'] }])
+  })
 })

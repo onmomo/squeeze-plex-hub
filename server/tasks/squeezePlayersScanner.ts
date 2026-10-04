@@ -35,7 +35,9 @@ export async function runSqueezePlayersScanner() {
     for (const key of servers) {
       logger.debug(`Scanning LMS with key '${key}' ..`)
       const server = await storage.getItem<ServerInfo>(key)
-      if (server) {
+      if (!server) continue
+      // One unreachable LMS must not stop the scan of the others and the check of the stereo pairs
+      try {
         logger.debug(`Looking for players from LMS '${server.name} (${server.ip})' ..`)
         const client = new SqueezeServerStub(`http://${server.ip}:${server.jsonPort || '9000'}`)
         const lms = new SqueezeServer(client)
@@ -49,6 +51,8 @@ export async function runSqueezePlayersScanner() {
           await storePlayerCapabilities(server, playerInfos)
           logger.debug(`Stored player infos for LMS '${server.name}' (${server.ip})`)
         }
+      } catch (error) {
+        logger.warn(`Failed to scan LMS '${server.name}' (${server.ip}):`, error)
       }
     }
   })
@@ -62,17 +66,20 @@ export async function runSqueezePlayersScanner() {
 }
 
 /**
- * Remembers which players offer the output channel setting that stereo pairs need. A player that does not answer keeps its
- * last known capabilities.
+ * Remembers which players offer the output channel setting that stereo pairs need.
  */
 async function storePlayerCapabilities(server: ServerInfo, playerInfos: IPlayerInfo[]) {
   const storage = useStorage('DISCOVERY')
   const stub = new SqueezeServerStub(`http://${server.ip}:${server.jsonPort || '9000'}`)
-  for (const { playerid } of playerInfos) {
-    try {
-      await storage.setItem(playerCapabilitiesKey(playerid), { outputChannels: await supportsStereoPair(stub, playerid) })
-    } catch (error) {
-      useLogger('squeezePlayersScanner').debug(`Could not read the capabilities of player '${playerid}':`, error)
-    }
-  }
+  // Capabilities of a player do not change, ask each player once. In parallel, so an unreachable one delays the scan only once
+  await Promise.allSettled(
+    playerInfos.map(async ({ playerid }) => {
+      if (await storage.getItem(playerCapabilitiesKey(playerid))) return
+      try {
+        await storage.setItem(playerCapabilitiesKey(playerid), { outputChannels: await supportsStereoPair(stub, playerid) })
+      } catch (error) {
+        useLogger('squeezePlayersScanner').debug(`Could not read the capabilities of player '${playerid}':`, error)
+      }
+    })
+  )
 }

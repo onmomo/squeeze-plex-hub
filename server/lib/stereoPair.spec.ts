@@ -1,15 +1,23 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
 import useSqueezePlayer from '../composables/useSqueezePlayer'
 import usePlayerInfo from '../composables/usePlayerInfo'
-import { getStereoPairs } from './hubConfig'
-import { dissolveStereoPair, formStereoPair, reconcileStereoPair, reconcileStereoPairs, supportsStereoPair } from './stereoPair'
+import { getPendingResets, getStereoPairs, removePendingReset } from './hubConfig'
+import {
+  applyPendingResets,
+  dissolveStereoPair,
+  formStereoPair,
+  reconcileStereoPair,
+  reconcileStereoPairs,
+  supportsStereoPair,
+  withPairLock
+} from './stereoPair'
 
 vi.mock('../composables/useLogger', () => ({
   default: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })
 }))
 vi.mock('../composables/useSqueezePlayer', () => ({ default: vi.fn() }))
 vi.mock('../composables/usePlayerInfo', () => ({ default: vi.fn() }))
-vi.mock('./hubConfig', () => ({ getStereoPairs: vi.fn() }))
+vi.mock('./hubConfig', () => ({ getStereoPairs: vi.fn(), getPendingResets: vi.fn(), removePendingReset: vi.fn() }))
 
 const calls: string[] = []
 const fakePlayer = (id: string) => ({
@@ -37,8 +45,14 @@ describe('stereoPair', () => {
       if (id === 'aa') throw new Error('offline')
       return { player: players[id] }
     })
-    await dissolveStereoPair('aa', 'bb')
+    expect(await dissolveStereoPair('aa', 'bb')).toEqual(['aa'])
     expect(calls).toEqual(['bb.unsync', 'bb.channels(stereo)'])
+  })
+
+  it('does not leave half a pair behind if LMS rejects a command', async () => {
+    players.bb!.syncTo.mockRejectedValue(new Error('rejected'))
+    await expect(formStereoPair('aa', 'bb')).rejects.toThrow('rejected')
+    expect(calls).toEqual(['aa.unsync', 'bb.unsync', 'aa.unsync', 'aa.channels(stereo)', 'bb.unsync', 'bb.channels(stereo)'])
   })
 })
 
@@ -108,6 +122,7 @@ describe('reconcileStereoPairs', () => {
     const setItem = vi.fn()
     vi.stubGlobal('useStorage', () => ({ setItem }))
     ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Kitchen', leftId: 'aa', rightId: 'bb' }])
+    ;(getPendingResets as Mock).mockResolvedValue([])
     ;(usePlayerInfo as Mock).mockRejectedValue(new Error('Player not found in storage'))
 
     await reconcileStereoPairs()
@@ -123,5 +138,48 @@ describe('supportsStereoPair', () => {
     [{ _p2: '' }, false]
   ])('reads the pref %j as %s', async (response, expected) => {
     expect(await supportsStereoPair({ requestAsync: async () => response } as any, 'aa')).toBe(expected)
+  })
+})
+
+describe('pair locks and pending resets', () => {
+  beforeEach(() => {
+    calls.length = 0
+    vi.clearAllMocks()
+  })
+
+  it('does not reconcile a pair while it is being changed', async () => {
+    const setItem = vi.fn()
+    vi.stubGlobal('useStorage', () => ({ setItem }))
+    ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Kitchen', leftId: 'aa', rightId: 'bb' }])
+    ;(getPendingResets as Mock).mockResolvedValue([])
+    ;(usePlayerInfo as Mock).mockRejectedValue(new Error('Player not found in storage'))
+
+    await withPairLock('aa', () => reconcileStereoPairs())
+    expect(setItem).not.toHaveBeenCalled()
+    await reconcileStereoPairs()
+    expect(setItem).toHaveBeenCalledTimes(1)
+  })
+
+  it('resets players of a dissolved pair once they are connected again', async () => {
+    const players: Record<string, any> = {
+      aa: { ...fakePlayer('aa'), isConnected: vi.fn(async () => false) },
+      bb: { ...fakePlayer('bb'), isConnected: vi.fn(async () => true) }
+    }
+    ;(useSqueezePlayer as Mock).mockImplementation(async (id: string) => ({ player: players[id] }))
+    ;(getStereoPairs as Mock).mockResolvedValue([])
+    ;(getPendingResets as Mock).mockResolvedValue(['aa', 'bb'])
+
+    await applyPendingResets()
+    expect(calls).toEqual(['bb.unsync', 'bb.channels(stereo)'])
+    expect(removePendingReset).toHaveBeenCalledTimes(1)
+    expect(removePendingReset).toHaveBeenCalledWith('bb')
+  })
+
+  it('drops a pending reset of a player that is part of a pair again', async () => {
+    ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Kitchen', leftId: 'aa', rightId: 'bb' }])
+    ;(getPendingResets as Mock).mockResolvedValue(['bb'])
+    await applyPendingResets()
+    expect(removePendingReset).toHaveBeenCalledWith('bb')
+    expect(calls).toEqual([])
   })
 })

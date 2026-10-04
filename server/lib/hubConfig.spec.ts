@@ -42,28 +42,33 @@ describe('hubConfig', () => {
   })
 
   it('makes all players visible when no settings file exists', async () => {
-    expect(await loadHubConfig()).toEqual({ version: 1, players: {}, pairs: {} })
+    expect(await loadHubConfig()).toEqual({ version: 1, players: {}, pairs: {}, pendingResets: [] })
     expect(await isPlayerHidden('00:04:20:aa:bb:cc')).toBe(false)
   })
 
   it('falls back to defaults if the settings file is invalid', async () => {
     await writeFile(join(dir, 'settings.json'), '{ not json')
-    expect(await loadHubConfig()).toEqual({ version: 1, players: {}, pairs: {} })
+    expect(await loadHubConfig()).toEqual({ version: 1, players: {}, pairs: {}, pendingResets: [] })
   })
 
   it('falls back to defaults if the settings file has no players', async () => {
     await writeFile(join(dir, 'settings.json'), 'null')
-    expect(await loadHubConfig()).toEqual({ version: 1, players: {}, pairs: {} })
+    expect(await loadHubConfig()).toEqual({ version: 1, players: {}, pairs: {}, pendingResets: [] })
   })
 
   it('ignores fields it does not know, e.g. names written by older versions', async () => {
     await writeFile(join(dir, 'settings.json'), JSON.stringify({ version: 1, players: { a: { name: 'Kitchen', hidden: true } } }))
-    expect(await loadHubConfig()).toEqual({ version: 1, players: { a: { hidden: true } }, pairs: {} })
+    expect(await loadHubConfig()).toEqual({ version: 1, players: { a: { hidden: true } }, pairs: {}, pendingResets: [] })
   })
 
   it('ignores malformed player entries', async () => {
     await writeFile(join(dir, 'settings.json'), JSON.stringify({ players: { a: { hidden: true }, b: 'nope', c: { hidden: 'yes' } } }))
-    expect(await loadHubConfig()).toEqual({ version: 1, players: { a: { hidden: true }, c: { hidden: false } }, pairs: {} })
+    expect(await loadHubConfig()).toEqual({
+      version: 1,
+      players: { a: { hidden: true }, c: { hidden: false } },
+      pairs: {},
+      pendingResets: []
+    })
   })
 
   it('persists player settings as readable json', async () => {
@@ -71,7 +76,7 @@ describe('hubConfig', () => {
 
     expect(await isPlayerHidden('00:04:20:aa:bb:cc')).toBe(true)
     const file = JSON.parse(await readFile(join(dir, 'settings.json'), 'utf8'))
-    expect(file).toEqual({ version: 1, players: { '00:04:20:aa:bb:cc': { hidden: true } }, pairs: {} })
+    expect(file).toEqual({ version: 1, players: { '00:04:20:aa:bb:cc': { hidden: true } }, pairs: {}, pendingResets: [] })
 
     // Survives a restart
     setConfigDir(dir)

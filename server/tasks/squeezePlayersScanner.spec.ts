@@ -24,7 +24,11 @@ vi.stubGlobal('useStorage', () => ({
   getItem: mockGetItem
 }))
 
-vi.mock('../lib/stereoPair', () => ({ reconcileStereoPairs: vi.fn() }))
+vi.mock('../lib/stereoPair', () => ({
+  reconcileStereoPairs: vi.fn(),
+  playerCapabilitiesKey: (id: string) => `playerCapabilities/${id}`,
+  supportsStereoPair: vi.fn().mockResolvedValue(true)
+}))
 
 // Mock composables
 vi.mock('lms-squeeze-rpc-x', async () => {
@@ -105,6 +109,28 @@ describe('squeezePlayersScanner plugin', () => {
     ;(reconcileStereoPairs as Mock).mockRejectedValue(new Error('boom'))
 
     await expect(runSqueezePlayersScanner()).resolves.toBeUndefined()
+    expect(reconcileStereoPairs).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps scanning the other servers and checks the pairs if one LMS fails', async () => {
+    const servers: Record<string, unknown> = {
+      'servers/u1': { name: 'Down', ip: '10.0.0.1', uuid: 'u1' },
+      'servers/u2': { name: 'Up', ip: '10.0.0.2', uuid: 'u2' }
+    }
+    const players = [{ name: 'P', playerid: 'id1', model: 'm', modelname: 'baby', firmware: '1', ip: '1.2.3.4' }]
+    mockGetKeys.mockResolvedValue(Object.keys(servers))
+    mockGetItem.mockImplementation(async (key: string) => servers[key] ?? null)
+    let call = 0
+    ;(SqueezeServer as unknown as Mock).mockImplementation(function () {
+      return { getPlayerInfosAsync: vi.fn(async () => (call++ === 0 ? Promise.reject(new Error('down')) : players)) }
+    })
+    ;(SqueezeServerStub as unknown as Mock).mockImplementation(function () {
+      return {}
+    })
+    ;(reconcileStereoPairs as Mock).mockResolvedValue(undefined)
+
+    await runSqueezePlayersScanner()
+    expect(mockSetItem).toHaveBeenCalledWith('players/u2', players)
     expect(reconcileStereoPairs).toHaveBeenCalledTimes(1)
   })
 })

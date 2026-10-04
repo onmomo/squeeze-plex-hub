@@ -3,7 +3,7 @@ import useLogger from '../../composables/useLogger'
 import usePlayers from '../../composables/usePlayers'
 import { findStereoPair, saveStereoPair, type StereoPair } from '../../lib/hubConfig'
 import usePlayerInfo from '../../composables/usePlayerInfo'
-import { formStereoPair, supportsStereoPair } from '../../lib/stereoPair'
+import { formStereoPair, supportsStereoPair, withPairLock } from '../../lib/stereoPair'
 
 /**
  * Creates a stereo pair of two players of the same LMS, e.g. `{ "name": "Kitchen", "leftId": "<mac>", "rightId": "<mac>" }`.
@@ -49,17 +49,19 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  try {
-    await formStereoPair(leftId, rightId)
-  } catch (error) {
-    logger.error(`Failed to sync players '${leftId}' and '${rightId}' on LMS:`, error)
-    throw createError({ statusCode: 502, statusMessage: 'Lyrion did not accept the stereo pair, check that both players are connected' })
-  }
+  return withPairLock(leftId, async () => {
+    try {
+      await formStereoPair(leftId, rightId)
+    } catch (error) {
+      logger.error(`Failed to sync players '${leftId}' and '${rightId}' on LMS:`, error)
+      throw createError({ statusCode: 502, statusMessage: 'Lyrion did not accept the stereo pair, check that both players are connected' })
+    }
 
-  try {
-    return await saveStereoPair({ name, leftId, rightId })
-  } catch (error) {
-    logger.error(`Failed to save stereo pair '${name}':`, error)
-    throw createError({ statusCode: 500, statusMessage: 'Failed to save settings, check that the config directory is writable' })
-  }
+    try {
+      return await saveStereoPair({ name, leftId, rightId })
+    } catch (error) {
+      logger.error(`Failed to save stereo pair '${name}':`, error)
+      throw createError({ statusCode: 500, statusMessage: 'Failed to save settings, check that the config directory is writable' })
+    }
+  })
 })

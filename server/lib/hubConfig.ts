@@ -32,6 +32,8 @@ export interface HubConfig {
   players: Record<string, PlayerSettings>
   // Stereo pairs keyed by the player id of their left player
   pairs: Record<string, StereoPair>
+  // Players of a dissolved pair that could not be reset because they were unreachable (still synced, left/right output)
+  pendingResets: string[]
 }
 
 let configDir = resolve(process.cwd(), 'config')
@@ -39,7 +41,7 @@ let cachedConfig: Promise<HubConfig> | null = null
 let pendingWrite: Promise<unknown> = Promise.resolve()
 
 function defaultConfig(): HubConfig {
-  return { version: HUB_CONFIG_VERSION, players: {}, pairs: {} }
+  return { version: HUB_CONFIG_VERSION, players: {}, pairs: {}, pendingResets: [] }
 }
 
 /**
@@ -78,6 +80,10 @@ function normalize(raw: unknown): HubConfig {
         }
       }
     }
+  }
+  const pendingResets = (raw as Partial<HubConfig> | null)?.pendingResets
+  if (Array.isArray(pendingResets)) {
+    config.pendingResets = [...new Set(pendingResets.filter((id): id is string => typeof id === 'string'))]
   }
   return config
 }
@@ -179,7 +185,12 @@ export async function findStereoPair(playerId: string): Promise<{ pair: StereoPa
  * @throws An error if the config could not be written
  */
 export async function saveStereoPair(pair: StereoPair): Promise<StereoPair> {
-  await updateHubConfig((current) => ({ ...current, pairs: { ...current.pairs, [pair.leftId]: pair } }))
+  await updateHubConfig((current) => ({
+    ...current,
+    pairs: { ...current.pairs, [pair.leftId]: pair },
+    // The players are configured again, a reset would undo that
+    pendingResets: current.pendingResets.filter((id) => id !== pair.leftId && id !== pair.rightId)
+  }))
   useLogger('hubConfig').debug(`Saved stereo pair '${pair.name}' to '${configFilePath()}'`)
   return pair
 }
@@ -194,4 +205,25 @@ export async function removeStereoPair(leftId: string): Promise<void> {
     const { [leftId]: _removed, ...pairs } = current.pairs
     return { ...current, pairs }
   })
+}
+
+/**
+ * Remembers players that still have to be reset to stereo and unsynced once they are reachable.
+ *
+ * @throws An error if the config could not be written
+ */
+export async function addPendingResets(playerIds: string[]): Promise<void> {
+  if (playerIds.length === 0) return
+  await updateHubConfig((current) => ({ ...current, pendingResets: [...new Set([...current.pendingResets, ...playerIds])] }))
+}
+
+export async function getPendingResets(): Promise<string[]> {
+  return [...(await loadHubConfig()).pendingResets]
+}
+
+/**
+ * @throws An error if the config could not be written
+ */
+export async function removePendingReset(playerId: string): Promise<void> {
+  await updateHubConfig((current) => ({ ...current, pendingResets: current.pendingResets.filter((id) => id !== playerId) }))
 }

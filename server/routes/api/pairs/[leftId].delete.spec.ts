@@ -1,13 +1,16 @@
 import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
-import { getStereoPairs, removeStereoPair } from '../../../lib/hubConfig'
+import { addPendingResets, getStereoPairs, removeStereoPair } from '../../../lib/hubConfig'
 import { dissolveStereoPair } from '../../../lib/stereoPair'
 import pairsDeleteHandler from './[leftId].delete'
 
 vi.mock('../../../composables/useLogger', () => ({
   default: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() })
 }))
-vi.mock('../../../lib/hubConfig', () => ({ getStereoPairs: vi.fn(), removeStereoPair: vi.fn() }))
-vi.mock('../../../lib/stereoPair', () => ({ dissolveStereoPair: vi.fn() }))
+vi.mock('../../../lib/hubConfig', () => ({ getStereoPairs: vi.fn(), removeStereoPair: vi.fn(), addPendingResets: vi.fn() }))
+vi.mock('../../../lib/stereoPair', () => ({
+  dissolveStereoPair: vi.fn(),
+  withPairLock: async (_id: string, change: () => Promise<unknown>) => change()
+}))
 
 const event = (id: string) => ({ __is_event__: true, node: { req: { headers: {} } }, context: { params: { leftId: id } } }) as any
 
@@ -15,12 +18,20 @@ describe('DELETE /api/pairs/:leftId', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     ;(removeStereoPair as Mock).mockResolvedValue(undefined)
+    ;(dissolveStereoPair as Mock).mockResolvedValue([])
     ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Kitchen', leftId: 'aa', rightId: 'bb' }])
   })
 
   it('dissolves the pair and removes it from the settings', async () => {
     expect(await pairsDeleteHandler(event('aa'))).toEqual({ removed: true })
     expect(dissolveStereoPair).toHaveBeenCalledWith('aa', 'bb')
+    expect(removeStereoPair).toHaveBeenCalledWith('aa')
+  })
+
+  it('remembers members that were unreachable so they are reset later', async () => {
+    ;(dissolveStereoPair as Mock).mockResolvedValue(['bb'])
+    await pairsDeleteHandler(event('aa'))
+    expect(addPendingResets).toHaveBeenCalledWith(['bb'])
     expect(removeStereoPair).toHaveBeenCalledWith('aa')
   })
 
