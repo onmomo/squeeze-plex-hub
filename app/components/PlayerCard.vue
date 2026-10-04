@@ -2,7 +2,9 @@
   <article class="channel" :class="{ 'is-standby': player.hidden, 'is-pair': !!pair }" :aria-label="`${player.name}, ${modelLabel}`">
     <header class="channel-head">
       <span class="channel-model">
-        <span class="channel-model-name" :title="modelLabel">{{ modelLabel }}</span>
+        <span class="channel-model-name" :title="modelLabel"
+          ><span v-if="pair" class="channel-pair-mark" aria-hidden="true">⇄</span> {{ modelLabel }}</span
+        >
         <span v-if="pair?.problem" class="channel-state">{{ pair.problem === 'offline' ? 'Offline' : 'Not in sync' }}</span>
         <span v-else-if="player.hidden" class="channel-state">Hidden</span>
       </span>
