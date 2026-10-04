@@ -20,6 +20,7 @@
 <p>
 <img alt="Squeeze Plex Hub - Plexamp controls" src="public/docs/squeezePlexHub_Plexamp_controls.gif" width="320" />
 <img alt="Squeeze Plex Hub - Dashboard" src="public/docs/squeezePlexHub_dashboard.gif" width="320" />
+<img alt="Squeeze Plex Hub - Stereo pair" src="public/docs/squeezePlexHub_stereo_pair.gif" width="320" />
 </p>
 </div>
 
@@ -84,8 +85,10 @@ lit while Plexamp can see the player. Press it to hide players you never play to
 ### Stereo pairs
 
 Squeezebox Radios and other mono speakers can play as a stereo pair. Choose **Pair as stereo…** in the menu of a player,
-pick the partner and which one plays the left channel. Squeeze Plex Hub syncs both players in Lyrion and sets their
-*Output channel* to left and right, Plexamp then sees the pair as one player. Use **Dissolve stereo pair** to undo it.
+pick the partner and which one plays the left channel. Squeeze Plex Hub syncs both players in Lyrion, sets their
+*Output channel* to left and right and links their volumes, Plexamp then sees the pair as one player (`Left ⇄ Right`).
+The pair card has an amber border, the ★ marks the main player: Plexamp controls the pair through it, and it keeps
+playing if you form or dissolve the pair. Use **Dissolve stereo pair** to undo it.
 Both players must be on the same Lyrion server and offer the *Output channel* setting in their Lyrion audio settings
 (Squeezebox 2 and newer, e.g. Radio, Touch, Boom, Receiver, Transporter and Squeezelite). Keep the pair on a stable network, a few milliseconds of sync drift shifts the stereo image.
 

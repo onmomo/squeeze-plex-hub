@@ -60,6 +60,17 @@ describe('POST /api/pairs', () => {
     expect(formStereoPair).not.toHaveBeenCalled()
   })
 
+  it('only saves the pair in demo mode, there is no Lyrion to sync on', async () => {
+    vi.stubGlobal('useRuntimeConfig', () => ({ demo: true }))
+    try {
+      expect(await pairsPostHandler(event)).toEqual({ name: 'Kitchen', leftId: 'aa', rightId: 'bb' })
+      expect(formStereoPair).not.toHaveBeenCalled()
+      expect(supportsStereoPair).not.toHaveBeenCalled()
+    } finally {
+      vi.stubGlobal('useRuntimeConfig', () => ({ appVersion: '1.2.3-test' }))
+    }
+  })
+
   it('returns 404 for unknown players', async () => {
     ;(usePlayers as Mock).mockResolvedValue([{ serverId: 's1', playerInfo: { playerid: 'aa' } }])
     await expect(pairsPostHandler(event)).rejects.toMatchObject({ statusCode: 404 })

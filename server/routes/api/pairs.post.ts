@@ -3,6 +3,7 @@ import useLogger from '../../composables/useLogger'
 import usePlayers from '../../composables/usePlayers'
 import { findStereoPair, saveStereoPair, type StereoPair } from '../../lib/hubConfig'
 import usePlayerInfo from '../../composables/usePlayerInfo'
+import { isDemoMode } from '../../lib/demoMode'
 import { formStereoPair, supportsStereoPair, withPairLock } from '../../lib/stereoPair'
 
 /**
@@ -40,7 +41,9 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  for (const { playerInfo, serverStub } of await Promise.all([leftId, rightId].map((id) => usePlayerInfo(id)))) {
+  // The demo players are fake, there is no Lyrion to sync them on
+  const demo = isDemoMode()
+  for (const { playerInfo, serverStub } of demo ? [] : await Promise.all([leftId, rightId].map((id) => usePlayerInfo(id)))) {
     if (!(await supportsStereoPair(serverStub, playerInfo.playerid).catch(() => false))) {
       throw createError({
         statusCode: 400,
@@ -51,7 +54,7 @@ export default defineEventHandler(async (event) => {
 
   return withPairLock(leftId, async () => {
     try {
-      await formStereoPair(leftId, rightId)
+      if (!demo) await formStereoPair(leftId, rightId)
     } catch (error) {
       logger.error(`Failed to sync players '${leftId}' and '${rightId}' on LMS:`, error)
       throw createError({ statusCode: 502, statusMessage: 'Lyrion did not accept the stereo pair, check that both players are connected' })

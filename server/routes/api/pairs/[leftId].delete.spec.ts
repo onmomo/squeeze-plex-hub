@@ -35,6 +35,17 @@ describe('DELETE /api/pairs/:leftId', () => {
     expect(removeStereoPair).toHaveBeenCalledWith('aa')
   })
 
+  it('only removes the pair in demo mode', async () => {
+    vi.stubGlobal('useRuntimeConfig', () => ({ demo: true }))
+    try {
+      expect(await pairsDeleteHandler(event('aa'))).toEqual({ removed: true })
+      expect(dissolveStereoPair).not.toHaveBeenCalled()
+      expect(removeStereoPair).toHaveBeenCalledWith('aa')
+    } finally {
+      vi.stubGlobal('useRuntimeConfig', () => ({ appVersion: '1.2.3-test' }))
+    }
+  })
+
   it('returns 404 for an unknown pair', async () => {
     await expect(pairsDeleteHandler(event('zz'))).rejects.toMatchObject({ statusCode: 404 })
     expect(dissolveStereoPair).not.toHaveBeenCalled()

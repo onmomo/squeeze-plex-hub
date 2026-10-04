@@ -1,6 +1,7 @@
 import { createError, defineEventHandler, getRouterParam } from 'h3'
 import useLogger from '../../../composables/useLogger'
 import { addPendingResets, getStereoPairs, removeStereoPair } from '../../../lib/hubConfig'
+import { isDemoMode } from '../../../lib/demoMode'
 import { dissolveStereoPair, withPairLock } from '../../../lib/stereoPair'
 
 /**
@@ -18,7 +19,7 @@ export default defineEventHandler(async (event) => {
   try {
     await withPairLock(leftId, async () => {
       // Members that are unreachable now are reset by the scanner once they are back
-      await addPendingResets(await dissolveStereoPair(pair.leftId, pair.rightId))
+      if (!isDemoMode()) await addPendingResets(await dissolveStereoPair(pair.leftId, pair.rightId))
       await removeStereoPair(leftId)
     }, [pair.leftId, pair.rightId])
   } catch (error) {
