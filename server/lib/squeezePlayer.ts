@@ -118,6 +118,26 @@ class ExtendedSqueezePlayer extends SqueezePlayer {
   }
 
   /**
+   * Makes a volume change on this player (or on any player synced with it that has the pref too) apply to all of them.
+   * Only has an effect while the players are synced.
+   */
+  async setSyncVolume(on: boolean) {
+    return this.stub.requestAsync([this.id, ['playerpref', 'syncVolume', on ? '1' : '0']])
+  }
+
+  async getSyncVolume(): Promise<boolean> {
+    const response: any = await this.stub.requestAsync([this.id, ['playerpref', 'syncVolume', '?']])
+    return Number.parseInt(response?._p2) === 1
+  }
+
+  /**
+   * Sets the volume (0 - 100), which also reaches the players synced with this one if they sync their volume.
+   */
+  async setVolume(volume: number) {
+    return this.stub.requestAsync([this.id, ['mixer', 'volume', Math.round(volume).toString()]])
+  }
+
+  /**
    * Reads the player pref `outputChannels`. Undefined if the player has none: LMS only offers it to players of the Squeezebox 2
    * family (`hasOutputChannels`), the others have no such pref.
    */

@@ -47,4 +47,13 @@ describe('PlayerCard', () => {
     await wrapper.find('button[role="switch"]').trigger('click')
     expect(wrapper.emitted('update:hidden')).toEqual([[true]])
   })
+
+  it('marks a stereo pair with the amber border and shows both players', async () => {
+    const pair = { leftName: 'Kitchen L', right: { ...player, name: 'Kitchen R' } }
+    const wrapper = await mountSuspended(PlayerCard, { props: { player: { ...player, name: 'Kitchen ⇄' }, pair } })
+    expect(wrapper.find('.channel').classes()).toContain('is-pair')
+    expect(wrapper.text()).toContain('Stereo pair')
+    const single = await mountSuspended(PlayerCard, { props: { player } })
+    expect(single.find('.channel').classes()).not.toContain('is-pair')
+  })
 })

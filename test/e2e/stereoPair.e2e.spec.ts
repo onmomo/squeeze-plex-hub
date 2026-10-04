@@ -84,6 +84,12 @@ describe('e2e: hub -> LMS synced stereo pair', () => {
     expect(await pref(PLAYER_ID)).toBe('1')
     expect(await pref(PLAYER2_ID)).toBe('2')
 
+    // Volumes are linked: a change on one player reaches the other
+    await e2e.lms.stub.requestAsync([PLAYER_ID, ['mixer', 'volume', '33']])
+    await waitFor(async () => Number(((await e2e.lms.stub.requestAsync([PLAYER2_ID, ['mixer', 'volume', '?']])) as any)?._volume) === 33, 15_000)
+    await e2e.lms.stub.requestAsync([PLAYER2_ID, ['mixer', 'volume', '61']])
+    await waitFor(async () => Number(((await e2e.lms.stub.requestAsync([PLAYER_ID, ['mixer', 'volume', '?']])) as any)?._volume) === 61, 15_000)
+
     // Playing on the left player (the pair's Plex target) reaches the right one
     await playOn(PLAYER_ID, 1)
     await waitUntilPlaying()
@@ -94,6 +100,9 @@ describe('e2e: hub -> LMS synced stereo pair', () => {
     expect(dissolved.syncgroups_loop ?? []).toHaveLength(0)
     expect(await pref(PLAYER_ID)).toBe('0')
     expect(await pref(PLAYER2_ID)).toBe('0')
+    // Volumes are independent again
+    await e2e.lms.stub.requestAsync([PLAYER_ID, ['mixer', 'volume', '20']])
+    expect(Number(((await e2e.lms.stub.requestAsync([PLAYER2_ID, ['mixer', 'volume', '?']])) as any)?._volume)).toBe(61)
   })
 
   it('detects players that offer the output channel setting', async () => {

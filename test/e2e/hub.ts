@@ -1,7 +1,11 @@
+import { mkdtemp } from 'node:fs/promises'
 import http from 'node:http'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import type { AddressInfo } from 'node:net'
 import { createApp, createRouter, toNodeListener, type EventHandler } from 'h3'
 import { createStorage, type Storage } from 'unstorage'
+import { setConfigDir } from '../../server/lib/hubConfig'
 import { runPlayQueueRefresher, type PlayQueueRefresherPayload } from '../../server/tasks/playQueueRefresher'
 import { runSqueezePlayersScanner } from '../../server/tasks/squeezePlayersScanner'
 import createPlayQueue from '../../server/routes/player/playback/createPlayQueue.get'
@@ -44,6 +48,8 @@ export interface Hub {
 }
 
 export async function startHub(): Promise<Hub> {
+  // Never read or write the settings of a hub running from this checkout (pairs would be reconciled against the test LMS)
+  setConfigDir(await mkdtemp(join(tmpdir(), 'e2e-hub-config-')))
   const storage = createStorage()
   ;(globalThis as any).useStorage = () => storage
   ;(globalThis as any).runTask = async (name: string, { payload }: { payload?: unknown } = {}) => {

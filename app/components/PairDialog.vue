@@ -10,7 +10,7 @@
         <UFormField label="Partner">
           <USelect v-model="partnerId" :items="partnerItems" placeholder="Choose a player" class="w-full" />
         </UFormField>
-        <UFormField label="This player plays">
+        <UFormField :label="`${player.name} plays`">
           <URadioGroup v-model="side" :items="sideItems" orientation="horizontal" />
         </UFormField>
         <UFormField label="Name in Plexamp">
@@ -58,7 +58,8 @@ watch(
   [partner, side],
   () => {
     if (!nameEdited.value) {
-      name.value = partner.value ? `${props.player.name} + ${partner.value.name}` : ''
+      const [left, right] = side.value === 'left' ? [props.player, partner.value] : [partner.value, props.player]
+      name.value = left && right ? `${left.name} ⇄ ${right.name}` : ''
     }
   },
   { immediate: true }

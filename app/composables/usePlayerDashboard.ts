@@ -104,8 +104,8 @@ export function usePlayerDashboard() {
           ? {
               kind: 'pair',
               id: player.id,
-              // Same mark as in Plexamp
-              player: { ...player, name: `${entry.pair.name} ⇄` },
+              // Same name as in Plexamp (server/lib/plexTargets.ts)
+              player: { ...player, name: entry.pair.name.includes('⇄') ? entry.pair.name : `${entry.pair.name} ⇄` },
               pair: {
                 right: toDashboardPlayer(partner),
                 leftName: player.name,

@@ -202,4 +202,14 @@ describe('PlayerDashboard', () => {
     ).toEqual(['bb'])
     wrapper.unmount()
   })
+
+  it('does not add the mark to a pair name that has it already', async () => {
+    players = [
+      player('aa', 'Kitchen L', false, { name: 'Kitchen L ⇄ Kitchen R', role: 'left', partnerId: 'bb' }),
+      player('bb', 'Kitchen R', false, { name: 'Kitchen L ⇄ Kitchen R', role: 'right', partnerId: 'aa' })
+    ]
+    const wrapper = await mountDashboard()
+    expect(wrapper.find('.channel-name').text()).toBe('Kitchen L ⇄ Kitchen R')
+    wrapper.unmount()
+  })
 })

@@ -1,4 +1,5 @@
 import useSqueezePlayer from '../composables/useSqueezePlayer'
+import type ExtendedSqueezePlayer from './squeezePlayer'
 import type { SqueezeServerStub } from 'lms-squeeze-rpc-x'
 import useLogger from '../composables/useLogger'
 import usePlayerInfo from '../composables/usePlayerInfo'
@@ -21,14 +22,24 @@ export async function formStereoPair(leftId: string, rightId: string) {
     await left.unsync()
     await right.unsync()
     await right.syncTo(leftId)
-    await left.setOutputChannels('left')
-    await right.setOutputChannels('right')
+    await applyPairPrefs(left, right)
+    // Both players start at the volume of the left one, from now on they follow each other
+    const volume = (await left.status())?.volume
+    if (volume !== undefined) await left.setVolume(volume)
   } catch (error) {
     // Do not leave half a pair behind, the former sync groups of the players are not restored
     await dissolveStereoPair(leftId, rightId)
     throw error
   }
   logger.info(`Synced players '${leftId}' (left) and '${rightId}' (right) as stereo pair`)
+}
+
+/** Left/right output and linked volumes, which LMS only applies while the players are synced */
+async function applyPairPrefs(left: ExtendedSqueezePlayer, right: ExtendedSqueezePlayer) {
+  await left.setOutputChannels('left')
+  await right.setOutputChannels('right')
+  await left.setSyncVolume(true)
+  await right.setSyncVolume(true)
 }
 
 /**
@@ -45,6 +56,7 @@ export async function dissolveStereoPair(leftId: string, rightId: string): Promi
       const { player } = await useSqueezePlayer(playerId)
       await player.unsync()
       await player.setOutputChannels('stereo')
+      await player.setSyncVolume(false)
     } catch (error) {
       logger.warn(`Could not reset player '${playerId}' of the dissolved stereo pair:`, error)
       failed.push(playerId)
@@ -84,6 +96,7 @@ export async function applyPendingResets() {
       if (await player.isConnected()) {
         await player.unsync()
         await player.setOutputChannels('stereo')
+        await player.setSyncVolume(false)
         await removePendingReset(playerId)
         logger.info(`Reset player '${playerId}' of a dissolved stereo pair`)
       }
@@ -134,16 +147,20 @@ export async function reconcileStereoPair(pair: StereoPair): Promise<StereoPairS
       const members = (group.sync_members ?? '').split(',')
       return members.includes(pair.leftId) && members.includes(pair.rightId)
     })
-    const intact = synced && (await left.getOutputChannels()) === 'left' && (await right.getOutputChannels()) === 'right'
+    const intact =
+      synced &&
+      (await left.getOutputChannels()) === 'left' &&
+      (await right.getOutputChannels()) === 'right' &&
+      (await left.getSyncVolume()) &&
+      (await right.getSyncVolume())
     if (intact) {
       return 'ok'
     }
 
     logger.info(`Stereo pair '${pair.name}' is no longer intact (synced: ${synced}), restoring it ..`)
     if (synced) {
-      // Only the output is off, the sync group (and its playback) stays as it is
-      await left.setOutputChannels('left')
-      await right.setOutputChannels('right')
+      // Only the prefs are off, the sync group (and its playback) stays as it is
+      await applyPairPrefs(left, right)
     } else {
       await formStereoPair(pair.leftId, pair.rightId)
     }

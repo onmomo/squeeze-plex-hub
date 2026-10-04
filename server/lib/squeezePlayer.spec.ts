@@ -199,4 +199,17 @@ describe('ExtendedSqueezePlayer', () => {
     expect(await player.isConnected()).toBe(expected)
     expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['connected', '?']])
   })
+
+  it('syncs and reads the volume link and sets the volume', async () => {
+    await player.setSyncVolume(true)
+    expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['playerpref', 'syncVolume', '1']])
+    await player.setSyncVolume(false)
+    expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['playerpref', 'syncVolume', '0']])
+    await player.setVolume(41.6)
+    expect(stub.requestAsync).toHaveBeenCalledWith(['abc123', ['mixer', 'volume', '42']])
+    ;(stub.requestAsync as Mock).mockResolvedValue({ _p2: '1' })
+    expect(await player.getSyncVolume()).toBe(true)
+    ;(stub.requestAsync as Mock).mockResolvedValue({ _p2: '0' })
+    expect(await player.getSyncVolume()).toBe(false)
+  })
 })

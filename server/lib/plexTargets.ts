@@ -23,6 +23,9 @@ export interface PlexTarget {
 /** Marks a stereo pair in the name Plexamp shows, so it can be told apart from a single player */
 export const STEREO_PAIR_MARK = '⇄'
 
+/** The name Plexamp shows for a pair: the chosen name with the mark, unless it contains it already (e.g. "Left ⇄ Right") */
+export const pairDisplayName = (name: string) => (name.includes(STEREO_PAIR_MARK) ? name : `${name} ${STEREO_PAIR_MARK}`)
+
 /**
  * Resolves all targets to announce to Plex clients, hidden players are left out.
  *
@@ -43,7 +46,7 @@ export async function resolvePlexTargets(): Promise<PlexTarget[]> {
     const pair = pairs.find((candidate) => candidate.leftId === id)
     targets.push(
       pair
-        ? { id, name: `${pair.name} ${STEREO_PAIR_MARK}`, kind: 'stereoPair', serverId, memberIds: [pair.leftId, pair.rightId] }
+        ? { id, name: pairDisplayName(pair.name), kind: 'stereoPair', serverId, memberIds: [pair.leftId, pair.rightId] }
         : { id, name: playerInfo.name, kind: 'player', serverId, memberIds: [id] }
     )
   }

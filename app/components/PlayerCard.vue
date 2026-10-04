@@ -1,5 +1,5 @@
 <template>
-  <article class="channel" :class="{ 'is-standby': player.hidden }" :aria-label="`${player.name}, ${modelLabel}`">
+  <article class="channel" :class="{ 'is-standby': player.hidden, 'is-pair': !!pair }" :aria-label="`${player.name}, ${modelLabel}`">
     <header class="channel-head">
       <span class="channel-model">
         <span class="channel-model-name" :title="modelLabel">{{ modelLabel }}</span>
@@ -134,6 +134,16 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
   transition:
     opacity 300ms ease,
     filter 300ms ease;
+}
+
+/* A stereo pair has the amber of the "In Plexamp" key around it */
+.channel.is-pair {
+  border-color: #ff9800;
+  box-shadow:
+    inset 0 1px 0 var(--rack-edge-highlight),
+    0 0 0 1px rgba(255, 152, 0, 0.35),
+    0 0 14px rgba(255, 152, 0, 0.2),
+    0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .channel.is-standby {

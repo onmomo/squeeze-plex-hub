@@ -61,4 +61,11 @@ describe('plexTargets', () => {
 
     expect(await resolvePlexTargets()).toEqual([{ id: 'bb', name: 'Office', kind: 'player', serverId: 's1', memberIds: ['bb'] }])
   })
+
+  it('does not add the mark twice if the pair name has it already', async () => {
+    ;(usePlayers as Mock).mockResolvedValue([{ serverId: 's1', playerInfo: kitchen }])
+    ;(isPlayerHidden as Mock).mockResolvedValue(false)
+    ;(getStereoPairs as Mock).mockResolvedValue([{ name: 'Kitchen ⇄ Office', leftId: 'aa', rightId: 'bb' }])
+    expect((await resolvePlexTargets())[0]!.name).toBe('Kitchen ⇄ Office')
+  })
 })
