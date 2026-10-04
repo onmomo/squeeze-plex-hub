@@ -1,3 +1,5 @@
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import { GenericContainer, Network, SocatContainer, Wait, type StartedNetwork, type StartedTestContainer } from 'testcontainers'
 import { SqueezeServerStub } from 'lms-squeeze-rpc-x'
 
@@ -11,6 +13,8 @@ import { SqueezeServerStub } from 'lms-squeeze-rpc-x'
  * (or testcontainers' `host.testcontainers.internal`) do not work for track URLs. Instead a socat relay joins the network as
  * PLEX_HOST and forwards to the fake Plex server on the test host, Docker's embedded DNS resolves the alias for LMS.
  */
+
+const execFileAsync = promisify(execFile)
 
 export const LMS_IMAGE = process.env.E2E_LMS_IMAGE ?? 'lmscommunity/lyrionmusicserver:9.1.1'
 export const SQUEEZELITE_IMAGE = process.env.E2E_SQUEEZELITE_IMAGE ?? 'giof71/squeezelite:debian-full-squeezelite-current-2026-08-05'
@@ -27,6 +31,8 @@ export interface LmsStack {
   host: string
   port: number
   stub: SqueezeServerStub
+  /** Disconnects / reconnects the second player (only with `secondPlayer`) */
+  setSecondPlayerOnline(online: boolean): Promise<void>
   stop(): Promise<void>
 }
 
@@ -89,6 +95,11 @@ export async function startLmsStack(plexPort: number, options: { secondPlayer?: 
     host,
     port,
     stub,
+    async setSecondPlayerOnline(online: boolean) {
+      if (!squeezelite2) throw new Error('No second player started')
+      // Not squeezelite2.stop(): testcontainers would then ignore the stop in `stop()` below and leave the container behind
+      await execFileAsync('docker', online ? ['start', squeezelite2.getId()] : ['stop', '-t', '0', squeezelite2.getId()])
+    },
     async stop() {
       await squeezelite.stop()
       await squeezelite2?.stop()
