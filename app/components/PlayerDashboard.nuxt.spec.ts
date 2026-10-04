@@ -134,7 +134,7 @@ describe('PlayerDashboard', () => {
     const cards = wrapper.findAllComponents(PlayerCard)
     expect(cards).toHaveLength(2)
     const pair = cards.find((card) => card.text().includes('Stereo pair'))!
-    expect(pair.find('.channel-name').text()).toBe('Kitchen')
+    expect(pair.find('.channel-name').text()).toBe('Kitchen ⇄')
     expect(pair.text()).toContain('Kitchen L')
     expect(pair.text()).toContain('Kitchen R')
     expect(wrapper.find('.vfd').text()).toContain('02/02')
