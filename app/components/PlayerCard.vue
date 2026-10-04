@@ -269,7 +269,7 @@ const menuItems = computed<DropdownMenuItem[]>(() => [
 /* The main player of a stereo pair, amber like the pair border */
 .main-star {
   color: #ff9800;
-  margin-left: 0.25rem;
+  margin-left: 0;
 }
 
 .readout dt {
