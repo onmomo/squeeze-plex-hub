@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.51.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.50.0...v1.51.0) (2026-10-04)
+
+
+### Features
+
+* **dashboard:** ⇄ next to Stereo pair in the card title ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([4d31870](https://github.com/onmomo/squeeze-plex-hub/commit/4d3187003b72c906ae3710c5f97c5dbe3e955fe4))
+* **dashboard:** create and dissolve stereo pairs ([#117](https://github.com/onmomo/squeeze-plex-hub/issues/117)) ([6065c30](https://github.com/onmomo/squeeze-plex-hub/commit/6065c3009eb1cb09f88932d0f61185ce9661dd15))
+* **dashboard:** pick player images like Lyrion, Softsqueeze for Squeezelite ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([fa939ed](https://github.com/onmomo/squeeze-plex-hub/commit/fa939ed83ee1b303941fa5e9632685515cb1cd82))
+* **dashboard:** star marks the main player of a stereo pair ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([6c01341](https://github.com/onmomo/squeeze-plex-hub/commit/6c013416a0c3e7d7653b66dd22b25ed38e130c03))
+* **stereo-pair:** link volumes, ⇄ names, amber pair card ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([995527c](https://github.com/onmomo/squeeze-plex-hub/commit/995527cabd1c798ae85ab30c373e0d82e1089d1b))
+* **stereo-pair:** mark pairs with ⇄ in Plexamp and on the dashboard ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([643ba66](https://github.com/onmomo/squeeze-plex-hub/commit/643ba66695dca5634b9eb84506e48b4fa47b6370))
+* **stereo-pair:** restore pairs in the scanner and only pair capable players ([#117](https://github.com/onmomo/squeeze-plex-hub/issues/117)) ([e071e3c](https://github.com/onmomo/squeeze-plex-hub/commit/e071e3c1fa2c6e32fe616613623c339644143c4e))
+* **stereo-pair:** sync two players as left/right stereo pair ([#117](https://github.com/onmomo/squeeze-plex-hub/issues/117)) ([3da5880](https://github.com/onmomo/squeeze-plex-hub/commit/3da5880266aa955bc527004a88add5f72ad11b4c))
+
+
+### Bug Fixes
+
+* **stereo-pair:** dissolve keeps the left player playing and resets members that were not connected ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([49cf265](https://github.com/onmomo/squeeze-plex-hub/commit/49cf26511e9d8e0107b347193b1c3dc370f8471f))
+* **stereo-pair:** header-safe device names, debounce offline readings ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([b86df98](https://github.com/onmomo/squeeze-plex-hub/commit/b86df98a4b6d3f9f90d2d8f6a16694955a884623))
+* **stereo-pair:** keep playing when a pair is formed while the main player plays ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([0ce14cf](https://github.com/onmomo/squeeze-plex-hub/commit/0ce14cf62e19cd79945db9b62336fd7fd0db1671))
+* **stereo-pair:** pending resets respect the pair lock, re-probe negative capabilities ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([5a1ce43](https://github.com/onmomo/squeeze-plex-hub/commit/5a1ce43cf2497268c4053b5776ece26452d68316))
+* **stereo-pair:** review comments ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([dcebf4a](https://github.com/onmomo/squeeze-plex-hub/commit/dcebf4a84faab6764a5db09642ad0b0eef86be34))
+* **stereo-pair:** review findings ([#118](https://github.com/onmomo/squeeze-plex-hub/issues/118)) ([133f7d0](https://github.com/onmomo/squeeze-plex-hub/commit/133f7d06426eaed28c32563561883ebb9740b0e5))
+
 ## [1.50.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.49.0...v1.50.0) (2026-10-03)
 
 
