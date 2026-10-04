@@ -343,7 +343,7 @@ player (`{ id, name, kind: 'player', serverId, memberIds }`). Both the GDM annou
 hidden player is neither announced nor described. Playback routes still accept hidden players (a running session may finish).
 
 A **stereo pair** is one target (`kind: 'stereoPair'`) under the id of its left player; the right player is not announced.
-Creating a pair (`server/lib/stereoPair.ts`) only issues LMS commands: the right player is synced to the left one and the
+Creating a pair (`server/lib/stereoPair.ts`) only issues LMS commands: the left player syncs to the right one (LMS: `A sync B` makes A the master, so what the left player plays carries on; the other way round the idle right player would clear the playlist) and the
 players get the pref `outputChannels` 1 (left) / 2 (right), 0 = stereo, and `syncVolume` 1 so a volume change on one reaches the other (0 again when dissolved). LMS applies the channel only while the player is
 synced, and playback commands to the left player apply to the whole sync group (verified in `test/e2e/stereoPair.e2e.spec.ts`).
 The scanner (every minute) records which players have the `outputChannels` pref (`playerCapabilities/{id}`; LMS only has it for

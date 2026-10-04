@@ -181,4 +181,18 @@ describe('e2e: hub -> LMS synced stereo pair', () => {
     await dissolveStereoPair(PLAYER_ID, PLAYER2_ID)
     await waitFor(async () => (await lmsStatus()).mode === 'play' && (await status2()).mode === 'stop', 15_000)
   })
+
+  it('keeps playing when the pair is formed while the main player plays', async () => {
+    await e2e.playAlbumFrom(2)
+    await e2e.waitUntilPlayedPast(3)
+    await formStereoPair(PLAYER_ID, PLAYER2_ID)
+
+    await waitFor(async () => (await status2()).mode === 'play' && (await status2()).tracks === 6, 15_000)
+    const status = await e2e.waitUntilPlayedPast(3)
+    expect(status.tracks).toBe(6)
+    expect(status.index).toBe(1)
+    // The main player is the master of the group
+    const left: any = await e2e.lms.stub.requestAsync([PLAYER_ID, ['status', '-', '1']])
+    expect(left.sync_master).toBe(PLAYER_ID)
+  })
 })

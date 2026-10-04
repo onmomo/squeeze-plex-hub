@@ -42,9 +42,9 @@ describe('stereoPair', () => {
   it('syncs the right player to the left one and sets the output channels', async () => {
     await formStereoPair('aa', 'bb')
     expect(calls).toEqual([
-      'aa.unsync',
       'bb.unsync',
-      'bb.syncTo(aa)',
+      'aa.unsync',
+      'aa.syncTo(bb)',
       'aa.channels(left)',
       'bb.channels(right)',
       'aa.syncVolume(true)',
@@ -76,11 +76,11 @@ describe('stereoPair', () => {
   })
 
   it('does not leave half a pair behind if LMS rejects a command', async () => {
-    players.bb!.syncTo.mockRejectedValue(new Error('rejected'))
+    players.aa!.syncTo.mockRejectedValue(new Error('rejected'))
     await expect(formStereoPair('aa', 'bb')).rejects.toThrow('rejected')
     expect(calls).toEqual([
-      'aa.unsync',
       'bb.unsync',
+      'aa.unsync',
       'bb.unsync',
       'bb.channels(stereo)',
       'bb.syncVolume(false)',
@@ -127,9 +127,9 @@ describe('reconcileStereoPair', () => {
     syncMembers = undefined
     expect(await reconcileStereoPair(pair)).toBe('repaired')
     expect(calls).toEqual([
-      'aa.unsync',
       'bb.unsync',
-      'bb.syncTo(aa)',
+      'aa.unsync',
+      'aa.syncTo(bb)',
       'aa.channels(left)',
       'bb.channels(right)',
       'aa.syncVolume(true)',

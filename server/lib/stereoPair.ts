@@ -7,8 +7,9 @@ import { getPendingResets, getStereoPairs, removePendingReset, type StereoPair }
 
 /**
  * Syncs two players and sets the left player to output the left channel and the right player the right channel.
- * Syncing the right player to the left one makes the left player the master of the sync group, playback commands to either
- * member apply to both.
+ * The left player syncs to the right one, which makes the left player the master of the group (LMS: `A sync B` lets A absorb B):
+ * what the left player plays, including its playlist and position, carries on on both. The other way round the idle right
+ * player would become the master and the playback would stop. Playback commands to either member apply to both.
  *
  * @throws An error if LMS rejects a command or a player is unknown
  */
@@ -18,10 +19,11 @@ export async function formStereoPair(leftId: string, rightId: string) {
   const { player: right } = await useSqueezePlayer(rightId)
 
   try {
-    // Leave previous sync groups first, otherwise the right player would drag its old group along
-    await left.unsync()
+    // Leave previous sync groups first, otherwise the players would drag their old group along (no-op for a single player,
+    // so a playing left player keeps playing)
     await right.unsync()
-    await right.syncTo(leftId)
+    await left.unsync()
+    await left.syncTo(rightId)
     await applyPairPrefs(left, right)
     // Both players start at the volume of the left one, from now on they follow each other
     const volume = (await left.status())?.volume
