@@ -5,7 +5,7 @@
         <img src="/logo_512.png" alt="" class="brand-logo" />
         <div>
           <h1 class="brand-name">Squeeze Plex Hub</h1>
-          <p class="brand-tagline">Manage the discovered Squeezebox players.</p>
+          <p class="brand-tagline">Manage your Squeezebox players.</p>
         </div>
       </div>
 
