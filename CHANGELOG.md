@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.52.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.51.0...v1.52.0) (2026-10-05)
+
+
+### Bug Fixes
+
+* **dashboard:** tagline "Manage your Squeezebox players." ([e5aed0b](https://github.com/onmomo/squeeze-plex-hub/commit/e5aed0bff565acf6d171acb2b691bde7dc63ee2d))
+
 ## [1.51.0](https://github.com/onmomo/squeeze-plex-hub/compare/v1.50.0...v1.51.0) (2026-10-04)
 
 
