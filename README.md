@@ -17,11 +17,23 @@
 </p>
 
 <h3>See how it works.</h3>
-<p>
-<img alt="Squeeze Plex Hub - Plexamp controls" src="public/docs/squeezePlexHub_Plexamp_controls.gif" width="320" />
-<img alt="Squeeze Plex Hub - Dashboard" src="public/docs/squeezePlexHub_dashboard.gif" width="320" />
-<img alt="Squeeze Plex Hub - Stereo pair" src="public/docs/squeezePlexHub_stereo_pair.gif" width="320" />
-</p>
+<table>
+<tr>
+<th width="33%"><img src="https://api.iconify.design/lucide/circle-play.svg?color=%23888888" width="16" height="16" alt="" /> Play from Plexamp</th>
+<th width="33%"><img src="https://api.iconify.design/lucide/speaker.svg?color=%23888888" width="16" height="16" alt="" /> Manage your Squeezebox players</th>
+<th width="33%"><img src="https://api.iconify.design/lucide/audio-lines.svg?color=%23888888" width="16" height="16" alt="" /> Pair as stereo</th>
+</tr>
+<tr>
+<td align="center"><img alt="Plexamp: select an advertised Squeezebox player" src="public/docs/squeezePlexHub_Plexamp_controls.gif" width="260" /></td>
+<td align="center"><img alt="Dashboard with all discovered players" src="public/docs/squeezePlexHub_dashboard.gif" width="260" /></td>
+<td align="center"><img alt="Stereo pair of two players" src="public/docs/squeezePlexHub_stereo_pair.gif" width="260" /></td>
+</tr>
+<tr>
+<td valign="top">Your Squeezebox players show up in Plexamp as cast targets. Pick one and control playback, volume and queue right from Plexamp.</td>
+<td valign="top">See every discovered Lyrion server and player at a glance, with live status and metadata. Choose which players Plexamp gets to see.</td>
+<td valign="top">Combine two players into a left and right pair. They play in sync and appear in Plexamp as a single player.</td>
+</tr>
+</table>
 </div>
 
 # Squeeze Plex Hub
